@@ -1,0 +1,1262 @@
+{
+ "version": "riverside-1",
+ "site": {
+  "id": "WH-01",
+  "name": "Riverside Logistics Hub",
+  "short": "WH-01 Riverside"
+ },
+ "units_note": "Meters. Origin = warehouse NW corner, x east, z south. heading_rad 0 = east, +pi/2 = south.",
+ "bounds": {
+  "x": [
+   -8,
+   78
+  ],
+  "z": [
+   -8,
+   56
+  ]
+ },
+ "buildings": [
+  {
+   "id": "WAREHOUSE",
+   "kind": "warehouse",
+   "x": 0,
+   "z": 0,
+   "w": 44,
+   "d": 28,
+   "h": 9,
+   "doors": [
+    {
+     "id": "D1",
+     "dock": "DOCK_1",
+     "wall": "south",
+     "x": 12,
+     "w": 4
+    },
+    {
+     "id": "D2",
+     "dock": "DOCK_2",
+     "wall": "south",
+     "x": 22,
+     "w": 4
+    },
+    {
+     "id": "D3",
+     "dock": "DOCK_3",
+     "wall": "south",
+     "x": 32,
+     "w": 4
+    }
+   ]
+  }
+ ],
+ "racks": [
+  {
+   "id": "RK-01",
+   "row": "A",
+   "x": 6,
+   "z": 2,
+   "w": 26,
+   "d": 2.5,
+   "slots": [
+    "RACK_A1",
+    "RACK_A2",
+    "RACK_A3",
+    "RACK_A4"
+   ]
+  },
+  {
+   "id": "RK-02",
+   "row": "B",
+   "x": 6,
+   "z": 11.5,
+   "w": 26,
+   "d": 2.5,
+   "slots": [
+    "RACK_B1",
+    "RACK_B2",
+    "RACK_B3",
+    "RACK_B4"
+   ]
+  }
+ ],
+ "zones": [
+  {
+   "id": "ZONE_A",
+   "name": "Zone A",
+   "purpose": "Receiving",
+   "x": 38.0,
+   "z": 1.5,
+   "w": 5.0,
+   "d": 7.0
+  },
+  {
+   "id": "ZONE_B",
+   "name": "Zone B",
+   "purpose": "Staging",
+   "x": 38.0,
+   "z": 10.5,
+   "w": 5.0,
+   "d": 7.0
+  },
+  {
+   "id": "ZONE_C",
+   "name": "Zone C",
+   "purpose": "Returns",
+   "x": 38.0,
+   "z": 20.0,
+   "w": 5.0,
+   "d": 7.0
+  }
+ ],
+ "roads": [
+  {
+   "id": "TRUCK_LANE",
+   "points": [
+    [
+     4,
+     44
+    ],
+    [
+     78,
+     44
+    ]
+   ],
+   "width": 8
+  },
+  {
+   "id": "APRON",
+   "points": [
+    [
+     6,
+     33
+    ],
+    [
+     38,
+     33
+    ]
+   ],
+   "width": 10
+  }
+ ],
+ "parking": [
+  {
+   "id": "P_BAY_1",
+   "x": 10.4,
+   "z": 29,
+   "w": 3.2,
+   "d": 10.5
+  },
+  {
+   "id": "P_BAY_2",
+   "x": 20.4,
+   "z": 29,
+   "w": 3.2,
+   "d": 10.5
+  },
+  {
+   "id": "P_BAY_3",
+   "x": 30.4,
+   "z": 29,
+   "w": 3.2,
+   "d": 10.5
+  }
+ ],
+ "fence": {
+  "points": [
+   [
+    -4,
+    30
+   ],
+   [
+    -4,
+    52
+   ],
+   [
+    62,
+    52
+   ],
+   [
+    62,
+    48
+   ]
+  ],
+  "gate": [
+   62,
+   40,
+   62,
+   48
+  ]
+ },
+ "decor": {
+  "trees": [
+   [
+    -3,
+    34
+   ],
+   [
+    -3,
+    40
+   ],
+   [
+    -3,
+    46
+   ],
+   [
+    50,
+    32
+   ],
+   [
+    55,
+    30
+   ],
+   [
+    58,
+    34
+   ],
+   [
+    48,
+    52
+   ],
+   [
+    30,
+    52
+   ],
+   [
+    14,
+    52
+   ]
+  ],
+  "containers": [
+   {
+    "x": 52,
+    "z": 37.5,
+    "heading_rad": 0,
+    "color": "#2F5FE0"
+   }
+  ]
+ },
+ "nodes": [
+  {
+   "id": "AISLE_W",
+   "type": "junction",
+   "x": 3.5,
+   "z": 8,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack aisle"
+  },
+  {
+   "id": "AISLE_E",
+   "type": "junction",
+   "x": 35,
+   "z": 8,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "East aisle"
+  },
+  {
+   "id": "AISLE_1",
+   "type": "junction",
+   "x": 9.25,
+   "z": 8,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack aisle"
+  },
+  {
+   "id": "RACK_A1",
+   "type": "rack_slot",
+   "x": 9.25,
+   "z": 5.7,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack A1",
+   "spots": [
+    [
+     9.25,
+     3.25
+    ]
+   ]
+  },
+  {
+   "id": "RACK_B1",
+   "type": "rack_slot",
+   "x": 9.25,
+   "z": 10.3,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack B1",
+   "spots": [
+    [
+     9.25,
+     12.75
+    ]
+   ]
+  },
+  {
+   "id": "AISLE_2",
+   "type": "junction",
+   "x": 15.75,
+   "z": 8,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack aisle"
+  },
+  {
+   "id": "RACK_A2",
+   "type": "rack_slot",
+   "x": 15.75,
+   "z": 5.7,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack A2",
+   "spots": [
+    [
+     15.75,
+     3.25
+    ]
+   ]
+  },
+  {
+   "id": "RACK_B2",
+   "type": "rack_slot",
+   "x": 15.75,
+   "z": 10.3,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack B2",
+   "spots": [
+    [
+     15.75,
+     12.75
+    ]
+   ]
+  },
+  {
+   "id": "AISLE_3",
+   "type": "junction",
+   "x": 22.25,
+   "z": 8,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack aisle"
+  },
+  {
+   "id": "RACK_A3",
+   "type": "rack_slot",
+   "x": 22.25,
+   "z": 5.7,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack A3",
+   "spots": [
+    [
+     22.25,
+     3.25
+    ]
+   ]
+  },
+  {
+   "id": "RACK_B3",
+   "type": "rack_slot",
+   "x": 22.25,
+   "z": 10.3,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack B3",
+   "spots": [
+    [
+     22.25,
+     12.75
+    ]
+   ]
+  },
+  {
+   "id": "AISLE_4",
+   "type": "junction",
+   "x": 28.75,
+   "z": 8,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack aisle"
+  },
+  {
+   "id": "RACK_A4",
+   "type": "rack_slot",
+   "x": 28.75,
+   "z": 5.7,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack A4",
+   "spots": [
+    [
+     28.75,
+     3.25
+    ]
+   ]
+  },
+  {
+   "id": "RACK_B4",
+   "type": "rack_slot",
+   "x": 28.75,
+   "z": 10.3,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Rack B4",
+   "spots": [
+    [
+     28.75,
+     12.75
+    ]
+   ]
+  },
+  {
+   "id": "MAIN_W",
+   "type": "junction",
+   "x": 3.5,
+   "z": 20,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Main aisle"
+  },
+  {
+   "id": "MAIN_E",
+   "type": "junction",
+   "x": 35,
+   "z": 20,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "East aisle"
+  },
+  {
+   "id": "MID_E",
+   "type": "junction",
+   "x": 35,
+   "z": 14,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "East aisle"
+  },
+  {
+   "id": "MAIN_1",
+   "type": "junction",
+   "x": 12,
+   "z": 20,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Main aisle"
+  },
+  {
+   "id": "DOCK_1",
+   "type": "dock",
+   "x": 12,
+   "z": 26.5,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Bay 1"
+  },
+  {
+   "id": "MAIN_2",
+   "type": "junction",
+   "x": 22,
+   "z": 20,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Main aisle"
+  },
+  {
+   "id": "DOCK_2",
+   "type": "dock",
+   "x": 22,
+   "z": 26.5,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Bay 2"
+  },
+  {
+   "id": "MAIN_3",
+   "type": "junction",
+   "x": 32,
+   "z": 20,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Main aisle"
+  },
+  {
+   "id": "DOCK_3",
+   "type": "dock",
+   "x": 32,
+   "z": 26.5,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Bay 3"
+  },
+  {
+   "id": "CHG_J",
+   "type": "junction",
+   "x": 4.5,
+   "z": 24.5,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Charging area"
+  },
+  {
+   "id": "CHARGER_C1",
+   "type": "charger",
+   "x": 1.8,
+   "z": 23.0,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Charger C1"
+  },
+  {
+   "id": "CHARGER_C2",
+   "type": "charger",
+   "x": 1.8,
+   "z": 26.0,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Charger C2"
+  },
+  {
+   "id": "ZONE_A",
+   "type": "zone",
+   "x": 38.3,
+   "z": 4.9,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Zone A",
+   "spots": [
+    [
+     39.8,
+     2.7
+    ],
+    [
+     41.8,
+     2.7
+    ],
+    [
+     39.8,
+     4.9
+    ],
+    [
+     41.8,
+     4.9
+    ],
+    [
+     39.8,
+     7.1
+    ],
+    [
+     41.8,
+     7.1
+    ]
+   ]
+  },
+  {
+   "id": "ZONE_B",
+   "type": "zone",
+   "x": 38.3,
+   "z": 13.9,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Zone B",
+   "spots": [
+    [
+     39.8,
+     11.7
+    ],
+    [
+     41.8,
+     11.7
+    ],
+    [
+     39.8,
+     13.9
+    ],
+    [
+     41.8,
+     13.9
+    ],
+    [
+     39.8,
+     16.1
+    ],
+    [
+     41.8,
+     16.1
+    ]
+   ]
+  },
+  {
+   "id": "ZONE_C",
+   "type": "zone",
+   "x": 38.3,
+   "z": 23.4,
+   "kinds": [
+    "forklift"
+   ],
+   "label": "Zone C",
+   "spots": [
+    [
+     39.8,
+     21.2
+    ],
+    [
+     41.8,
+     21.2
+    ],
+    [
+     39.8,
+     23.4
+    ],
+    [
+     41.8,
+     23.4
+    ],
+    [
+     39.8,
+     25.6
+    ],
+    [
+     41.8,
+     25.6
+    ]
+   ]
+  },
+  {
+   "id": "YARD_1",
+   "type": "junction",
+   "x": 12,
+   "z": 44,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Yard lane"
+  },
+  {
+   "id": "BAY_1",
+   "type": "bay",
+   "x": 12,
+   "z": 34,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Bay 1"
+  },
+  {
+   "id": "YARD_2",
+   "type": "junction",
+   "x": 22,
+   "z": 44,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Yard lane"
+  },
+  {
+   "id": "BAY_2",
+   "type": "bay",
+   "x": 22,
+   "z": 34,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Bay 2"
+  },
+  {
+   "id": "YARD_3",
+   "type": "junction",
+   "x": 32,
+   "z": 44,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Yard lane"
+  },
+  {
+   "id": "BAY_3",
+   "type": "bay",
+   "x": 32,
+   "z": 34,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Bay 3"
+  },
+  {
+   "id": "YARD_E",
+   "type": "junction",
+   "x": 48,
+   "z": 44,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Yard lane"
+  },
+  {
+   "id": "GATE_IN",
+   "type": "gate",
+   "x": 62,
+   "z": 44,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Gate"
+  },
+  {
+   "id": "ROAD_E",
+   "type": "exit",
+   "x": 74,
+   "z": 44,
+   "kinds": [
+    "truck"
+   ],
+   "label": "Road"
+  }
+ ],
+ "lanes": [
+  {
+   "a": "AISLE_W",
+   "b": "AISLE_1",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_1",
+   "b": "AISLE_2",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_2",
+   "b": "AISLE_3",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_3",
+   "b": "AISLE_4",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_4",
+   "b": "AISLE_E",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_1",
+   "b": "RACK_A1",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_1",
+   "b": "RACK_B1",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_2",
+   "b": "RACK_A2",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_2",
+   "b": "RACK_B2",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_3",
+   "b": "RACK_A3",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_3",
+   "b": "RACK_B3",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_4",
+   "b": "RACK_A4",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_4",
+   "b": "RACK_B4",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_1",
+   "b": "DOCK_1",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_2",
+   "b": "DOCK_2",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_3",
+   "b": "DOCK_3",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_W",
+   "b": "MAIN_1",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_1",
+   "b": "MAIN_2",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_2",
+   "b": "MAIN_3",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_3",
+   "b": "MAIN_E",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_W",
+   "b": "MAIN_W",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_E",
+   "b": "MID_E",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MID_E",
+   "b": "MAIN_E",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_W",
+   "b": "CHG_J",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "CHG_J",
+   "b": "CHARGER_C1",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "CHG_J",
+   "b": "CHARGER_C2",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "AISLE_E",
+   "b": "ZONE_A",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MID_E",
+   "b": "ZONE_B",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "MAIN_E",
+   "b": "ZONE_C",
+   "kinds": [
+    "forklift"
+   ]
+  },
+  {
+   "a": "YARD_1",
+   "b": "BAY_1",
+   "kinds": [
+    "truck"
+   ],
+   "reverse_into": "BAY_1"
+  },
+  {
+   "a": "YARD_2",
+   "b": "BAY_2",
+   "kinds": [
+    "truck"
+   ],
+   "reverse_into": "BAY_2"
+  },
+  {
+   "a": "YARD_3",
+   "b": "BAY_3",
+   "kinds": [
+    "truck"
+   ],
+   "reverse_into": "BAY_3"
+  },
+  {
+   "a": "YARD_1",
+   "b": "YARD_2",
+   "kinds": [
+    "truck"
+   ]
+  },
+  {
+   "a": "YARD_2",
+   "b": "YARD_3",
+   "kinds": [
+    "truck"
+   ]
+  },
+  {
+   "a": "YARD_3",
+   "b": "YARD_E",
+   "kinds": [
+    "truck"
+   ]
+  },
+  {
+   "a": "YARD_E",
+   "b": "GATE_IN",
+   "kinds": [
+    "truck"
+   ]
+  },
+  {
+   "a": "GATE_IN",
+   "b": "ROAD_E",
+   "kinds": [
+    "truck"
+   ]
+  }
+ ],
+ "docks": [
+  {
+   "id": "DK-01",
+   "node": "DOCK_1",
+   "bay_node": "BAY_1",
+   "door": "D1",
+   "label": "Bay 1"
+  },
+  {
+   "id": "DK-02",
+   "node": "DOCK_2",
+   "bay_node": "BAY_2",
+   "door": "D2",
+   "label": "Bay 2"
+  },
+  {
+   "id": "DK-03",
+   "node": "DOCK_3",
+   "bay_node": "BAY_3",
+   "door": "D3",
+   "label": "Bay 3"
+  }
+ ],
+ "chargers": [
+  {
+   "id": "CH-01",
+   "node": "CHARGER_C1",
+   "label": "Charger C1"
+  },
+  {
+   "id": "CH-02",
+   "node": "CHARGER_C2",
+   "label": "Charger C2"
+  }
+ ],
+ "gate_node": "GATE_IN",
+ "exit_node": "ROAD_E",
+ "gateway": {
+  "id": "GW-01",
+  "label": "Dock gateway",
+  "x": 6.0,
+  "z": 30.5,
+  "ble_range_m": 14
+ },
+ "seed": {
+  "forklifts": [
+   {
+    "id": "FL-01",
+    "node": "MAIN_1",
+    "heading_rad": 0,
+    "battery_pct": 82,
+    "meta": {
+     "operator": "Priya Nair",
+     "model": "Electric counterbalance, 1.6 t"
+    },
+    "plan": [
+     {
+      "node": "RACK_A1",
+      "action": "pick"
+     },
+     {
+      "node": "DOCK_1",
+      "action": "load"
+     }
+    ]
+   },
+   {
+    "id": "FL-02",
+    "node": "CHARGER_C1",
+    "heading_rad": 3.1416,
+    "battery_pct": 46,
+    "charging": true,
+    "meta": {
+     "operator": "Tom Okafor",
+     "model": "Electric counterbalance, 1.6 t"
+    },
+    "plan": []
+   },
+   {
+    "id": "FL-03",
+    "node": "AISLE_2",
+    "heading_rad": 0,
+    "battery_pct": 71,
+    "meta": {
+     "operator": "Lena Brandt",
+     "model": "Reach truck, 1.4 t"
+    },
+    "plan": [
+     {
+      "node": "ZONE_A",
+      "action": "pick"
+     },
+     {
+      "node": "RACK_B4",
+      "action": "drop"
+     }
+    ]
+   },
+   {
+    "id": "FL-04",
+    "node": "MID_E",
+    "heading_rad": 3.1416,
+    "battery_pct": 93,
+    "meta": {
+     "operator": "Sam Reyes",
+     "model": "Electric counterbalance, 2.0 t"
+    },
+    "plan": [
+     {
+      "node": "RACK_B2",
+      "action": "pick"
+     },
+     {
+      "node": "DOCK_1",
+      "action": "load"
+     }
+    ]
+   }
+  ],
+  "trucks": [
+   {
+    "id": "TR-01",
+    "node": "BAY_1",
+    "heading_rad": 1.5708,
+    "state": "docked",
+    "capacity": 6,
+    "inbound": false,
+    "meta": {
+     "plate": "RLH 4821",
+     "carrier": "Northline Freight",
+     "route": "Outbound to Eastgate DC"
+    }
+   },
+   {
+    "id": "TR-02",
+    "node": "ROAD_E",
+    "heading_rad": 3.1416,
+    "state": "arriving",
+    "capacity": 6,
+    "inbound": false,
+    "meta": {
+     "plate": "RLH 7390",
+     "carrier": "Harbor Haulage",
+     "route": "Inbound, empty for pickup"
+    }
+   }
+  ],
+  "pallets": [
+   {
+    "id": "PL-01",
+    "at": "RACK_A1",
+    "meta": {
+     "sku": "SKU-10422",
+     "contents": "Bottled water, 48 cases"
+    }
+   },
+   {
+    "id": "PL-02",
+    "at": "RACK_A2",
+    "meta": {
+     "sku": "SKU-20117",
+     "contents": "Kitchen paper, 60 packs"
+    }
+   },
+   {
+    "id": "PL-03",
+    "at": "RACK_A3",
+    "meta": {
+     "sku": "SKU-31876",
+     "contents": "Detergent, 40 cases"
+    }
+   },
+   {
+    "id": "PL-04",
+    "at": "RACK_A4",
+    "meta": {
+     "sku": "SKU-10422",
+     "contents": "Bottled water, 48 cases"
+    }
+   },
+   {
+    "id": "PL-05",
+    "at": "RACK_B1",
+    "meta": {
+     "sku": "SKU-44210",
+     "contents": "Pet food, 32 bags"
+    }
+   },
+   {
+    "id": "PL-06",
+    "at": "RACK_B2",
+    "meta": {
+     "sku": "SKU-50933",
+     "contents": "Garden soil, 50 bags"
+    }
+   },
+   {
+    "id": "PL-07",
+    "at": "RACK_B3",
+    "meta": {
+     "sku": "SKU-20117",
+     "contents": "Kitchen paper, 60 packs"
+    }
+   },
+   {
+    "id": "PL-08",
+    "at": "ZONE_A",
+    "meta": {
+     "sku": "SKU-61205",
+     "contents": "Cereal, 72 cartons"
+    }
+   },
+   {
+    "id": "PL-09",
+    "at": "ZONE_A",
+    "meta": {
+     "sku": "SKU-72018",
+     "contents": "Coffee beans, 40 sacks"
+    }
+   },
+   {
+    "id": "PL-10",
+    "at": "ZONE_A",
+    "meta": {
+     "sku": "SKU-31876",
+     "contents": "Detergent, 40 cases"
+    }
+   },
+   {
+    "id": "PL-11",
+    "at": "TR-01",
+    "meta": {
+     "sku": "SKU-83344",
+     "contents": "Canned tomatoes, 96 cases"
+    }
+   },
+   {
+    "id": "PL-12",
+    "at": "TR-01",
+    "meta": {
+     "sku": "SKU-44210",
+     "contents": "Pet food, 32 bags"
+    }
+   }
+  ],
+  "dock_states": {
+   "DK-01": "occupied",
+   "DK-02": "available",
+   "DK-03": "available"
+  }
+ }
+}

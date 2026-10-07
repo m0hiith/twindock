@@ -26,7 +26,8 @@ moving forklifts and trucks by hand.
 | 0. HARDWARE.md | Done (SDK-verified; a few physical checks open) |
 | 1. Scaffold + contract | Done |
 | 2. Firmware | Not started |
-| 3–9. Backend, 3D, HUD, Control Room, board twin, BLE, demo | Not started |
+| 3. Backend world engine | Done (41 tests; verified end to end with the fake board) |
+| 4–9. 3D, HUD, Control Room, board twin, BLE, demo | Not started |
 
 ## Running
 
@@ -36,7 +37,7 @@ moving forklifts and trucks by hand.
 - Python 3.11+ (the Homebrew Python on the dev Mac is currently broken, so we use python.org 3.13):
   ```sh
   /Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13 -m venv .venv
-  .venv/bin/pip install -r tools/requirements.txt
+  .venv/bin/pip install -r tools/requirements.txt -r backend/requirements.txt
   ```
 
 ### 1. Broker
@@ -68,6 +69,39 @@ It validates every payload against `shared/schemas/mqtt` before sending. **Never
 Note: the fake board's retained `hello` stays in the broker. Before a demo, clear it with
 `mosquitto_pub -r -n -t twin/gateway/hello` and let the real board publish its own.
 
-### 3. Backend and frontend
+### 3. Backend
 
-Coming in steps 3–7.
+```sh
+./scripts/run_backend.sh          # http://localhost:8000, WebSocket at ws://localhost:8000/ws
+(cd backend && ../.venv/bin/python -m pytest -q)
+```
+
+| Endpoint | What |
+|---|---|
+| `GET /api/layout` | Static geometry and waypoint graph (`backend/world/layout.json`) |
+| `GET /api/snapshot` | Same payload as the WebSocket `world_snapshot` |
+| `POST /api/reset` | Restore the seed world (board data is kept: it is real) |
+| `GET /api/health` | Broker connection, board online/fake, client count |
+| `WS /ws` | Messages in `shared/schema.md` |
+
+How it works, in `backend/twindock/`:
+
+- `engine.py` is the single source of truth. Client intents, MQTT messages and 20 Hz ticks all go
+  through it; it validates every message against `/shared/schemas` and queues outgoing messages.
+- `world.py` holds the units and the movement engine: shortest paths on the waypoint graph
+  (`graph.py`), forklift 2.2 m/s, truck 3 m/s (1.2 m/s backing into a bay), smooth heading,
+  move validation (trucks only to docks/gate, one truck per dock, no picking a carried or
+  claimed pallet, one forklift per charger, low battery).
+- `gateway.py` keeps board state built only from real messages, each with its receive time;
+  offline after 15 s without status. Hardware is limited to `hardware.py` (= HARDWARE.md).
+- Physical controls: BTN1 short press selects the next forklift on every screen; BTN0 short press
+  runs the selected forklift's next task-list step (refilled by the planner when empty).
+  LED0 follows "truck docked at Bay 1"; LED1 is commanded from clients and is only shown on
+  after the board confirms.
+- `planner.py` is auto mode (off by default): unload inbound trucks to Zone A, put away to the
+  racks, load outbound trucks, send full trucks away and bring them back. Units it moves are
+  `source: "auto"`.
+
+### 4. Frontend
+
+Coming in steps 4–7.
