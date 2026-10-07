@@ -27,7 +27,8 @@ moving forklifts and trucks by hand.
 | 1. Scaffold + contract | Done |
 | 2. Firmware | Not started |
 | 3. Backend world engine | Done (41 tests; verified end to end with the fake board) |
-| 4–9. 3D, HUD, Control Room, board twin, BLE, demo | Not started |
+| 4. 3D scene | Done (isometric twin at `/`, minimal HUD) |
+| 5–9. HUD, Control Room, board twin, BLE, demo | Not started |
 
 ## Running
 
@@ -113,4 +114,19 @@ Seed: TR-01 is docked at Bay 2 and TR-02 waits on the road, so Bay 1 (and LED0) 
 
 ### 4. Frontend
 
-Coming in steps 4–7.
+```sh
+cd frontend && npm install && npm run dev    # http://localhost:5173 (proxies /api and /ws to :8000)
+npm run gen:types                            # regenerate src/contract/generated.ts after a /shared change
+```
+
+- Message types are generated from `/shared/schemas` and every WebSocket message is validated
+  at runtime with ajv against the same files the backend uses (`src/contract/`).
+- The store (`src/store/`) only changes on server messages; clicks send intents. Units glide
+  towards each 20 Hz server position (critically damped, never extrapolated).
+- The scene (`src/scene/`) is procedural low-poly: cutaway warehouse (walls facing the camera
+  drop to a kerb so the floor stays visible from all four 90° views), roll-up doors D1–D3 that
+  open while a truck is docked, racks, instanced pallets, forklifts, box trucks, office, fence
+  and gate, trees, containers, and the gateway pole with its violet BLE ring (bright only
+  while the board is online). Static scenery is merged per material (~230 draw calls in total).
+- Controls: drag to pan, wheel or +/− to zoom (0.6x–2x), rotate in 90° steps, home/center.
+  Click a unit to select it on every screen; `?stats` shows FPS and exposes renderer stats.

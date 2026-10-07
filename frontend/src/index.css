@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --ground: #e9edf6;
+  --road: #dce2ee;
+  --structure: #2f5fe0;
+  --structure-dark: #2349b8;
+  --card: rgb(255 255 255 / 0.96);
+  --card-border: #e6e9f0;
+  --card-shadow: 0 8px 24px rgba(30, 45, 90, 0.08);
+  --ink: #1b2333;
+  --ink-2: #6b7385;
+  --ok: #16a34a;
+  --ok-bg: #e8f7ee;
+  --info: #2f5fe0;
+  --info-bg: #eaf0ff;
+  --warn: #d97706;
+  --warn-bg: #fff4e0;
+  --crit: #dc2626;
+  --crit-bg: #fdecec;
+  --idle: #8a93a6;
+  --idle-bg: #f1f3f7;
+  --live: #7c3aed;
+}
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-crit: var(--crit);
+  --color-crit-bg: var(--crit-bg);
+  --color-idle: var(--idle);
+  --color-idle-bg: var(--idle-bg);
+  --color-live: var(--live);
+  --color-structure: var(--structure);
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 14px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
