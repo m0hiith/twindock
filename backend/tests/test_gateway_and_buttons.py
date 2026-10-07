@@ -16,14 +16,14 @@ def test_btn1_selects_next_forklift_for_everyone(h: Harness) -> None:
 
 def test_btn0_runs_next_task_of_selected_forklift(h: Harness) -> None:
     h.board_online()
-    h.press("BTN1", 2000)  # FL-01, plan: pick at RACK_A1, then load at DOCK_1
+    h.press("BTN1", 2000)  # FL-01, plan: pick at RACK_A1, then load at DOCK_2
     h.press("BTN0", 3000)
     fl = h.world.entities["FL-01"]
     assert fl.action == "pick" and fl.target == "RACK_A1" and fl.source == "manual"
     assert [s.action for s in fl.plan] == ["load"]
     h.run(25)
     h.press("BTN0", 30000)
-    assert fl.action == "load" and fl.target == "DOCK_1"
+    assert fl.action == "load" and fl.target == "DOCK_2"
     h.run(30)
     assert "PL-01" in (h.world.entities["TR-01"].cargo or [])
 
@@ -45,16 +45,33 @@ def test_long_press_is_not_a_short_press(h: Harness) -> None:
     assert h.engine.gw.buttons["BTN1"].state == "released"
 
 
+def confirm_last(h: Harness, ts_ms: int) -> None:
+    p = h.mqtt[-1].payload
+    h.mqtt_in("twin/gateway/led", {"ts_ms": ts_ms, "led": p["led"], "on": p["on"], "cmd_id": p["cmd_id"]})
+
+
 def test_led0_follows_bay1_rule(h: Harness) -> None:
     h.board_online()
-    assert h.mqtt[-1].payload["led"] == "LED0" and h.mqtt[-1].payload["on"] is True  # TR-01 docked at Bay 1
     gw = h.engine.gw
-    assert gw.leds["LED0"].pending is not None and gw.leds["LED0"].on is None  # not on until confirmed
-    cmd_id = h.mqtt[-1].payload["cmd_id"]
-    h.mqtt_in("twin/gateway/led", {"ts_ms": 1100, "led": "LED0", "on": True, "cmd_id": cmd_id})
+    # Bay 1 is free in the seed: the backend syncs the board's LED0 to off on connect.
+    assert h.mqtt[-1].payload["led"] == "LED0" and h.mqtt[-1].payload["on"] is False
+    confirm_last(h, 1100)
+    assert gw.leds["LED0"].on is False and gw.leds["LED0"].pending is None
+    # Demo opener: send a truck to Bay 1. LED0 is commanded on only once it has docked.
+    h.client({"type": "move_unit", "cmd_id": "d1", "unit_id": "TR-02", "target_node": "DOCK_1"})
+    n = len(h.mqtt)
+    for t in range(12):  # ~36 s drive; keep the board's status fresh meanwhile
+        h.run(3)
+        h.mqtt_in("twin/gateway/status", {"ts_ms": 2000 + t * 3000})
+        if len(h.mqtt) > n:
+            break
+    assert h.world.entities["TR-02"].state == "docked"
+    assert h.mqtt[-1].payload["led"] == "LED0" and h.mqtt[-1].payload["on"] is True
+    assert gw.leds["LED0"].on is False and gw.leds["LED0"].pending is not None  # not on until confirmed
+    confirm_last(h, 40000)
     assert gw.leds["LED0"].on is True and gw.leds["LED0"].pending is None
-    h.client({"type": "move_unit", "cmd_id": "d1", "unit_id": "TR-01", "target_node": "GATE_IN"})
-    assert h.mqtt[-1].payload == {"led": "LED0", "on": False, "cmd_id": h.mqtt[-1].payload["cmd_id"]}
+    h.client({"type": "move_unit", "cmd_id": "d2", "unit_id": "TR-02", "target_node": "GATE_IN"})
+    assert h.mqtt[-1].payload["led"] == "LED0" and h.mqtt[-1].payload["on"] is False
 
 
 def test_led0_cannot_be_commanded_by_clients(h: Harness) -> None:

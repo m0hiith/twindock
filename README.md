@@ -102,6 +102,15 @@ How it works, in `backend/twindock/`:
   racks, load outbound trucks, send full trucks away and bring them back. Units it moves are
   `source: "auto"`.
 
+#### Demo time scale
+
+The world runs at real speed (forklift 2.2 m/s, truck 3 m/s) but some processes are compressed
+so they are visible in a few minutes: forklift battery drains and charges about 20x faster than
+a real shift (`backend/twindock/world.py`), with a 15% floor so no forklift can strand at 0%
+mid-demo; auto-mode trucks return 20 s after leaving (`planner.py`). Board data is never scaled.
+
+Seed: TR-01 is docked at Bay 2 and TR-02 waits on the road, so Bay 1 (and LED0) start free/off.
+
 ### 4. Frontend
 
 Coming in steps 4–7.

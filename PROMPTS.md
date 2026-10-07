@@ -69,8 +69,10 @@ Step E: BLE scanning alongside Wi-Fi. Report devices whose name starts with "TD-
   twin/gateway/ble every 2 s. Explain how the SDK handles Wi-Fi/BLE coexistence and why you
   chose the scan window and interval.
 Step F: Resilience. If Wi-Fi or MQTT drops, reconnect with backoff, buffer up to 50 status
-  messages in RAM with original timestamps, then flush them on reconnect and report the
-  count in "buffered". Increment "reconnects".
+  messages in RAM with original timestamps, then flush them on reconnect with
+  "replay": true on each flushed message (so the backend keeps them as history and never
+  mistakes one for the current status), and report the count in "buffered" on the next
+  live status. Increment "reconnects".
 
 Use only APIs that exist in my installed SDK; search the SDK headers to confirm every
 function you call. Explain every function you add in a short comment so I can answer
@@ -88,7 +90,7 @@ Read CLAUDE.md and /shared. Build the backend in /backend.
 2. backend/world/layout.json: a believable small yard and warehouse. 3 docks (Bay 1–3),
    2 rack rows (A, B) with 4 slots each, 2 chargers, zones A–C, a gate, a truck lane,
    and a waypoint graph with lanes connecting everything. Seed: 4 forklifts, 2 trucks
-   (one docked at Bay 1, one inbound), 12 pallets, 1 gateway.
+   (one docked at Bay 2, one inbound; Bay 1 starts free so LED0 starts off), 12 pallets, 1 gateway.
 3. Movement engine at 20 Hz: units follow shortest paths on the graph at the speeds in
    CLAUDE.md, with smooth heading. Validate moves (a truck can only target docks or the
    gate, a forklift cannot pick a pallet that is already carried, a dock holds one truck).

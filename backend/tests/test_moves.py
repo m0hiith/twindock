@@ -1,7 +1,7 @@
 import math
 
 from conftest import Harness
-from twindock.world import SPEED
+from twindock.world import BATTERY_FLOOR_PCT, SPEED
 
 
 def move(h: Harness, unit: str, target: str, action: str = "goto", **kw: object) -> dict:
@@ -15,15 +15,15 @@ def test_truck_can_only_target_docks_or_gate(h: Harness) -> None:
     assert not ack["ok"] and "dock or the gate" in ack["reason"]
     ack = move(h, "TR-02", "ZONE_A")
     assert not ack["ok"]
-    assert move(h, "TR-02", "DOCK_2")["ok"]
+    assert move(h, "TR-02", "DOCK_3")["ok"]
 
 
 def test_dock_holds_one_truck(h: Harness) -> None:
-    ack = move(h, "TR-02", "DOCK_1")  # TR-01 is docked at Bay 1 in the seed
+    ack = move(h, "TR-02", "DOCK_2")  # TR-01 is docked at Bay 2 in the seed
     assert not ack["ok"] and "occupied by TR-01" in ack["reason"]
-    assert move(h, "TR-02", "DOCK_2")["ok"]
+    assert move(h, "TR-02", "DOCK_3")["ok"]
     assert move(h, "TR-01", "GATE_IN")["ok"]  # TR-01 leaves
-    ack = move(h, "TR-01", "DOCK_2")
+    ack = move(h, "TR-01", "DOCK_3")
     assert not ack["ok"] and "reserved for TR-02" in ack["reason"]
 
 
@@ -69,7 +69,7 @@ def test_full_pick_and_load_cycle(h: Harness) -> None:
     assert move(h, "FL-01", "RACK_A1", "pick")["ok"]
     h.run(25)
     assert w.entities["FL-01"].carrying == "PL-01"
-    ack = move(h, "FL-01", "DOCK_1", "load")
+    ack = move(h, "FL-01", "DOCK_2", "load")
     assert ack["ok"], ack
     h.run(30)
     tr = w.entities["TR-01"]
@@ -95,11 +95,21 @@ def test_charger_holds_one_forklift(h: Harness) -> None:
     assert h.world.entities["FL-01"].action == "charge"
 
 
-def test_low_battery_only_accepts_charge(h: Harness) -> None:
-    h.world.entities["FL-01"].battery = 5
-    ack = move(h, "FL-01", "DOCK_1")
-    assert not ack["ok"] and "Battery low" in ack["reason"]
-    assert move(h, "FL-01", "CHARGER_C2", "charge")["ok"]
+def test_battery_never_drops_below_floor_in_15_minutes(h: Harness) -> None:
+    w = h.world  # drive the world directly: 15 simulated minutes of nonstop driving
+    fl = w.entities["FL-01"]
+    targets = ["DOCK_3", "CHARGER_C2", "ZONE_A", "RACK_B4"]  # passing through, never charging
+    lowest = 100.0
+    for i in range(int(15 * 60 / 0.1)):
+        if not fl.moving:
+            assert w.command("FL-01", targets[i % 4], "goto").ok
+            fl.action = None if fl.action == "charge" else fl.action  # drive past, don't charge
+        w.tick(0.1)
+        if fl.state == "charging":
+            fl.state, fl.action = "idle", None
+        lowest = min(lowest, fl.battery or 0)
+    assert lowest >= BATTERY_FLOOR_PCT
+    assert lowest == BATTERY_FLOOR_PCT  # it really did drain down to the floor
 
 
 def test_device_units_reject_manual_moves(h: Harness) -> None:
@@ -115,19 +125,19 @@ def test_static_units_cannot_move(h: Harness) -> None:
 
 def test_truck_backs_into_bay_and_docks(h: Harness) -> None:
     w = h.world
-    assert move(h, "TR-02", "DOCK_2")["ok"]
+    assert move(h, "TR-02", "DOCK_1")["ok"]
     h.run(60)
     tr = w.entities["TR-02"]
-    assert tr.state == "docked" and tr.docked_at == "DOCK_2"
+    assert tr.state == "docked" and tr.docked_at == "DOCK_1"
     assert math.isclose(tr.heading, math.pi / 2, abs_tol=1e-6)  # cab towards the yard
-    assert w.entities["DK-02"].state == "occupied"
+    assert w.entities["DK-01"].state == "occupied"
 
 
 def test_departing_truck_frees_the_dock_and_goes_off_site(h: Harness) -> None:
     w = h.world
     ack = move(h, "TR-01", "GATE_IN")
     assert ack["ok"] and ack["path"][-1] == "ROAD_E"
-    assert w.entities["DK-01"].state == "available"
+    assert w.entities["DK-02"].state == "available"
     h.run(60)
     tr = w.entities["TR-01"]
     assert tr.state == "gone" and tr.inbound  # it left with 2 pallets, so it returns to be unloaded

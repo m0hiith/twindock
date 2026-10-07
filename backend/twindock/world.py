@@ -24,9 +24,12 @@ CREEP_SPEED = 0.3           # m/s floor so braking never stalls just short of a 
 
 PICK_S = 3.0                # fork handling time for pick and drop
 LOAD_S = 4.0                # driving into the trailer, setting down, backing out
-CHARGE_PCT_PER_S = 1.5      # sped up for the demo (real: ~1 h for a full charge)
-DRAIN_PCT_PER_M = 0.08      # sped up for the demo, so battery visibly moves
-LOW_BATTERY_PCT = 10.0      # below this a forklift only accepts "charge"
+# Demo time scale: battery moves ~20x faster than a real shift so it visibly changes in a demo.
+# Nonstop driving drains ~10 %/min, so drain stops at a floor: no forklift can be stranded at
+# 0% mid-demo, however long it runs. Auto mode sends forklifts to charge below 25%.
+CHARGE_PCT_PER_S = 1.5      # real: about an hour for a full charge
+DRAIN_PCT_PER_M = 0.08
+BATTERY_FLOOR_PCT = 15.0
 FORK_OFFSET_M = 1.1         # carried pallet sits this far ahead of the forklift centre
 
 BAY1_DOCK_NODE = "DOCK_1"   # LED0 rule: on while a truck is docked at Bay 1
@@ -253,9 +256,6 @@ class World:
             action = "charge"
         if action in ("dock", "depart"):
             return _fail("Only trucks dock or depart")
-        assert u.battery is not None
-        if u.battery < LOW_BATTERY_PCT and action != "charge":
-            return _fail(f"Battery low ({u.battery:.0f}%), send {u.id} to a charger")
 
         if action == "pick":
             if u.carrying:
@@ -443,7 +443,7 @@ class World:
                 moved += move
                 move = 0.0
         if u.kind == "forklift" and u.battery is not None:
-            u.battery = max(0.0, u.battery - DRAIN_PCT_PER_M * moved)
+            u.battery = max(min(u.battery, BATTERY_FLOOR_PCT), u.battery - DRAIN_PCT_PER_M * moved)
         if not u.path:
             u.speed = 0.0
             u.node = u.prev_node

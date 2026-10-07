@@ -1069,7 +1069,7 @@
       "action": "pick"
      },
      {
-      "node": "DOCK_1",
+      "node": "DOCK_2",
       "action": "load"
      }
     ]
@@ -1121,7 +1121,7 @@
       "action": "pick"
      },
      {
-      "node": "DOCK_1",
+      "node": "DOCK_2",
       "action": "load"
      }
     ]
@@ -1130,7 +1130,7 @@
   "trucks": [
    {
     "id": "TR-01",
-    "node": "BAY_1",
+    "node": "BAY_2",
     "heading_rad": 1.5708,
     "state": "docked",
     "capacity": 6,
@@ -1254,8 +1254,8 @@
    }
   ],
   "dock_states": {
-   "DK-01": "occupied",
-   "DK-02": "available",
+   "DK-01": "available",
+   "DK-02": "occupied",
    "DK-03": "available"
   }
  }
