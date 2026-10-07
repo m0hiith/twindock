@@ -1,65 +1,97 @@
 # HARDWARE.md: verified inventory of the physical board
 
-> **Status: DRAFT, NOTHING VERIFIED YET.**
-> Every row below is marked `unverified` until it has been confirmed against the WiSeConnect SDK
-> board config for BRD2605A **and** by the developer. The UI and firmware may only expose rows
-> marked `verified`.
+Status legend:
+- **sdk-verified**: found in the WiSeConnect 3.5.3 board config for BRD2605A (file cited). Still needs a
+  quick physical check by the developer (silkscreen label, location).
+- **confirmed**: sdk-verified **and** confirmed by the developer on the physical board.
+- **unverified**: mentioned in the user guide or product page only.
+
+The UI and firmware may only expose rows that are **sdk-verified** or **confirmed**, and only the rows
+listed under "Exposed in TwinDock".
+
+SDK paths below are relative to `wiseconnect-3.5.3/components/board/silabs/`.
 
 ## Kit identity
 
-| Field | Value | Status |
-|---|---|---|
-| Kit | SiWx917-DK2605A (Wi-Fi 6 + Bluetooth LE SoC Dev Kit) | confirmed by developer |
-| Board | BRD2605A (revision: _fill in from label, e.g. A02_) | unverified |
-| SoC | SiWx917 (exact OPN: _fill in from chip marking_) | unverified |
-| Debugger | Onboard SEGGER J-Link over USB Type-C | unverified |
-| SDK | WiSeConnect _version_ in Simplicity Studio _version_ | **not installed yet** |
-| SDK path | _fill in after install_ | **not installed yet** |
+| Field | Value | Source | Status |
+|---|---|---|---|
+| Kit | SiWx917-DK2605A (Wi-Fi 6 + BLE SoC Dev Kit) | developer | confirmed |
+| Board | BRD2605A, revision A02 | `component/brd2605a.slcc` (`SL_BOARD_NAME "BRD2605A"`, `SL_BOARD_REV "A02"`) | sdk-verified (developer: check label) |
+| Radio board | none (single board). `hello.radio_board = ""` | `brd2605a.slcc` | sdk-verified |
+| SoC OPN | SiWG917M111MGTBA | `brd2605a.slcc` (`requires: siwg917m111mgtba`) | sdk-verified |
+| Memory | Common flash mode, 8 MB external PSRAM, no external flash | `brd2605a.slcc` | sdk-verified |
+| Console | VCOM over the onboard debugger USB | `brd2605a.slcc` tag `hardware:has:vcom` | sdk-verified |
+| SDK | WiSeConnect 3.5.3, at `./wiseconnect-3.5.3` (also `~/Downloads/wiseconnect-3.5.3`) | on disk | confirmed |
+| IDE | Simplicity Studio: _version? not found on this Mac yet (only the installer)_ | — | **open** |
 
 ## User LEDs
 
-Source so far: product page / user guide summary only ("one RGB LED"). How the SDK exposes it
-(one `sl_si91x_led` instance per colour? which colours?) must be checked in the board config.
+The board has **one RGB LED**, exposed by the SDK as a single instance `led0` with three channels.
+There is no second user LED.
 
-| UI name | SDK instance | Pin | Colour | Status |
+| Channel | SDK instance / API | GPIO | Source | Status |
 |---|---|---|---|---|
-| LED0 | _?_ | _?_ | _?_ | unverified |
-| LED1 | _?_ | _?_ | _?_ | unverified |
+| Red | `led0` red, `sl_si91x_rgb_led_on/off()` | HP GPIO 50 (port 3 pin 2, pad 14) | `config/brd2605a/sl_si91x_rgb_led_init_led0_config.h`, `RTE_Device_917.h` | sdk-verified |
+| Green | `led0` green | HP GPIO 51 (port 3 pin 3, pad 15) | same | sdk-verified |
+| Blue | `led0` blue | HP GPIO 15 (pad 8) | same | sdk-verified |
+
+The official dev kit demo (`examples/si91x_soc/siwx917_dev_kit/sensors/rgb_led.c`) drives the channels
+with `sl_si91x_rgb_led_on(&RED)` / `sl_si91x_rgb_led_off(&RED)` etc.
 
 ## User buttons
 
-Source so far: user guide summary ("two push buttons" plus a reset button that is not a user button).
+| UI name | SDK instance | GPIO | Interrupt | Source | Status |
+|---|---|---|---|---|---|
+| BTN0 | `btn0` (`sl_si91x_button_917`) | UULP_VBAT GPIO 2 | rise + fall edge | `config/brd2605a/sl_si91x_button_init_btn0_config.h` | sdk-verified |
+| BTN1 | `btn1` (`sl_si91x_button_917`) | HP GPIO 49 (port 3 pin 1, pad 13) | rise + fall edge | `config/brd2605a/sl_si91x_button_init_btn1_config.h` | sdk-verified |
 
-| UI name | SDK instance | Pin | Active level | Status |
-|---|---|---|---|---|
-| BTN0 | _?_ | _?_ | _?_ | unverified |
-| BTN1 | _?_ | _?_ | _?_ | unverified |
+Rise and fall edge interrupts mean the firmware can report both `pressed` and `released`. Active
+level is handled by the button driver (`sl_si91x_button_state()`), to be confirmed in step 2C.
+The reset button is not a user button and is not exposed.
 
 ## Onboard sensors
 
-Source so far: user guide summary. None may be shown in the UI until verified and a firmware driver exists.
+All sit on the ULP I2C bus (I2C2) behind a **sensor power enable** pin:
+`SENSOR_ENABLE_GPIO_PIN = RTE_UULP_GPIO_1_PIN` (UULP GPIO 1, `RTE_Device_917.h` line ~5563). The dev kit
+demo drives it high before talking to any sensor (`siwx917_dev_kit/sensors/light_sensor.c`).
 
-| Sensor | Part | Bus / address | Enable pin | MQTT name | Status |
-|---|---|---|---|---|---|
-| Relative humidity + temperature | Si7021 | I2C / _?_ | _?_ | `temperature`, `humidity` | unverified |
-| 6-axis IMU | ICM-40627 | SPI or I2C / _?_ | _?_ | _not planned_ | unverified |
-| Ambient light | _part?_ | I2C / _?_ | _?_ | `light` | unverified |
-| MEMS microphones (x2) | ICS-43434 | I2S | _?_ | _not planned_ | unverified |
+| Sensor | Part | Bus / address | SDK driver | Status |
+|---|---|---|---|---|
+| Relative humidity + temperature | Si7021 | ULP_I2C / 0x40 | `si70xx_sensor` (`SI7021_ADDR 0x40`) | sdk-verified |
+| Ambient light | VEML6035 | ULP_I2C / 0x29 | `veml6035` (`VEML6035_SLAVE_ADDR 0x29`) | sdk-verified |
+| 6-axis IMU | ICM-40627 | SPI (ULP SSI primary) | `sl_icm40627` (board override for ULP SSI) | sdk-verified |
+| MEMS microphones | ICS-43434 (x2, per product page) | I2S0 | `sl_si91x_mic` (board override) | sdk-verified driver, count unverified |
 
 ## Power
 
 | Option | Notes | Status |
 |---|---|---|
-| USB Type-C | Power + J-Link debug + VCOM | unverified |
-| Battery / other | _check user guide_ | unverified |
+| USB (debugger connector) | Power + debug + VCOM | unverified (developer: confirm connector) |
+| Other (battery / coin cell) | User guide not readable from here (403) | unverified |
+
+## Exposed in TwinDock
+
+To be decided by the developer (see questions). Proposed:
+
+| TwinDock name | Hardware | Driven by |
+|---|---|---|
+| BTN0 | `btn0` | physical press → selected forklift drives to next waypoint |
+| BTN1 | `btn1` | physical press → select next forklift |
+| LED0 | `led0` **green** channel | rule: on while a truck is docked at Bay 1 |
+| LED1 | `led0` **blue** channel | manual from the twin |
+| `temperature`, `humidity` | Si7021 | published every 10 s (only if you want sensors) |
+| `light` | VEML6035 | published every 10 s (only if you want sensors) |
+
+Caveat of the proposal: LED0 and LED1 are two colours of the **same** physical LED. When both are on,
+the board shows cyan. The board twin must render one LED whose colour is the mix, not two LEDs.
 
 ## Questions for the developer
 
-1. Board label revision (e.g. BRD2605A **A02**) and SoC OPN.
-2. WiSeConnect and Simplicity Studio versions, and the SDK path once installed.
-3. Is the RGB LED one LED (three channels) or does the SDK expose it as separate LED instances?
-   Which colours do you want as LED0 / LED1?
-4. Which sensors do you actually want in the twin (Si7021 temperature/humidity is the easy one)?
+1. **LED mapping:** accept the proposal above (green = LED0 Bay 1 rule, blue = LED1 manual), or prefer
+   another split, or expose it honestly as one RGB LED (`LED0` with a colour) and change the contract?
+2. **Sensors:** include temperature/humidity and/or light in the twin? (IMU and mics are not planned.)
+3. Confirm on the board: silkscreen says BRD2605A **A02**, and the buttons are labelled BTN0/BTN1.
+4. Simplicity Studio: is it installed (v6, or the VS Code extension)? I only found the installer.
 
 ## Hotspot positions (board twin)
 
@@ -68,7 +100,6 @@ Fill in after taking the photo.
 
 | Element | x % | y % | Notes |
 |---|---|---|---|
-| LED0 | | | |
-| LED1 | | | |
+| RGB LED (led0) | | | |
 | BTN0 | | | |
 | BTN1 | | | |

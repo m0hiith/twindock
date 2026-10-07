@@ -8,3 +8,5 @@ dist/
 broker/data/
 broker/log/
 .env
+# Vendor SDK (405 MB), kept locally, not committed
+wiseconnect-*/
