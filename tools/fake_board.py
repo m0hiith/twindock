@@ -47,6 +47,7 @@ BANNER = """
 STATUS_PERIOD_S = 5.0  # matches the firmware contract in CLAUDE.md
 BLE_PERIOD_S = 2.0
 BUFFER_MAX = 50  # firmware buffers up to 50 status messages while offline
+SENSOR_PERIOD_S = 10.0  # matches HARDWARE.md (Si7021 every 10 s)
 
 
 def load_validators() -> dict[str, jsonschema.Draft202012Validator]:
@@ -110,7 +111,7 @@ class FakeBoard:
                 "fw_version": "fake",
                 "leds": self.leds,
                 "buttons": self.buttons,
-                "sensors": [],
+                "sensors": ["temperature", "humidity"],
             },
             retain=True,
         )
@@ -178,6 +179,16 @@ class FakeBoard:
                 sightings.append({"name": t["name"], "addr": t["addr"], "rssi_dbm": round(t["rssi"])})
             self.publish("ble", "twin/gateway/ble", {"ts_ms": self.ts_ms(), "sightings": sightings})
 
+    def sensor_loop(self) -> None:
+        temp, hum = 21.5, 45.0
+        while not self.stop.wait(SENSOR_PERIOD_S):
+            if not self.online():
+                continue
+            temp += random.uniform(-0.1, 0.1)
+            hum += random.uniform(-0.3, 0.3)
+            self.publish("sensor", "twin/gateway/sensor/temperature", {"ts_ms": self.ts_ms(), "value": round(temp, 2), "unit": "C"})
+            self.publish("sensor", "twin/gateway/sensor/humidity", {"ts_ms": self.ts_ms(), "value": round(hum, 1), "unit": "%RH"})
+
     def button(self, name: str, state: str) -> None:
         self.publish("button", "twin/gateway/button", {"ts_ms": self.ts_ms(), "button": name, "state": state})
 
@@ -208,6 +219,7 @@ class FakeBoard:
             sys.exit(f"[fake] could not connect to broker at {self.host}:{self.port}")
         threading.Thread(target=self.status_loop, daemon=True).start()
         threading.Thread(target=self.ble_loop, daemon=True).start()
+        threading.Thread(target=self.sensor_loop, daemon=True).start()
         print(__doc__.split("Interactive commands")[1] if __doc__ else "")
         try:
             for line in sys.stdin:
@@ -246,7 +258,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="FAKE BOARD for TwinDock development")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=1883)
-    # Defaults follow the CLAUDE.md control mapping. Change them to match HARDWARE.md once verified.
+    # Defaults match "Exposed in TwinDock" in HARDWARE.md.
     ap.add_argument("--leds", default="LED0,LED1")
     ap.add_argument("--buttons", default="BTN0,BTN1")
     ap.add_argument("--tags", default="TD-FL01,TD-FL02", help="fake BLE tag names (must start with TD-)")

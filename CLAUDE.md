@@ -85,6 +85,8 @@ Physical controls (exact mapping finalised after HARDWARE.md):
 - BTN0 short press: selected forklift drives to its next waypoint in its task list.
 - BTN1 short press: select next forklift (selection is shared across all clients).
 - LED0 on while any truck is docked at Bay 1. LED1 controlled manually from the twin.
+- BRD2605A has one RGB LED: LED0 = its green channel, LED1 = its blue channel (see HARDWARE.md).
+  The board twin shows a single LED whose colour is the mix.
 
 ## Visual design spec
 

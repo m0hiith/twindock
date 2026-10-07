@@ -23,7 +23,7 @@ moving forklifts and trucks by hand.
 
 | Step | State |
 |---|---|
-| 0. HARDWARE.md | Draft, waiting for the SDK and developer checks |
+| 0. HARDWARE.md | Done (SDK-verified; a few physical checks open) |
 | 1. Scaffold + contract | Done |
 | 2. Firmware | Not started |
 | 3–9. Backend, 3D, HUD, Control Room, board twin, BLE, demo | Not started |

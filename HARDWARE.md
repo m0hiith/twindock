@@ -71,27 +71,30 @@ demo drives it high before talking to any sensor (`siwx917_dev_kit/sensors/light
 
 ## Exposed in TwinDock
 
-To be decided by the developer (see questions). Proposed:
+Decided by the developer on 2026-10-07. Nothing else may appear in the UI or firmware.
 
-| TwinDock name | Hardware | Driven by |
-|---|---|---|
-| BTN0 | `btn0` | physical press → selected forklift drives to next waypoint |
-| BTN1 | `btn1` | physical press → select next forklift |
-| LED0 | `led0` **green** channel | rule: on while a truck is docked at Bay 1 |
-| LED1 | `led0` **blue** channel | manual from the twin |
-| `temperature`, `humidity` | Si7021 | published every 10 s (only if you want sensors) |
-| `light` | VEML6035 | published every 10 s (only if you want sensors) |
+| TwinDock name | Hardware | Driven by | Status |
+|---|---|---|---|
+| BTN0 | `btn0` | physical press → selected forklift drives to next waypoint | confirmed |
+| BTN1 | `btn1` | physical press → select next forklift | confirmed |
+| LED0 | `led0` **green** channel (HP GPIO 51) | rule: on while a truck is docked at Bay 1 | confirmed |
+| LED1 | `led0` **blue** channel (HP GPIO 15) | manual from the twin | confirmed |
+| `temperature` (°C) | Si7021 | `twin/gateway/sensor/temperature` every 10 s | confirmed |
+| `humidity` (%RH) | Si7021 | `twin/gateway/sensor/humidity` every 10 s | confirmed |
 
-Caveat of the proposal: LED0 and LED1 are two colours of the **same** physical LED. When both are on,
-the board shows cyan. The board twin must render one LED whose colour is the mix, not two LEDs.
+The red channel, VEML6035, ICM-40627 and the microphones are **not** exposed.
 
-## Questions for the developer
+LED0 and LED1 are two colours of the **same** physical LED: green only, blue only, both on = cyan.
+The board twin renders one LED at the RGB LED position whose colour is the mix of LED0/LED1.
 
-1. **LED mapping:** accept the proposal above (green = LED0 Bay 1 rule, blue = LED1 manual), or prefer
-   another split, or expose it honestly as one RGB LED (`LED0` with a colour) and change the contract?
-2. **Sensors:** include temperature/humidity and/or light in the twin? (IMU and mics are not planned.)
-3. Confirm on the board: silkscreen says BRD2605A **A02**, and the buttons are labelled BTN0/BTN1.
-4. Simplicity Studio: is it installed (v6, or the VS Code extension)? I only found the installer.
+`hello` payload the firmware must send:
+`{"board":"BRD2605A","radio_board":"","fw_version":"<ver>","leds":["LED0","LED1"],"buttons":["BTN0","BTN1"],"sensors":["temperature","humidity"]}`
+
+## Open items
+
+1. Confirm on the board: silkscreen says BRD2605A **A02**, buttons are labelled BTN0/BTN1.
+2. Simplicity Studio: install it (only the installer was found) and note the version above.
+3. Power options: confirm from the user guide.
 
 ## Hotspot positions (board twin)
 
