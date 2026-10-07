@@ -1,0 +1,155 @@
+# TwinDock: warehouse digital twin on Silicon Labs SiWx917
+
+This file is the standing brief for every task in this repo. Read it fully before starting any work.
+
+## What we are building
+
+A browser-based digital twin of a small warehouse ("Riverside Logistics Hub"), shown as an
+isometric, low-poly 3D world with an operations HUD on top. It has three inputs:
+
+1. **The physical SiWx917 board** (real firmware, real data). Its buttons, LEDs, Wi-Fi state and
+   BLE scans are mirrored in the twin, and the twin can command it (LED control).
+2. **The Control Room page**, where an operator manually moves forklifts and trucks.
+   Every move appears in the 3D twin in real time, on every open screen.
+3. **Optional auto mode** for background movement. Off by default.
+
+The design language is inspired by Dilum Sanjaya's "WareTrack" concept (credit it in the README).
+Do NOT copy its name, logo, wordmarks or truck branding. Our product name is **TwinDock**.
+
+## Non-negotiable data rules
+
+- **The board is never faked.** Every value shown for the gateway/board (button state, LED state,
+  Wi-Fi RSSI, uptime, message counters, BLE sightings, any onboard sensor) must come from a real
+  MQTT message sent by the firmware. If no message has arrived, show "Waiting for device" or the
+  last value greyed out with its age ("12s ago"). Never generate, interpolate or default a board value.
+- **Only expose hardware that exists.** The board twin may only show LEDs, buttons and sensors listed
+  in `HARDWARE.md`, which is built from the board's user guide and SDK board config, and confirmed
+  by the developer.
+- **Every unit has a `source` field:** `"device"`, `"manual"` or `"auto"`. The UI shows device units
+  with the violet LIVE badge. Nothing pretends to be device data.
+- **The backend is the single source of truth.** Clients send intents; the backend validates,
+  updates world state, and broadcasts. Clients never move units locally without the server.
+
+## Architecture
+
+```
+SiWx917 board ──MQTT (Wi-Fi)──► Mosquitto (laptop) ◄──► backend (FastAPI, Python)
+      ▲                                                   │  world state + movement engine
+      └──── twin/gateway/cmd/* (LED commands) ◄───────────┤
+                                                          ▼ WebSocket
+                                  ┌───────────────────────┴───────────────────────┐
+                                  │  /twin  3D view + HUD    /control  Control Room │
+                                  └─────────────────────────────────────────────────┘
+```
+
+Repo layout:
+
+```
+/firmware   Simplicity Studio project (WiSeConnect SDK), C
+/backend    FastAPI + aiomqtt, world state, movement engine, WebSocket hub
+/frontend   Vite + React + TypeScript + React Three Fiber + drei + zustand + Tailwind
+/shared     schema.md and JSON schemas for every message
+HARDWARE.md verified inventory of the physical board
+```
+
+## MQTT contract
+
+| Topic | Direction | Payload |
+|---|---|---|
+| `twin/gateway/status` | board → | `{ts_ms, uptime_s, wifi_rssi_dbm, wifi_connected, ip, fw_version, msgs_sent, reconnects, buffered}` every 5 s |
+| `twin/gateway/button` | board → | `{ts_ms, button: "BTN0", state: "pressed" \| "released"}` on change |
+| `twin/gateway/led` | board → | `{ts_ms, led: "LED0", on: true}` on change (confirmation, not command) |
+| `twin/gateway/ble` | board → | `{ts_ms, sightings: [{name, addr, rssi_dbm}]}` every 2 s, filtered to names starting `TD-` |
+| `twin/gateway/sensor/<name>` | board → | `{ts_ms, value, unit}` only for sensors in HARDWARE.md |
+| `twin/gateway/cmd/led` | → board | `{led: "LED0", on: true, cmd_id}` |
+| `twin/gateway/hello` | board → | retained; `{board, radio_board, fw_version, leds[], buttons[], sensors[]}` |
+
+The LED in the UI turns on only after the board's confirmation on `twin/gateway/led` arrives,
+not when the user clicks. Show a short pending state in between.
+
+## World model
+
+The floor is a coordinate grid in meters (origin at the warehouse's north-west corner, x east,
+z south). Movement happens along a **waypoint graph** defined in `backend/world/layout.json`:
+named nodes (`DOCK_1`, `RACK_A3`, `CHARGER_C1`, `ZONE_B`, `GATE_IN`...) and lanes between them.
+Units move along shortest paths at realistic speeds (forklift 2.2 m/s, truck in yard 3 m/s),
+with heading following the path.
+
+Entities: `forklift`, `truck`, `pallet`, `dock`, `rack`, `charger`, `gateway`.
+
+Forklift states: `idle`, `driving`, `picking`, `carrying`, `loading`, `charging`.
+Truck states: `arriving`, `docked`, `loading`, `departing`, `gone`.
+Dock states: `available`, `occupied`, `maintenance`.
+
+Physical controls (exact mapping finalised after HARDWARE.md):
+- BTN0 short press: selected forklift drives to its next waypoint in its task list.
+- BTN1 short press: select next forklift (selection is shared across all clients).
+- LED0 on while any truck is docked at Bay 1. LED1 controlled manually from the twin.
+
+## Visual design spec
+
+**Feel:** a clean, bright, premium strategy-game world with an enterprise HUD floating over it.
+Calm, airy, never cartoonish. The 3D scene fills the whole viewport; HUD cards float on top.
+
+**Palette (tokens in `frontend/src/theme.ts` and CSS variables):**
+- `--ground` #E9EDF6 pale blue-grey floor; `--road` #DCE2EE with white dashed lane markings
+- `--structure` #2F5FE0 warehouse walls/roofs; `--structure-dark` #2349B8 roof shading
+- `--card` #FFFFFF at 96% opacity, 1px border #E6E9F0, shadow `0 8px 24px rgba(30,45,90,0.08)`
+- `--ink` #1B2333 primary text; `--ink-2` #6B7385 secondary text
+- `--ok` #16A34A (pill bg #E8F7EE); `--info` #2F5FE0 (bg #EAF0FF); `--warn` #D97706 (bg #FFF4E0);
+  `--crit` #DC2626 (bg #FDECEC); `--idle` #8A93A6 (bg #F1F3F7)
+- `--live` #7C3AED: reserved exclusively for real board/device data (LIVE badges, gateway range ring)
+- Floor markings yellow #F2C230; cardboard boxes #D9B48A / #C79A6B; pallets #B98A5A; trees #6BBF8A
+
+**Type:** "Inter" (fallback system-ui). Sizes 12 / 13 / 15 / 20 / 28. KPI numbers 28 semibold
+with tabular numerals; labels 13 regular `--ink-2`. Sentence case everywhere.
+
+**3D scene:**
+- Orthographic camera, isometric angle (~35° elevation, 45° yaw). Zoom limited 0.6x–2x.
+  Pan with drag; rotate in 90° steps via the map controls only.
+- All models built procedurally from primitives (boxes, cylinders, rounded boxes) in a
+  consistent low-poly style: warehouse with ribbed blue roof and roll-up dock doors labelled
+  D1–D3, racks with cardboard pallets, forklifts (yellow body, blue mast, small driver),
+  box trucks (blue cab, white trailer with TwinDock wordmark), shipping container, lollipop trees,
+  roads with dashed lines, yellow parking and zone outlines.
+- One directional light with soft shadows on units and buildings only, plus hemisphere fill.
+  Target 60 fps on a mid-range laptop; use instancing for boxes and pallets.
+- Selected unit: blue corner-bracket frame on the ground around it, plus a floating pill label
+  above it ("FL-01 · Loading truck"). Hovered unit: subtle outline.
+- Map pins (blue teardrop) mark points of interest such as the active pallet's destination.
+- The gateway (board) stands on a pole near the docks with a faint violet BLE range ring.
+
+**HUD layout (desktop 1440 × 900):**
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ▣ TwinDock   [ Search sites, trucks, forklifts…  / ]  [WH-01 Riverside ▾] ● Live 09:40  🔔  👤 │
+├──────────────────────────────────────────────────────────────────────────┤
+│ [Stock on hand] [Trucks on site] [On-time delivery]          [+][-][↺][↻][⌂] [Inspect card ] │
+│                                                                          │
+│                         isometric 3D scene                                │
+│                                                                          │
+│ [Shipment tracking: 5-step stepper | shipment card]      [Docks|Forklifts|Trucks table] │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+- KPI cards: icon tile, label, big number, green delta pill, small context line.
+- Inspect card (right): icon, eyebrow "Forklift · WH-01", ID, operator and model, actions
+  (locate, open, close); status pill + one-line task; battery bar; key-value rows.
+- Shipment tracking: stepper with done (filled blue), current (ring), upcoming (grey) steps.
+- Bottom-right panel: tabs with counts, rows with ID, assignment, status pill, progress, chevron.
+- Gateway inspect card shows the **board twin** (see below) instead of key-value rows only.
+
+**Board twin:** a 3D model of the actual board. Base is a thin box textured with a top-down
+photo of the real board (`frontend/public/board/top.jpg`, supplied by the developer). Clickable
+hotspots sit at the real LED and button positions (coordinates in HARDWARE.md, as % of photo
+width/height). Pressed buttons visibly depress; LEDs glow with bloom when on; a violet radio
+pulse animates on each BLE scan message; the whole board dims with an "Offline" label when the
+status topic is stale for more than 15 s.
+
+## Coding conventions
+
+- TypeScript strict mode; no `any`. Python 3.11 with type hints and pydantic models.
+- Every message type is defined once in `/shared` and validated on both ends.
+- Firmware in C following the SDK example structure; no dynamic allocation in hot paths;
+  comment every non-obvious choice (scan interval, publish rate, buffer size) with the reason.
+- Small commits with clear messages after each working step.
+- When something is uncertain about the hardware or SDK, stop and ask instead of guessing.

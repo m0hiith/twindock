@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_led.json",
+  "title": "twin/gateway/led",
+  "description": "Confirmation of the real LED state after it changed (not a command). cmd_id echoes the command that caused it, if any.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts_ms", "led", "on"],
+  "properties": {
+    "ts_ms": { "type": "integer", "minimum": 0 },
+    "led": { "type": "string", "pattern": "^LED[0-9]+$" },
+    "on": { "type": "boolean" },
+    "cmd_id": { "type": "string" }
+  }
+}

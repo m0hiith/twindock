@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_cmd_led.json",
+  "title": "twin/gateway/cmd/led",
+  "description": "Backend to board. The board drives the LED and confirms on twin/gateway/led with the same cmd_id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["led", "on", "cmd_id"],
+  "properties": {
+    "led": { "type": "string", "pattern": "^LED[0-9]+$" },
+    "on": { "type": "boolean" },
+    "cmd_id": { "type": "string", "minLength": 1, "maxLength": 36 }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/led_command.json",
+  "title": "led_command (client -> server)",
+  "description": "Forwarded to twin/gateway/cmd/led. Rejected if the LED is not in hello.leds or is rule-driven (LED0).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "cmd_id", "led", "on"],
+  "properties": {
+    "type": { "const": "led_command" },
+    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
+    "led": { "type": "string", "pattern": "^LED[0-9]+$" },
+    "on": { "type": "boolean" }
+  }
+}

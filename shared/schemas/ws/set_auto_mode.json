@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/set_auto_mode.json",
+  "title": "set_auto_mode (client -> server)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "cmd_id", "enabled"],
+  "properties": {
+    "type": { "const": "set_auto_mode" },
+    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
+    "enabled": { "type": "boolean" }
+  }
+}

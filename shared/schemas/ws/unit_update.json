@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/unit_update.json",
+  "title": "unit_update (server -> client)",
+  "description": "Changed units since the last tick (full unit objects). removed lists units that left the world.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "server_ts_ms", "units"],
+  "properties": {
+    "type": { "const": "unit_update" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "server_ts_ms": { "type": "integer" },
+    "units": { "type": "array", "items": { "$ref": "defs.json#/$defs/unit" } },
+    "removed": { "type": "array", "items": { "$ref": "defs.json#/$defs/unit_id" } },
+    "auto_mode": { "type": "boolean" }
+  }
+}

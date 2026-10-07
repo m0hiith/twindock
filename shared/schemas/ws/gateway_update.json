@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/gateway_update.json",
+  "title": "gateway_update (server -> client)",
+  "description": "Full gateway state after any device message or a stale/online transition. raw carries the MQTT message that caused it (for the /device log).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "server_ts_ms", "gateway"],
+  "properties": {
+    "type": { "const": "gateway_update" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "server_ts_ms": { "type": "integer" },
+    "gateway": { "$ref": "defs.json#/$defs/gateway" },
+    "raw": {
+      "type": "object",
+      "required": ["topic", "payload", "received_ms"],
+      "properties": { "topic": { "type": "string" }, "payload": {}, "received_ms": { "type": "integer" } }
+    }
+  }
+}

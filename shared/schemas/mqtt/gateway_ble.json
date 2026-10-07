@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_ble.json",
+  "title": "twin/gateway/ble",
+  "description": "Every 2 s. Only advertisers whose name starts with TD-. Empty list means a scan ran and found none.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts_ms", "sightings"],
+  "properties": {
+    "ts_ms": { "type": "integer", "minimum": 0 },
+    "sightings": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "addr", "rssi_dbm"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^TD-" },
+          "addr": { "type": "string", "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$" },
+          "rssi_dbm": { "type": "integer", "minimum": -127, "maximum": 20 }
+        }
+      }
+    }
+  }
+}

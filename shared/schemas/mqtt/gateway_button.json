@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_button.json",
+  "title": "twin/gateway/button",
+  "description": "Sent on every debounced state change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts_ms", "button", "state"],
+  "properties": {
+    "ts_ms": { "type": "integer", "minimum": 0 },
+    "button": { "type": "string", "pattern": "^BTN[0-9]+$" },
+    "state": { "enum": ["pressed", "released"] }
+  }
+}

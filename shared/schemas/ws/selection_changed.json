@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/selection_changed.json",
+  "title": "selection_changed (server -> client)",
+  "description": "Selection is shared by all clients. by is a client id, or \"BTN1\" when the physical button changed it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "selected_unit_id", "by"],
+  "properties": {
+    "type": { "const": "selection_changed" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "selected_unit_id": { "anyOf": [{ "$ref": "defs.json#/$defs/unit_id" }, { "type": "null" }] },
+    "by": { "type": "string" }
+  }
+}

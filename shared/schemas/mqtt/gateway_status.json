@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_status.json",
+  "title": "twin/gateway/status",
+  "description": "Every 5 s. Fields the SDK cannot provide are omitted, never invented. Only ts_ms is required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts_ms"],
+  "properties": {
+    "ts_ms": { "type": "integer", "minimum": 0, "description": "Board time in ms when the sample was taken (kept on buffered replays)." },
+    "uptime_s": { "type": "integer", "minimum": 0 },
+    "wifi_rssi_dbm": { "type": "integer", "minimum": -127, "maximum": 0 },
+    "wifi_connected": { "type": "boolean" },
+    "ip": { "type": "string" },
+    "fw_version": { "type": "string" },
+    "msgs_sent": { "type": "integer", "minimum": 0 },
+    "reconnects": { "type": "integer", "minimum": 0 },
+    "buffered": { "type": "integer", "minimum": 0, "description": "Messages flushed from the offline buffer on the last reconnect." }
+  }
+}

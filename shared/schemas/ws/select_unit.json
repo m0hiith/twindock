@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/select_unit.json",
+  "title": "select_unit (client -> server)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "cmd_id", "unit_id"],
+  "properties": {
+    "type": { "const": "select_unit" },
+    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
+    "unit_id": { "anyOf": [{ "$ref": "defs.json#/$defs/unit_id" }, { "type": "null" }] }
+  }
+}

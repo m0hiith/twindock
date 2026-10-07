@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_sensor.json",
+  "title": "twin/gateway/sensor/<name>",
+  "description": "Only for sensors marked verified in HARDWARE.md and listed in hello.sensors.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts_ms", "value", "unit"],
+  "properties": {
+    "ts_ms": { "type": "integer", "minimum": 0 },
+    "value": { "type": "number" },
+    "unit": { "type": "string", "minLength": 1 }
+  }
+}

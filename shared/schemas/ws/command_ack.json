@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/command_ack.json",
+  "title": "command_ack (server -> client)",
+  "description": "Reply to one client command. For led_command, ok:true means sent to the board; the LED changes only on the board's confirmation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "cmd_id",
+    "command",
+    "ok"
+  ],
+  "properties": {
+    "type": {
+      "const": "command_ack"
+    },
+    "cmd_id": {
+      "$ref": "defs.json#/$defs/cmd_id"
+    },
+    "command": {
+      "enum": [
+        "move_unit",
+        "select_unit",
+        "led_command",
+        "set_auto_mode"
+      ]
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Short human reason when ok is false."
+    },
+    "path": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.json#/$defs/node_id"
+      },
+      "description": "Planned path for an accepted (or dry-run) move_unit."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/gateway_hello.json",
+  "title": "twin/gateway/hello",
+  "description": "Retained. Board identity and the hardware it exposes. Lists must match HARDWARE.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["board", "radio_board", "fw_version", "leds", "buttons", "sensors"],
+  "properties": {
+    "board": { "type": "string", "minLength": 1, "description": "e.g. BRD2605A. The fake board sends FAKE." },
+    "radio_board": { "type": "string", "description": "Radio board ID, or empty string when the kit is a single board." },
+    "fw_version": { "type": "string", "minLength": 1, "description": "\"fake\" means tools/fake_board.py." },
+    "leds": { "type": "array", "items": { "type": "string", "pattern": "^LED[0-9]+$" }, "uniqueItems": true },
+    "buttons": { "type": "array", "items": { "type": "string", "pattern": "^BTN[0-9]+$" }, "uniqueItems": true },
+    "sensors": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }, "uniqueItems": true }
+  }
+}

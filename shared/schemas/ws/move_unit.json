@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/move_unit.json",
+  "title": "move_unit (client -> server)",
+  "description": "Intent to move a unit to a node, optionally performing an action there. The server validates and plans the path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "cmd_id", "unit_id", "target_node"],
+  "properties": {
+    "type": { "const": "move_unit" },
+    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
+    "unit_id": { "$ref": "defs.json#/$defs/unit_id" },
+    "target_node": { "$ref": "defs.json#/$defs/node_id" },
+    "action": { "enum": ["goto", "pick", "drop", "load", "charge", "dock", "depart"], "default": "goto" },
+    "dry_run": { "type": "boolean", "default": false, "description": "Validate and return the planned path without moving (for the Control Room preview)." }
+  }
+}
