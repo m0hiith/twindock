@@ -5,13 +5,45 @@
   "description": "Intent to move a unit to a node, optionally performing an action there. The server validates and plans the path.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["type", "cmd_id", "unit_id", "target_node"],
+  "required": [
+    "type",
+    "cmd_id",
+    "unit_id",
+    "target_node"
+  ],
   "properties": {
-    "type": { "const": "move_unit" },
-    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
-    "unit_id": { "$ref": "defs.json#/$defs/unit_id" },
-    "target_node": { "$ref": "defs.json#/$defs/node_id" },
-    "action": { "enum": ["goto", "pick", "drop", "load", "charge", "dock", "depart"], "default": "goto" },
-    "dry_run": { "type": "boolean", "default": false, "description": "Validate and return the planned path without moving (for the Control Room preview)." }
+    "type": {
+      "const": "move_unit"
+    },
+    "cmd_id": {
+      "$ref": "defs.json#/$defs/cmd_id"
+    },
+    "unit_id": {
+      "$ref": "defs.json#/$defs/unit_id"
+    },
+    "target_node": {
+      "$ref": "defs.json#/$defs/node_id"
+    },
+    "action": {
+      "enum": [
+        "goto",
+        "pick",
+        "drop",
+        "load",
+        "charge",
+        "dock",
+        "depart"
+      ],
+      "default": "goto"
+    },
+    "dry_run": {
+      "type": "boolean",
+      "default": false,
+      "description": "Validate and return the planned path without moving (for the Control Room preview)."
+    },
+    "pallet_id": {
+      "$ref": "defs.json#/$defs/unit_id",
+      "description": "Optional, for action pick: the pallet to take (must be at target_node). Without it the first free pallet there is taken."
+    }
   }
 }

@@ -21,7 +21,7 @@ The backend (pydantic) and frontend (TypeScript) both validate against these fil
 | Topic | Dir | Schema | Notes |
 |---|---|---|---|
 | `twin/gateway/hello` | board → | `mqtt/gateway_hello.json` | Retained. LED/button/sensor lists must match HARDWARE.md. |
-| `twin/gateway/status` | board → | `mqtt/gateway_status.json` | Every 5 s. Fields the SDK can't give are omitted. Buffered replays keep their original `ts_ms`. |
+| `twin/gateway/status` | board → | `mqtt/gateway_status.json` | Every 5 s. Fields the SDK can't give are omitted. Buffered replays keep their original `ts_ms` and set `replay: true`.\*\* |
 | `twin/gateway/button` | board → | `mqtt/gateway_button.json` | On each debounced change. |
 | `twin/gateway/led` | board → | `mqtt/gateway_led.json` | Confirmation of real LED state. Optional `cmd_id` echoes the command that caused it.* |
 | `twin/gateway/ble` | board → | `mqtt/gateway_ble.json` | Every 2 s, names starting `TD-` only. |
@@ -31,6 +31,10 @@ The backend (pydantic) and frontend (TypeScript) both validate against these fil
 \* `cmd_id` on the LED confirmation is an addition to the table in CLAUDE.md. It lets the UI
 clear exactly the pending command it belongs to. It is optional, so a confirmation caused by a
 local rule (no command) is still valid.
+
+\*\* `replay` is also an addition. Without it the backend cannot tell a flushed old sample from
+a fresh one after a board reboot (both can have a small `ts_ms`). Replays count as "board reachable"
+but never replace the current status.
 
 ### Fake board
 
@@ -51,12 +55,13 @@ Every message is a JSON object with a `type` field.
 | `gateway_update` | `ws/gateway_update.json` | After each device message or online/stale change. Includes `raw` MQTT message for the log. |
 | `selection_changed` | `ws/selection_changed.json` | When any client or BTN1 changes the shared selection. |
 | `command_ack` | `ws/command_ack.json` | Reply to each client command (`ok`, `reason`, planned `path`). |
+| `event` | `ws/event.json` | Event-log notices: BTN0/BTN1 actions, auto mode, LED confirmation timeouts, dropped device messages. |
 
 ### Client → server
 
 | type | Schema | Validation |
 |---|---|---|
-| `move_unit` | `ws/move_unit.json` | Unit exists, is not `device`-sourced, target allowed for its kind (truck: docks/gate only), path exists, dock holds one truck, pallet not already carried. `dry_run` returns the path only. |
+| `move_unit` | `ws/move_unit.json` | Optional `pallet_id` for `pick`. Unit exists, is not `device`-sourced, target allowed for its kind (truck: docks/gate only), path exists, dock holds one truck, pallet not already carried. `dry_run` returns the path only. |
 | `select_unit` | `ws/select_unit.json` | Unit exists (or null to clear). |
 | `led_command` | `ws/led_command.json` | LED is in `hello.leds`; LED0 is rule-driven (Bay 1) and rejected. Forwarded to `twin/gateway/cmd/led`. |
 | `set_auto_mode` | `ws/set_auto_mode.json` | — |

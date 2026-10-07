@@ -166,6 +166,7 @@ class FakeBoard:
                     self.publish("status", "twin/gateway/status", payload)
                 else:
                     payload["wifi_connected"] = False
+                    payload["replay"] = True  # flushed later; backend keeps it as history only
                     self.buffer.append(payload)
                     print(f"[fake] offline, buffered status ({len(self.buffer)}/{BUFFER_MAX})")
 

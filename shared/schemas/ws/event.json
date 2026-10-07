@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/event.json",
+  "title": "event (server -> client)",
+  "description": "Human-readable notice for the event log: physical button actions, auto mode, LED timeouts, dropped device messages.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "seq",
+    "server_ts_ms",
+    "level",
+    "source",
+    "text"
+  ],
+  "properties": {
+    "type": {
+      "const": "event"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "server_ts_ms": {
+      "type": "integer"
+    },
+    "level": {
+      "enum": [
+        "info",
+        "warn",
+        "error"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "description": "BTN0, BTN1, auto, gateway, system, or a client id."
+    },
+    "text": {
+      "type": "string"
+    },
+    "unit_id": {
+      "$ref": "defs.json#/$defs/unit_id"
+    }
+  }
+}
