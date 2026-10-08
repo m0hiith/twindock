@@ -7,23 +7,31 @@ a clock. The engine (engine.py) owns a World and turns its changes into WebSocke
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass, field
 
 from .graph import Graph
 from .models import Action, Layout, Node, PlanStep, Source, Unit
 
-# Speeds from CLAUDE.md. Accel/turn values are chosen to look plausible at isometric zoom:
-# a forklift reaches 2.2 m/s in under 2 s; a truck turns noticeably slower than a forklift.
-SPEED = {"forklift": 2.2, "truck": 3.0}
-TRUCK_REVERSE_SPEED = 1.2   # backing into a bay is done slowly
-ACCEL = 1.2                 # m/s^2, also used as the braking rate before the final node
-TURN_RATE = {"forklift": 2.5, "truck": 0.9}  # rad/s
-TURN_SLOW_ANGLE = 0.6       # rad; with a bigger heading error the unit crawls while it turns
-TURN_SLOW_SPEED = 0.5       # m/s
-CREEP_SPEED = 0.3           # m/s floor so braking never stalls just short of a node
+# Demo pace: the whole motion model is played this many times faster than real life, so a demo
+# doesn't wait half a minute for a truck to reverse into a bay. Speeds and turn rates scale by
+# PACE, accelerations by PACE^2 and handling times by 1/PACE, so every move follows exactly the
+# same path and speed curve as at real pace, just sooner. TWINDOCK_PACE=1 gives real speeds.
+PACE = float(os.environ.get("TWINDOCK_PACE", "2.5"))
 
-PICK_S = 3.0                # fork handling time for pick and drop
-LOAD_S = 4.0                # driving into the trailer, setting down, backing out
+# Real-pace values: forklift 2.2 m/s and truck 3 m/s from CLAUDE.md. Accel/turn values are chosen
+# to look plausible at isometric zoom: a forklift reaches top speed in under 2 s; a truck turns
+# noticeably slower than a forklift.
+SPEED = {"forklift": 2.2 * PACE, "truck": 3.0 * PACE}
+TRUCK_REVERSE_SPEED = 1.2 * PACE   # backing into a bay is done slowly
+ACCEL = 1.2 * PACE**2              # m/s^2, also used as the braking rate before the final node
+TURN_RATE = {"forklift": 2.5 * PACE, "truck": 0.9 * PACE}  # rad/s
+TURN_SLOW_ANGLE = 0.6              # rad; with a bigger heading error the unit crawls while it turns
+TURN_SLOW_SPEED = 0.5 * PACE       # m/s
+CREEP_SPEED = 0.3 * PACE           # m/s floor so braking never stalls just short of a node
+
+PICK_S = 3.0 / PACE                # fork handling time for pick and drop
+LOAD_S = 4.0 / PACE                # driving into the trailer, setting down, backing out
 # Demo time scale: battery moves ~20x faster than a real shift so it visibly changes in a demo.
 # Nonstop driving drains ~10 %/min, so drain stops at a floor: no forklift can be stranded at
 # 0% mid-demo, however long it runs. Auto mode sends forklifts to charge below 25%.

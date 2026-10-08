@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 os.environ.setdefault("TWINDOCK_MQTT", "0")  # tests never touch a real broker
+os.environ.setdefault("TWINDOCK_PACE", "1")  # test timings are written for real-world speeds
 
 from twindock.contract import first_error, validator
 from twindock.engine import Engine, MqttOut, WsOut

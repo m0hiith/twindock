@@ -92,7 +92,8 @@ The floor is a coordinate grid in meters (origin at the warehouse's north-west c
 z south). Movement happens along a **waypoint graph** defined in `backend/world/layout.json`:
 named nodes (`DOCK_1`, `RACK_A3`, `CHARGER_C1`, `ZONE_B`, `GATE_IN`...) and lanes between them.
 Units move along shortest paths at realistic speeds (forklift 2.2 m/s, truck in yard 3 m/s),
-with heading following the path.
+with heading following the path, played 2.5× faster for the demo (`PACE` in `world.py`,
+`TWINDOCK_PACE=1` for real speed).
 
 Entities: `forklift`, `truck`, `pallet`, `dock`, `rack`, `charger`, `gateway`.
 

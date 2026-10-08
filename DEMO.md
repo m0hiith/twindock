@@ -12,7 +12,7 @@ never fake a board value.
 | ☐ | **Firmware flashed** (PROMPTS.md step 2): hello, status every 5 s with `reconnects`/`buffered`, buttons, LED commands with confirmations, offline buffer + replay | **Not started.** `firmware/` is empty. Beats 1–4 need it. |
 | ☐ | **Board twin** (step 7): the 3D board in the gateway card | **Blocked** on `frontend/public/board/top.jpg` and the hotspot table in HARDWARE.md. Until then beat 3 uses the gateway inspect card's LED switch. |
 | ☐ | Laptop has a **fixed IP** on the demo router (DHCP reservation), and the firmware points at it | The router reboot in beat 4 must not move the broker. |
-| ☐ | **Router boot time** measured: power off → board back online | Beat 4 assumes about 30 s. Slower? See beat 4's alternative. |
+| ☐ | **Router boot time** measured: power off → board back online | Beat 4 leaves about 45 s for it. Slower? See beat 4's alternative. |
 | ☐ | Fake board **stopped**; no red FAKE BOARD banner anywhere | `tools/fake_board.py` is for rehearsal only. |
 | ☐ | BLE zones: not used in this script | Leave `backend/world/ble_zones.json` with empty `zones` unless calibrated on site. |
 
@@ -40,21 +40,22 @@ something, the card switches to it. The script re-opens the gateway card at beat
 
 ## The run
 
-Times marked ~ are estimates from route lengths and speeds; re-time them in your first rehearsal
-(see below) and with the real board, which adds its own Wi-Fi and LED latency.
+Movement times are from the simulator at the default pace (`TWINDOCK_PACE=2.5`): the truck docks
+in about 12 s, FL-01 picks in about 9 s and loads in about 13 s. Times marked ~ add talking time;
+the real board adds its own Wi-Fi and LED latency, so re-time them in your first rehearsal.
 
 | Time | You do | Audience sees | Say |
 |---|---|---|---|
 | 0:00 | Projector on `/twin`. | The isometric site, three KPI cards, the violet LIVE gateway. | "This is a live twin of a warehouse. The violet board is real: everything violet comes from that SiWx917 over Wi-Fi." |
 | 0:15 | **Beat 1.** Phone: tap **TR-02** → **Dock at bay** → **Bay 1** → **Confirm move**. | Planned path on the phone, then TR-02 drives in and backs into Bay 1 on the projector. Trucks-on-site and Docks-in-use KPIs tick. | "I'm the yard manager. One tap sends the truck; the server plans the route and every screen follows." |
-| ~0:50 | Hold the board up. | **The real LED turns green.** The phone's Gateway tab shows LED0 *On · confirmed*. | "The rule 'Bay 1 occupied' is on the server; it told the board, and the twin only shows green after the board confirms." |
-| 1:00 | **Beat 2.** Press **BTN1** on the board once. | FL-01 gets the blue selection frame and pill; the event log says *Selected FL-01*. Selection is shared, so it shows on the phone too. | "The board's buttons are a physical controller." |
-| 1:05 | Press **BTN0**. | FL-01 drives to Rack A1 and lifts PL-01. | "BTN0 runs the forklift's next task." |
-| ~1:20 | Press **BTN0** again. | FL-01 carries PL-01 to Bay 2 and loads it onto TR-01; TR-01's cargo goes 2 → 3 in the shipment card. | |
-| ~1:45 | **Beat 3.** Projector: click the **gateway pole** (or `/` → `GW-01`), then flip **LED1** in its card. | Spinner (*waiting for the board*), then **the real LED turns cyan** (green + blue: both channels of the one RGB LED). | "Commands go the other way too, and again the twin waits for the board to confirm." |
-| 2:00 | **Beat 4.** Unplug the **router's power**. | Phone goes Reconnecting (expected, it's on that Wi-Fi). After ~15–20 s the board card dims to **Offline**, the gateway ring fades, event: *Board offline*. The rest of the twin keeps running on the laptop. | "The board just lost its network. It keeps measuring and buffers its status messages on the chip." |
-| ~2:25 | Plug the router back in. Keep talking while it boots. | — | "Nothing in the twin is invented while it's away; you see the last values, greyed, with their age." |
-| ~2:50 | — | Board **Online** again; **Reconnects +1** and **Flushed on last reconnect: N msgs** in the gateway card; phone reconnects. | "And here are the messages it saved while offline, delivered on reconnect." |
+| ~0:30 | Hold the board up. | **The real LED turns green.** The phone's Gateway tab shows LED0 *On · confirmed*. | "The rule 'Bay 1 occupied' is on the server; it told the board, and the twin only shows green after the board confirms." |
+| ~0:40 | **Beat 2.** Press **BTN1** on the board once. | FL-01 gets the blue selection frame and pill; the event log says *Selected FL-01*. Selection is shared, so it shows on the phone too. | "The board's buttons are a physical controller." |
+| ~0:45 | Press **BTN0**. | FL-01 drives to Rack A1 and lifts PL-01. | "BTN0 runs the forklift's next task." |
+| ~0:55 | Press **BTN0** again. | FL-01 carries PL-01 to Bay 2 and loads it onto TR-01; TR-01's cargo goes 2 → 3 in the shipment card. | |
+| ~1:15 | **Beat 3.** Projector: click the **gateway pole** (or `/` → `GW-01`), then flip **LED1** in its card. | Spinner (*waiting for the board*), then **the real LED turns cyan** (green + blue: both channels of the one RGB LED). | "Commands go the other way too, and again the twin waits for the board to confirm." |
+| ~1:30 | **Beat 4.** Unplug the **router's power**. | Phone goes Reconnecting (expected, it's on that Wi-Fi). After ~15–20 s the board card dims to **Offline**, the gateway ring fades, event: *Board offline*. The rest of the twin keeps running on the laptop. | "The board just lost its network. It keeps measuring and buffers its status messages on the chip." |
+| ~1:55 | Plug the router back in. Keep talking while it boots. | — | "Nothing in the twin is invented while it's away; you see the last values, greyed, with their age." |
+| ~2:40 | — | Board **Online** again; **Reconnects +1** and **Flushed on last reconnect: N msgs** in the gateway card; phone reconnects. | "And here are the messages it saved while offline, delivered on reconnect." |
 | 3:00 | Phone → **Reset world**. | The seed world snaps back. | "Thanks." |
 
 ### Fallbacks
@@ -62,7 +63,7 @@ Times marked ~ are estimates from route lengths and speeds; re-time them in your
 - **Truck doesn't move**: the phone shows the server's reason (e.g. *Bay 1 is occupied*). Reset world and retry once.
 - **LED stays pending > 5 s**: the backend logs *LED0: no confirmation from the board within 5 s* and retries after 30 s. Say "the board didn't confirm, so the twin won't pretend" and continue.
 - **BTN presses do nothing**: check the event log on the phone. *no forklift selected* means press BTN1 first; *busy* means wait for the forklift.
-- **Router takes longer than ~40 s to boot**: talk through the offline state. If you measured it in advance and it's slow, use the router's Wi-Fi on/off button (if it has one) instead of the power plug: same effect on the board, much faster.
+- **Router takes longer than ~45 s to boot**: talk through the offline state. If you measured it in advance and it's slow, use the router's Wi-Fi on/off button (if it has one) instead of the power plug: same effect on the board, much faster.
 - **Projector browser dies**: reopen `localhost:5173/twin`; it rebuilds from the server's snapshot.
 
 ## Rehearsal with the fake board (no hardware)
