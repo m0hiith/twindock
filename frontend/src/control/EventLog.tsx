@@ -35,7 +35,7 @@ export function EventLog() {
           );
         }
         const { e } = r;
-        const state = e.ack === null ? "pending" : e.ack.ok ? "ok" : "rejected";
+        const state = e.ack === null ? "pending" : e.ack.type === "local_failure" ? "undelivered" : e.ack.ok ? "ok" : "rejected";
         return (
           <li key={`c${e.cmd_id}`} className="flex gap-3 py-2.5">
             <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${state === "ok" ? "bg-ok" : state === "rejected" ? "bg-crit" : "bg-idle"}`} />
@@ -43,11 +43,11 @@ export function EventLog() {
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-medium">{e.text}</span>
                 <span className={`shrink-0 rounded-full px-2 py-px text-[11px] font-semibold ${state === "ok" ? "bg-ok-bg text-ok" : state === "rejected" ? "bg-crit-bg text-crit" : "bg-idle-bg text-idle"}`}>
-                  {state === "ok" ? "Accepted" : state === "rejected" ? "Rejected" : "Sent"}
+                  {state === "ok" ? "Accepted" : state === "rejected" ? "Rejected" : state === "undelivered" ? "Not delivered" : "Sent"}
                 </span>
               </div>
               <div className="text-[12px] text-ink-2">
-                You · {ago(r.t)}{e.ack && !e.ack.ok && e.ack.reason ? ` · ${e.ack.reason}` : ""}
+                You · {ago(r.t)}{e.ack && (e.ack.type === "local_failure" || !e.ack.ok) && e.ack.reason ? ` · ${e.ack.reason}` : ""}
               </div>
             </div>
           </li>

@@ -2,6 +2,7 @@
 // gateway, from a real device message (with its age); missing device values say so.
 import type { ReactNode } from "react";
 import type { Gateway, Unit } from "../contract";
+import { ButtonSection, LedSection } from "../control/GatewayPanel";
 import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
 import { stateLabel } from "../status";
@@ -32,11 +33,13 @@ function ForkliftRows({ u }: { u: Unit }) {
       <Row k="Location">{u.node ? nodeLabel(u.node) : `To ${nodeLabel(u.target_node)}`}</Row>
       <Row k="Carrying">{u.carrying ?? "Nothing"}</Row>
       <Row k="Next step">{next ? `${actionText[next.action] ?? next.action} ${nodeLabel(next.node)}` : "No queued steps"}</Row>
-      <Row k="Speed"><span className="tabular">{(u.speed_mps ?? 0).toFixed(1)} m/s</span></Row>
+      <Row k="Speed"><span className="tabular">{speed(u)}</span></Row>
       <SourceRow u={u} />
     </>
   );
 }
+
+const speed = (u: Unit) => (u.speed_mps === undefined ? "—" : `${u.speed_mps.toFixed(1)} m/s`);
 
 function TruckRows({ u }: { u: Unit }) {
   const cap = Number(u.meta?.capacity ?? 0);
@@ -49,7 +52,7 @@ function TruckRows({ u }: { u: Unit }) {
         <div className="flex justify-between"><span className="text-ink-2">Cargo</span><span className="tabular font-medium">{n} / {cap} pallets</span></div>
         <Bar pct={cap ? (n / cap) * 100 : 0} className="mt-1.5" />
       </div>
-      <Row k="Speed"><span className="tabular">{(u.speed_mps ?? 0).toFixed(1)} m/s</span></Row>
+      <Row k="Speed"><span className="tabular">{speed(u)}</span></Row>
       <SourceRow u={u} />
     </>
   );
@@ -97,12 +100,16 @@ function GatewayRows({ gw }: { gw: Gateway | null }) {
           <Row k="Uptime" dim={stale}><span className="tabular">{v(st.data.uptime_s, duration)}</span></Row>
           <Row k="IP" dim={stale}>{v(st.data.ip)}</Row>
           <Row k="Messages sent" dim={stale}><span className="tabular">{v(st.data.msgs_sent)}</span></Row>
+          <Row k="Reconnects" dim={stale}><span className="tabular">{v(st.data.reconnects)}</span></Row>
+          <Row k="Flushed on last reconnect" dim={stale}><span className="tabular">{v(st.data.buffered, (n) => `${n} msgs`)}</span></Row>
           <Row k="Status age" dim={stale}>{ago(st.received_ms)}</Row>
         </>
       ) : <Row k="Status">Waiting for device</Row>}
       {Object.entries(gw.sensors).map(([name, s]) => s && (
         <Row key={name} k={stateLabel(name)} dim={stale}><span className="tabular">{s.data.value.toFixed(1)} {s.data.unit} · {ago(s.received_ms)}</span></Row>
       ))}
+      <div className="pb-1"><LedSection gw={gw} /></div>
+      <div className="pb-2"><ButtonSection gw={gw} /></div>
     </>
   );
 }
@@ -133,7 +140,7 @@ export function InspectCard() {
   const sub = subtitle(u, gw);
   const live = u.source === "device";
   return (
-    <div className={`card pointer-events-auto w-[340px] p-4 ${live && gw && !gw.online ? "opacity-90" : ""}`} aria-label={`${u.id} details`}>
+    <div className={`card pointer-events-auto max-h-[calc(100vh-250px)] w-[340px] overflow-y-auto p-4 ${live && gw && !gw.online ? "opacity-90" : ""}`} aria-label={`${u.id} details`}>
       <div className="flex items-start gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${live ? "bg-[#F3EDFF] text-live" : "bg-info-bg text-info"}`}>
           <Icon name={kindIcon[u.kind]} size={20} />

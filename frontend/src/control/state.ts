@@ -1,8 +1,8 @@
 // Control Room view state. Nothing here is world state: the proposal is a server-validated
 // dry run waiting for the operator's confirm, and the log records commands and their acks.
 import { create } from "zustand";
-import type { CommandAck, MoveUnit } from "../contract";
-import { request } from "../store/ws";
+import type { MoveUnit } from "../contract";
+import { request, type Reply } from "../store/ws";
 
 export type Action = NonNullable<MoveUnit["action"]>;
 
@@ -27,7 +27,7 @@ export interface LogEntry {
   cmd_id: string;
   text: string;
   sent_ms: number;
-  ack: CommandAck | null;
+  ack: Reply | null;
 }
 
 interface ControlState {
@@ -38,7 +38,7 @@ interface ControlState {
   propose: (p: ControlState["proposal"]) => void;
   setNotice: (text: string | null) => void;
   /** Send a command for real, log it, and record its ack when it arrives. */
-  run: (msg: Parameters<typeof request>[0], text: string) => Promise<CommandAck>;
+  run: (msg: Parameters<typeof request>[0], text: string) => Promise<Reply>;
 }
 
 const MAX_LOG = 100;

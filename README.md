@@ -13,7 +13,7 @@ moving forklifts and trucks by hand.
 |---|---|
 | `firmware/` | Simplicity Studio project (WiSeConnect SDK, C) |
 | `backend/` | FastAPI + aiomqtt: world state, movement engine, WebSocket hub |
-| `frontend/` | Vite + React + TS + React Three Fiber: `/twin` and `/control` |
+| `frontend/` | Vite + React + TS + React Three Fiber: `/twin`, `/control` (phone) and `/device` |
 | `shared/` | `schema.md` and JSON Schemas for every MQTT and WebSocket message |
 | `broker/` | Mosquitto config |
 | `tools/fake_board.py` | **Development-only** board simulator |
@@ -26,9 +26,13 @@ moving forklifts and trucks by hand.
 | 0. HARDWARE.md | Done (SDK-verified; a few physical checks open) |
 | 1. Scaffold + contract | Done |
 | 2. Firmware | Not started |
-| 3. Backend world engine | Done (41 tests; verified end to end with the fake board) |
-| 4. 3D scene | Done (isometric twin at `/`, minimal HUD) |
-| 5–9. HUD, Control Room, board twin, BLE, demo | Not started |
+| 3. Backend world engine | Done (verified end to end with the fake board) |
+| 4. 3D scene | Done |
+| 5. HUD (`/twin`) | Done |
+| 6. Control Room (`/control`) | Done |
+| 7. Board twin | Blocked: needs `frontend/public/board/top.jpg` and the hotspot table in HARDWARE.md |
+| 8. BLE tags as live forklifts | Done; zones need on-site calibration at `/device` |
+| 9. Demo hardening | Done: [DEMO.md](DEMO.md), reset button, data audit, 15-minute soak (60 fps throughout, no memory growth; Apple M1) |
 
 ## Running
 

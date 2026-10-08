@@ -37,7 +37,7 @@ export function useDryRuns(unitId: string | null, candidates: Candidate[]): { re
       Promise.all(candidates.map(async (c): Promise<Checked> => {
         const { ack } = request({ type: "move_unit", unit_id: unitId, target_node: c.target, action: c.action, dry_run: true, ...(c.pallet_id ? { pallet_id: c.pallet_id } : {}) });
         const a = await ack;
-        return { ...c, ok: a.ok, reason: a.reason, path: a.path };
+        return a.type === "command_ack" ? { ...c, ok: a.ok, reason: a.reason, path: a.path } : { ...c, ok: false, reason: a.reason };
       })).then((list) => {
         if (cancelled) return;
         setResults(new Map(list.map((r) => [r.key, r])));

@@ -34,7 +34,7 @@ export function connect(): void {
   ws.onclose = () => {
     if (socket !== ws) return;
     setConn("reconnecting");
-    for (const [id, resolve] of waiting) resolve(localFailure(id, "Connection lost"));
+    for (const resolve of waiting.values()) resolve(localFailure("Connection lost before the server replied"));
     waiting.clear();
     setTimeout(connect, backoffMs);
     backoffMs = Math.min(backoffMs * 2, 5000);
@@ -52,24 +52,27 @@ export function send(msg: Outgoing): string | null {
 }
 
 const ACK_TIMEOUT_MS = 5000;
-const waiting = new Map<string, (a: CommandAck) => void>();
+/** The browser itself saw the command not get through (no socket, no reply in time). Kept apart
+ *  from CommandAck so it is never shown as if the server had rejected the command. */
+export interface LocalFailure { type: "local_failure"; reason: string }
+export type Reply = CommandAck | LocalFailure;
 
-/** A failure the client noticed itself (no socket, no reply). Never confused with a server ack:
- *  it only ever says the command did not get through. */
-function localFailure(cmd_id: string, reason: string, command: CommandAck["command"] = "move_unit"): CommandAck {
-  return { type: "command_ack", cmd_id, command, ok: false, reason };
+const waiting = new Map<string, (a: Reply) => void>();
+
+function localFailure(reason: string): LocalFailure {
+  return { type: "local_failure", reason };
 }
 
 /** Send an intent and wait for its command_ack (or a local failure after 5 s). */
-export function request(msg: Outgoing): { cmd_id: string; ack: Promise<CommandAck> } {
+export function request(msg: Outgoing): { cmd_id: string; ack: Promise<Reply> } {
   const cmd_id = send(msg);
   if (cmd_id === null) {
-    return { cmd_id: `local-${++counter}`, ack: Promise.resolve(localFailure("", "Not connected to the server", msg.type)) };
+    return { cmd_id: `local-${++counter}`, ack: Promise.resolve(localFailure("Not connected to the server")) };
   }
-  const ack = new Promise<CommandAck>((resolve) => {
+  const ack = new Promise<Reply>((resolve) => {
     waiting.set(cmd_id, resolve);
     setTimeout(() => {
-      if (waiting.delete(cmd_id)) resolve(localFailure(cmd_id, "No reply from the server", msg.type));
+      if (waiting.delete(cmd_id)) resolve(localFailure("No reply from the server within 5 s"));
     }, ACK_TIMEOUT_MS);
   });
   return { cmd_id, ack };

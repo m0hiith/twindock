@@ -52,7 +52,8 @@ export function ProposalSheet() {
     const a = await run({ type: "move_unit", unit_id: p.unit_id, target_node: p.target, action: p.action, ...(p.pallet_id ? { pallet_id: p.pallet_id } : {}) }, `${p.unit_id}: ${what}`);
     setBusy(false);
     propose(null);
-    setResult({ ok: a.ok, text: a.ok ? `${p.unit_id} accepted: ${what}` : `Rejected: ${a.reason ?? "no reason given"}` });
+    setResult(a.type === "local_failure" ? { ok: false, text: `Not delivered: ${a.reason}` }
+      : { ok: a.ok, text: a.ok ? `${p.unit_id} accepted: ${what}` : `Rejected: ${a.reason ?? "no reason given"}` });
   };
 
   return (

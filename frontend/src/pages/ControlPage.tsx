@@ -38,6 +38,32 @@ function AutoModeToggle() {
   );
 }
 
+/** One click restores the seed world (POST /api/reset). The page then updates from the
+ *  server's world_snapshot, like every other change. */
+function ResetButton() {
+  const [state, setState] = useState<"idle" | "busy" | "failed">("idle");
+  const reset = async () => {
+    setState("busy");
+    try {
+      const r = await fetch("/api/reset", { method: "POST" });
+      if (!r.ok) throw new Error(String(r.status));
+      useControl.getState().propose(null);
+      setState("idle");
+    } catch {
+      setState("failed");
+      setTimeout(() => setState("idle"), 3000);
+    }
+  };
+  return (
+    <button type="button" onClick={reset} disabled={state === "busy"} title="Restore the seed world"
+      className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium transition-colors ${state === "failed" ? "border-crit bg-crit-bg text-crit" : "border-[var(--card-border)] bg-white text-ink hover:bg-idle-bg"}`}>
+      <Icon name="reset" size={15} />
+      <span className="hidden sm:inline">{state === "busy" ? "Resetting…" : state === "failed" ? "Reset failed" : "Reset world"}</span>
+      <span className="sr-only sm:hidden">Reset world</span>
+    </button>
+  );
+}
+
 export function ControlPage() {
   const [tab, setTab] = useState<Tab>("move");
   const layout = useWorld((s) => s.layout);
@@ -94,6 +120,7 @@ export function ControlPage() {
             <div className="truncate text-[15px] font-semibold leading-tight">Control Room</div>
             <div className="hidden truncate text-[12px] text-ink-2 sm:block">{layout?.site.short}</div>
           </div>
+          <ResetButton />
           <AutoModeToggle />
           <LivePill />
           <a href="/twin" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Open twin</a>

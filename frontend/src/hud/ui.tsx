@@ -28,6 +28,7 @@ const PATHS = {
   battery: "M3 8h15v8H3zM20 11v2",
   arrowUp: "M12 19V5M6 11l6-6 6 6",
   arrowDown: "M12 5v14M6 13l6 6 6-6",
+  reset: "M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4",
 } as const;
 
 export type IconName = keyof typeof PATHS;
