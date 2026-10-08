@@ -6,9 +6,14 @@ empty. It only proposes steps; every step still goes through World.command valid
 The flow keeps stock circulating: inbound trucks are unloaded to Zone A (receiving), Zone A is
 put away into the racks, rack and Zone B stock is loaded onto outbound trucks, and a truck that
 leaves full comes back later as inbound with the same pallets.
+
+Auto mode passes a random generator so the floor doesn't replay the same moves every time: job
+order, pallet and slot choices, waits and truck bays vary. BTN0 passes none and stays predictable.
 """
 
 from __future__ import annotations
+
+import random
 
 from .world import Entity, Step, World
 
@@ -20,6 +25,13 @@ TRUCK_DEPART_IDLE_S = 8.0    # ...and nothing has been loaded for this long
 TRUCK_RETURN_S = 20.0        # a gone truck comes back after this long off site
 TRUCK_WAITING_S = 5.0        # a truck waiting at the gate is given a bay after this long
 FORKLIFT_IDLE_S = 2.0        # pause between tasks so movements read as separate jobs
+# Auto mode's random rhythm. Each 1 s auto pass, an eligible unit acts with this probability,
+# which gives a random (geometric) wait instead of everyone moving in lockstep.
+AUTO_START_P = 0.5
+AUTO_TRUCK_P = 0.3
+AUTO_WANDER_P = 0.15         # an idle forklift with no work drives somewhere now and then
+CHOICE_SPREAD = 3            # random choices pick among this many nearest candidates
+WANDER_TYPES = ("junction", "zone")
 
 
 def _dist(world: World, u: Entity, node: str) -> float:
@@ -31,8 +43,14 @@ def _dist(world: World, u: Entity, node: str) -> float:
     return world.graph.path_length(path) if path else float("inf")
 
 
-def _nearest(world: World, u: Entity, nodes: list[str]) -> list[str]:
-    return sorted(nodes, key=lambda n: _dist(world, u, n))
+def _nearest(world: World, u: Entity, nodes: list[str], rng: random.Random | None = None) -> list[str]:
+    """Nearest first. With rng, one of the few nearest is moved to the front, so choices vary
+    without sending a forklift across the building for no reason."""
+    ordered = sorted(nodes, key=lambda n: _dist(world, u, n))
+    if rng is not None and len(ordered) > 1:
+        i = rng.randrange(min(CHOICE_SPREAD, len(ordered)))
+        ordered.insert(0, ordered.pop(i))
+    return ordered
 
 
 def _docked(world: World, inbound: bool) -> list[Entity]:
@@ -45,12 +63,12 @@ def _free_rack_slots(world: World, exclude: str) -> list[str]:
     return [n.id for n in g.nodes.values() if n.type == "rack_slot" and world.free_spots(n, exclude) > 0]
 
 
-def carrying_step(world: World, f: Entity) -> Step | None:
+def carrying_step(world: World, f: Entity, rng: random.Random | None = None) -> Step | None:
     """Where to take the pallet a forklift is holding."""
     for t in _docked(world, inbound=False):
         if world.truck_room(t, exclude=f.id) > 0 and t.docked_at:
             return Step(t.docked_at, "load")
-    slots = _nearest(world, f, _free_rack_slots(world, f.id))
+    slots = _nearest(world, f, _free_rack_slots(world, f.id), rng)
     if slots:
         return Step(slots[0], "drop")
     for z in (STAGING_ZONE, "ZONE_C", RECEIVING_ZONE):
@@ -63,39 +81,53 @@ def _unclaimed(world: World, pallets: list[Entity], f: Entity) -> bool:
     return any(p.claimed_by in (None, f.id) for p in pallets)
 
 
-def suggest_forklift(world: World, f: Entity) -> list[Step]:
+def suggest_forklift(world: World, f: Entity, rng: random.Random | None = None) -> list[Step]:
     assert f.battery is not None
     if f.battery < CHARGE_BELOW_PCT and f.state != "charging":
         chargers = [c.node for c in world.layout.chargers if not world.charger_taken_by(c.node, f.id)]
         if chargers:
             return [Step(_nearest(world, f, chargers)[0], "charge")]
     if f.carrying:
-        s = carrying_step(world, f)
+        s = carrying_step(world, f, rng)
         return [s] if s else []
 
-    zone_a = world.graph.nodes[RECEIVING_ZONE]
-    for t in _docked(world, inbound=True):
-        assert t.cargo is not None and t.docked_at is not None
-        if _unclaimed(world, [world.entities[p] for p in t.cargo], f) and world.free_spots(zone_a, f.id) > 0:
-            return [Step(t.docked_at, "pick"), Step(RECEIVING_ZONE, "drop")]
+    def unload() -> list[Step]:
+        zone_a = world.graph.nodes[RECEIVING_ZONE]
+        for t in _docked(world, inbound=True):
+            assert t.cargo is not None and t.docked_at is not None
+            if _unclaimed(world, [world.entities[p] for p in t.cargo], f) and world.free_spots(zone_a, f.id) > 0:
+                return [Step(t.docked_at, "pick"), Step(RECEIVING_ZONE, "drop")]
+        return []
 
-    for t in _docked(world, inbound=False):
-        if world.truck_room(t, exclude=f.id) <= 0 or t.docked_at is None:
-            continue
-        sources = [STAGING_ZONE] if _unclaimed(world, world.pallets_at(STAGING_ZONE), f) else []
-        sources += _nearest(world, f, [n.id for n in world.graph.nodes.values()
-                                       if n.type == "rack_slot" and _unclaimed(world, world.pallets_at(n.id), f)])
-        if sources:
-            return [Step(sources[0], "pick"), Step(t.docked_at, "load")]
+    def load() -> list[Step]:
+        for t in _docked(world, inbound=False):
+            if world.truck_room(t, exclude=f.id) <= 0 or t.docked_at is None:
+                continue
+            sources = [STAGING_ZONE] if _unclaimed(world, world.pallets_at(STAGING_ZONE), f) else []
+            sources += _nearest(world, f, [n.id for n in world.graph.nodes.values()
+                                           if n.type == "rack_slot" and _unclaimed(world, world.pallets_at(n.id), f)], rng)
+            if sources:
+                return [Step(sources[0], "pick"), Step(t.docked_at, "load")]
+        return []
 
-    if _unclaimed(world, world.pallets_at(RECEIVING_ZONE), f):
-        slots = _nearest(world, f, _free_rack_slots(world, f.id))
-        if slots:
-            return [Step(RECEIVING_ZONE, "pick"), Step(slots[0], "drop")]
+    def put_away() -> list[Step]:
+        if _unclaimed(world, world.pallets_at(RECEIVING_ZONE), f):
+            slots = _nearest(world, f, _free_rack_slots(world, f.id), rng)
+            if slots:
+                return [Step(RECEIVING_ZONE, "pick"), Step(slots[0], "drop")]
+        return []
+
+    jobs = [unload, load, put_away]  # the flow's priority order; auto mode varies it
+    if rng is not None:
+        rng.shuffle(jobs)
+    for job in jobs:
+        steps = job()
+        if steps:
+            return steps
     return []
 
 
-def run_next_step(world: World, f: Entity, source: str) -> tuple[bool, str]:
+def run_next_step(world: World, f: Entity, source: str, rng: random.Random | None = None) -> tuple[bool, str]:
     """Run the forklift's next task-list step, refilling the list from the planner when empty.
 
     Steps that are no longer valid (pallet gone, truck left) are dropped. Returns (ok, text).
@@ -106,7 +138,7 @@ def run_next_step(world: World, f: Entity, source: str) -> tuple[bool, str]:
         if not f.plan:
             if refilled:
                 break
-            f.plan = suggest_forklift(world, f)
+            f.plan = suggest_forklift(world, f, rng)
             refilled = True
             if not f.plan:
                 break
@@ -120,20 +152,26 @@ def run_next_step(world: World, f: Entity, source: str) -> tuple[bool, str]:
     return False, f"{f.id} has nothing to do{why}"
 
 
-def auto_step(world: World) -> list[str]:
-    """One auto-mode pass. Returns human-readable notes for the event log."""
+def auto_step(world: World, rng: random.Random) -> list[str]:
+    """One auto-mode pass (once a second). Returns human-readable notes for the event log."""
     notes: list[str] = []
     now = world.time
     for f in world.of_kind("forklift"):
         if f.source == "device" or f.moving or f.busy or f.action is not None:
             continue
-        if now - f.idle_since < FORKLIFT_IDLE_S:
+        if now - f.idle_since < FORKLIFT_IDLE_S or rng.random() > AUTO_START_P:
             continue
-        ok, text = run_next_step(world, f, "auto")
+        ok, text = run_next_step(world, f, "auto", rng)
         if ok:
             notes.append(text)
+        elif not f.carrying and rng.random() < AUTO_WANDER_P:
+            spots = [n.id for n in world.graph.nodes.values()
+                     if n.type in WANDER_TYPES and "forklift" in n.kinds and n.id != f.node]
+            target = rng.choice(spots)
+            if world.command(f.id, target, "goto", source="auto").ok:
+                notes.append(f"{f.id}: no work, moving to {world.node_label(target)}")
     for t in world.of_kind("truck"):
-        if t.source == "device" or t.moving or t.state == "loading":
+        if t.source == "device" or t.moving or t.state == "loading" or rng.random() > AUTO_TRUCK_P:
             continue
         assert t.cargo is not None
         idle = now - t.idle_since
@@ -142,7 +180,7 @@ def auto_step(world: World) -> list[str]:
                 if world.command(t.id, world.layout.gate_node, "depart", source="auto").ok:
                     notes.append(f"{t.id} departs with {len(t.cargo)} pallets")
         elif (t.state == "gone" and idle >= TRUCK_RETURN_S) or (t.state == "arriving" and idle >= TRUCK_WAITING_S):
-            for d in world.layout.docks:
+            for d in rng.sample(world.layout.docks, len(world.layout.docks)):
                 if world.command(t.id, d.node, "dock", source="auto").ok:
                     notes.append(f"{t.id} assigned to {d.label}")
                     break

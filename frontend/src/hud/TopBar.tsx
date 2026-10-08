@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Event } from "../contract";
 import { useWorld } from "../store/world";
+import { AutoModeToggle } from "./AutoModeToggle";
 import { LivePill } from "./LivePill";
 import { Search } from "./Search";
 import { ago, Icon, useTick } from "./ui";
@@ -116,6 +117,7 @@ export function TopBar() {
       <div className="ml-4"><Search /></div>
       <div className="ml-auto flex items-center gap-2">
         <SiteSelector />
+        <AutoModeToggle />
         <LivePill />
         <Notifications />
         <span className="grid h-9 w-9 place-items-center rounded-full bg-info-bg text-info" title="Operator (no sign-in on this demo)">

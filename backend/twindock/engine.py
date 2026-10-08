@@ -8,6 +8,8 @@ inputs in and sends whatever is in self.out. That keeps every rule testable with
 from __future__ import annotations
 
 import json
+import os
+import random
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -72,6 +74,9 @@ class Engine:
         self._led_cmd_counter = 0
         self._rule_retry_after: dict[str, int] = {}
         self._auto_mode_dirty = False
+        # Auto mode's dice. TWINDOCK_AUTO_SEED makes a run repeatable (tests, debugging).
+        seed = os.environ.get("TWINDOCK_AUTO_SEED")
+        self.rng = random.Random(int(seed) if seed else None)
 
     # ------------------------------------------------------------------ output helpers
 
@@ -162,7 +167,7 @@ class Engine:
             self._auto_acc += dt
             if self._auto_acc >= AUTO_PERIOD_S:
                 self._auto_acc = 0.0
-                for note in planner.auto_step(w):
+                for note in planner.auto_step(w, self.rng):
                     self.event("info", note, "auto")
         else:
             for u in w.entities.values():

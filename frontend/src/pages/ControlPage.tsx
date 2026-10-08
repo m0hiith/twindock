@@ -9,6 +9,7 @@ import { ProposalSheet } from "../control/ProposalSheet";
 import { SiteMap } from "../control/SiteMap";
 import { useControl, type Checked } from "../control/state";
 import { firstValid, useDryRuns } from "../control/useDryRuns";
+import { AutoModeToggle } from "../hud/AutoModeToggle";
 import { FakeBoardBanner } from "../hud/FakeBoardBanner";
 import { LivePill } from "../hud/LivePill";
 import { Icon, TabButton } from "../hud/ui";
@@ -18,25 +19,6 @@ import { useWorld } from "../store/world";
 
 type Tab = "move" | "gateway" | "log";
 
-function AutoModeToggle() {
-  const auto = useWorld((s) => s.autoMode);
-  const run = useControl((s) => s.run);
-  const [waiting, setWaiting] = useState(false);
-  const toggle = async () => {
-    setWaiting(true);
-    await run({ type: "set_auto_mode", enabled: !auto }, `Auto mode ${auto ? "off" : "on"}`);
-    setWaiting(false);
-  };
-  return (
-    <button type="button" role="switch" aria-checked={auto} onClick={toggle} disabled={waiting}
-      className={`flex h-9 items-center gap-2 rounded-xl border px-3 text-[13px] font-medium transition-colors ${auto ? "border-warn bg-warn-bg text-warn" : "border-[var(--card-border)] bg-white text-ink"}`}>
-      <span className={`relative h-4 w-7 rounded-full transition-colors ${auto ? "bg-warn" : "bg-[#D5DAE5]"}`}>
-        <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-[left] ${auto ? "left-3.5" : "left-0.5"}`} />
-      </span>
-      Auto{waiting ? "…" : auto ? " on" : " off"}
-    </button>
-  );
-}
 
 /** One click restores the seed world (POST /api/reset). The page then updates from the
  *  server's world_snapshot, like every other change. */

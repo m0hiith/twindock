@@ -8,6 +8,7 @@ import pytest
 
 os.environ.setdefault("TWINDOCK_MQTT", "0")  # tests never touch a real broker
 os.environ.setdefault("TWINDOCK_PACE", "1")  # test timings are written for real-world speeds
+os.environ.setdefault("TWINDOCK_AUTO_SEED", "7")  # auto mode's random choices repeat in tests
 
 from twindock.contract import first_error, validator
 from twindock.engine import Engine, MqttOut, WsOut
