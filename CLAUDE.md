@@ -74,9 +74,11 @@ not when the user clicks. Show a short pending state in between.
 
 Every message has a `type`. Server → client: `world_snapshot` (on connect and after reset),
 `unit_update` (changed units, ≤ 20 Hz), `gateway_update` (after each device message, with the
-`raw` MQTT message), `selection_changed`, `command_ack` (`ok`, `reason`, planned `path`), and
+`raw` MQTT message), `selection_changed`, `command_ack` (`ok`, `reason`, planned `path`),
 `event` (`{seq, server_ts_ms, level: info|warn|error, source, text, unit_id?}` for the event log:
-BTN0/BTN1 actions, auto mode, LED timeouts, dropped device messages).
+BTN0/BTN1 actions, auto mode, LED timeouts, dropped device messages, BLE tags), and
+`ble_tracks` (after each BLE scan: per tag last/smoothed RSSI, raw/committed/pending zone, plus
+the zone config; for the /device calibration helper).
 Client → server: `move_unit` (`unit_id`, `target_node`, `action`, `dry_run`, optional `pallet_id`
 for `pick`), `select_unit`, `led_command`, `set_auto_mode`.
 

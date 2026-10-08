@@ -1,7 +1,7 @@
 // Client mirror of server state. It only ever changes in response to server messages:
 // the UI sends intents (ws.ts) and waits for the backend to broadcast the result.
 import { create } from "zustand";
-import type { CommandAck, Event, Gateway, ServerMessage, Unit } from "../contract";
+import type { BleTracks, CommandAck, Event, Gateway, ServerMessage, Unit } from "../contract";
 import type { Layout } from "../layout";
 import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
@@ -18,6 +18,9 @@ interface WorldState {
   autoMode: boolean;
   events: Event[];
   acks: CommandAck[];
+  ble: BleTracks | null;
+  /** Smoothed RSSI per tag from successive ble_tracks messages (real scans only), oldest first. */
+  bleHistory: Record<string, { t: number; avg: number; raw: number }[]>;
   /** KPI counts at the last world_snapshot, so KPI cards can show what changed since then. */
   baseline: { counts: KpiCounts; at_ms: number } | null;
   setConn: (c: Conn) => void;
@@ -26,6 +29,7 @@ interface WorldState {
 }
 
 const MAX_LOG = 200;
+const MAX_BLE_POINTS = 90; // 3 minutes of 2 s scans
 
 /** Server time minus local time, from the latest server_ts_ms. Device ages are measured on the
  *  server clock, so a phone with a skewed clock still shows "12s ago" correctly. */
@@ -42,6 +46,8 @@ export const useWorld = create<WorldState>((set) => ({
   autoMode: false,
   events: [],
   acks: [],
+  ble: null,
+  bleHistory: {},
   baseline: null,
   setConn: (conn) => set({ conn }),
   setLayout: (layout) => set({ layout }),
@@ -80,6 +86,17 @@ export const useWorld = create<WorldState>((set) => ({
           return { acks: [...s.acks, m].slice(-MAX_LOG) };
         case "event":
           return { events: [...s.events, m].slice(-MAX_LOG) };
+        case "ble_tracks": {
+          const bleHistory = { ...s.bleHistory };
+          for (const t of m.tracks) {
+            if (t.avg_rssi_dbm === null) continue;
+            const h = bleHistory[t.name] ?? [];
+            // A scan seen twice (lost-tag message re-sends tracks) adds no new point.
+            if (h.at(-1)?.t === t.last_seen_ms) continue;
+            bleHistory[t.name] = [...h, { t: t.last_seen_ms, avg: t.avg_rssi_dbm, raw: t.last_rssi_dbm }].slice(-MAX_BLE_POINTS);
+          }
+          return { ble: m, bleHistory };
+        }
       }
     }),
 }));

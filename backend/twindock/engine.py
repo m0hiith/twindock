@@ -15,12 +15,13 @@ from typing import Any, Callable
 from pydantic import TypeAdapter
 
 from . import planner
+from .ble_tracker import BleConfig, BleTracker, ZoneChange
 from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
-from .models import (ButtonState, ClientMessage, CommandAck, Event, GatewayUpdate, Layout, LedCommand,
+from .models import (BleTracks, ButtonState, ClientMessage, CommandAck, Event, GatewayUpdate, Layout, LedCommand,
                      MoveUnit, PendingLed, RawMqtt, SelectionChanged, SelectUnit, SetAutoMode, Timed,
                      UnitUpdate, WorldSnapshot)
 from .world import World
@@ -50,10 +51,15 @@ _client_adapter: TypeAdapter[ClientMessage] = TypeAdapter(ClientMessage)
 
 
 class Engine:
-    def __init__(self, layout: Layout, clock: Callable[[], int] = wall_ms) -> None:
+    def __init__(self, layout: Layout, clock: Callable[[], int] = wall_ms, ble_config: BleConfig | None = None) -> None:
         self.layout = layout
         self.clock = clock
-        self.world = World(layout, Graph(layout))
+        graph = Graph(layout)
+        self.world = World(layout, graph)
+        forklift_nodes = {n.id for n in layout.nodes if "forklift" in n.kinds}
+        self.ble = BleTracker(ble_config if ble_config is not None else BleConfig.load(valid_nodes=forklift_nodes))
+        self._device_goal: dict[str, str] = {}   # forklift -> zone node its tag says it is in
+        self._device_sent: dict[str, str] = {}   # forklift -> goal already turned into a move
         self.gw = GatewayStore()
         self.selected: str | None = None
         self.auto_mode = False
@@ -123,10 +129,15 @@ class Engine:
 
     def on_connect(self, client_id: str) -> None:
         self._send(self.snapshot(), client_id)
+        self._send_ble_tracks(client_id)
 
     def reset(self) -> None:
         """Restore the seed world. Gateway state is real device data and is kept."""
         self.world.reset()
+        # Every forklift is back at its seed spot and manual; tags re-acquire after stable_s.
+        self.ble.forget_zones()
+        self._device_goal.clear()
+        self._device_sent.clear()
         self.selected = None
         self.auto_mode = False
         self._truck_cargo.clear()
@@ -159,6 +170,14 @@ class Engine:
                     u.source = "manual"
 
         now = self.clock()
+        lost = self.ble.expire(now)
+        for t in lost:
+            self._release_device(t.unit_id, f"Tag {t.name} not seen for {self.ble.config.lost_after_s:g} s")
+        if lost:
+            self._send_ble_tracks()
+        for uid, goal in self._device_goal.items():
+            if self._device_sent.get(uid) != goal:
+                self._drive_device(uid)  # was busy finishing a pick or load when the zone changed
         if self.gw.refresh_online(now):
             self._on_online_changed()
         for name, st in self.gw.leds.items():
@@ -289,6 +308,8 @@ class Engine:
                 st.pending = None
         elif kind == "ble":
             self.gw.ble = Timed(data=data, received_ms=now)
+            self._apply_ble(self.ble.update(data["sightings"], now))
+            self._send_ble_tracks()
         elif kind == "sensor":
             assert sensor_name is not None
             if sensor_name not in self.gw.sensors_available:
@@ -299,6 +320,53 @@ class Engine:
         self._gateway_update(RawMqtt(topic=topic, payload=data, received_ms=now))
         if kind == "hello":
             self._sync_rule_leds()
+
+    # ------------------------------------------------------------------ BLE tags -> live forklifts
+
+    def _send_ble_tracks(self, to: str | None = None) -> None:
+        self._send(BleTracks(seq=self._next_seq(), server_ts_ms=self.clock(), **self.ble.wire()), to)
+
+    def _apply_ble(self, changes: list[ZoneChange]) -> None:
+        w = self.world
+        for c in changes:
+            u = w.entities.get(c.unit_id or "")
+            if u is None or u.kind != "forklift":
+                if c.first:
+                    self.event("warn", f"Tag {c.tag} has no matching forklift", "gateway")
+                continue
+            if c.zone is None:
+                if u.source == "device":
+                    self.event("info", f"{u.id}: tag {c.tag} is beyond the calibrated zones, holding position",
+                               "gateway", u.id)
+                continue
+            label = w.node_label(c.zone)
+            if u.source != "device":
+                u.source = "device"  # from now on only the tag moves it, even if it is mid-pick
+                self.event("info", f"{u.id} is now tracked by tag {c.tag} ({label})", "gateway", u.id)
+            else:
+                self.event("info", f"{u.id}: tag {c.tag} moved to {label}", "gateway", u.id)
+            self._device_goal[u.id] = c.zone
+            self._drive_device(u.id)
+
+    def _drive_device(self, uid: str) -> None:
+        u = self.world.entities[uid]
+        goal = self._device_goal[uid]
+        if u.busy:
+            return  # finish the pallet handling first; tick() retries
+        self._device_sent[uid] = goal
+        if u.target == goal or (u.node == goal and not u.moving):
+            return
+        r = self.world.command(uid, goal, "goto", source="device")
+        if not r.ok:
+            self.event("warn", f"{uid}: can't follow tag to {self.world.node_label(goal)}: {r.reason}", "gateway", uid)
+
+    def _release_device(self, uid: str | None, why: str) -> None:
+        u = self.world.entities.get(uid or "")
+        self._device_goal.pop(uid or "", None)
+        self._device_sent.pop(uid or "", None)
+        if u is not None and u.source == "device":
+            u.source = "manual"
+            self.event("warn", f"{why}; {u.id} is back under manual control", "gateway", u.id)
 
     # ------------------------------------------------------------------ physical buttons
 

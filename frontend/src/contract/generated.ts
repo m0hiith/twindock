@@ -1,11 +1,6 @@
 /* Generated from /shared/schemas by scripts/gen-types.mjs. Do not edit. */
 
 /**
- * This interface was referenced by `TwinDockContract`'s JSON-Schema
- * via the `definition` "cmd_id".
- */
-export type CmdId = string;
-/**
  * Waypoint graph node, e.g. DOCK_1, RACK_A3, CHARGER_C1, GATE_IN
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -19,6 +14,11 @@ export type NodeId = string;
  * via the `definition` "unit_id".
  */
 export type UnitId = string;
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "cmd_id".
+ */
+export type CmdId = string;
 /**
  * e.g. FL-01, TR-02, PL-07, GW-01
  */
@@ -57,6 +57,7 @@ export interface TwinDockContract {
   gateway_led?: GatewayLed;
   gateway_sensor?: GatewaySensor;
   gateway_status?: GatewayStatus;
+  ble_tracks?: BleTracks;
   command_ack?: CommandAck;
   event?: Event;
   gateway_update?: GatewayUpdate;
@@ -179,6 +180,64 @@ export interface GatewayStatus {
    * true on messages flushed from the offline buffer. The backend keeps them in history but does not treat them as the current status.
    */
   replay?: boolean;
+}
+/**
+ * BLE tag tracking state after each twin/gateway/ble message and when a tag is lost. Smoothed values are computed by the backend from real sightings only; used by the /device calibration helper.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "ble_tracks".
+ */
+export interface BleTracks {
+  type: "ble_tracks";
+  seq: number;
+  server_ts_ms: number;
+  /**
+   * backend/world/ble_zones.json as loaded. Empty zones = tracking off.
+   */
+  config: {
+    window: number;
+    stable_s: number;
+    lost_after_s: number;
+    /**
+     * Nearest first; thresholds strictly decreasing.
+     */
+    zones: {
+      node: NodeId;
+      min_rssi_dbm: number;
+    }[];
+  };
+  tracks: {
+    name: string;
+    addr: string;
+    /**
+     * Forklift this tag maps to (TD-FL01 -> FL-01), or null.
+     */
+    unit_id: UnitId | null;
+    last_rssi_dbm: number;
+    /**
+     * Moving average of the last `window` readings.
+     */
+    avg_rssi_dbm: number | null;
+    readings: number;
+    /**
+     * Server time of the last scan that saw this tag.
+     */
+    last_seen_ms: number;
+    /**
+     * Zone the current average falls in, before hysteresis. null = beyond every zone or tracking off.
+     */
+    raw_zone: NodeId | null;
+    /**
+     * Committed zone. null with has_zone = beyond every zone.
+     */
+    zone: NodeId | null;
+    has_zone: boolean;
+    pending_zone: NodeId | null;
+    /**
+     * When the pending zone (possibly null = beyond every zone) started; null = nothing pending.
+     */
+    pending_since_ms: number | null;
+  }[];
 }
 /**
  * Reply to one client command. For led_command, ok:true means sent to the board; the LED changes only on the board's confirmation.

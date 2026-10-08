@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/ble_tracks.json",
+  "title": "ble_tracks (server -> client)",
+  "description": "BLE tag tracking state after each twin/gateway/ble message and when a tag is lost. Smoothed values are computed by the backend from real sightings only; used by the /device calibration helper.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "server_ts_ms", "config", "tracks"],
+  "properties": {
+    "type": { "const": "ble_tracks" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "server_ts_ms": { "type": "integer" },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["window", "stable_s", "lost_after_s", "zones"],
+      "description": "backend/world/ble_zones.json as loaded. Empty zones = tracking off.",
+      "properties": {
+        "window": { "type": "integer", "minimum": 1 },
+        "stable_s": { "type": "number", "minimum": 0 },
+        "lost_after_s": { "type": "number", "exclusiveMinimum": 0 },
+        "zones": {
+          "type": "array",
+          "description": "Nearest first; thresholds strictly decreasing.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["node", "min_rssi_dbm"],
+            "properties": {
+              "node": { "$ref": "defs.json#/$defs/node_id" },
+              "min_rssi_dbm": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "addr", "unit_id", "last_rssi_dbm", "avg_rssi_dbm", "readings", "last_seen_ms", "raw_zone", "zone", "has_zone", "pending_zone", "pending_since_ms"],
+        "properties": {
+          "name": { "type": "string" },
+          "addr": { "type": "string" },
+          "unit_id": { "anyOf": [{ "$ref": "defs.json#/$defs/unit_id" }, { "type": "null" }], "description": "Forklift this tag maps to (TD-FL01 -> FL-01), or null." },
+          "last_rssi_dbm": { "type": "integer" },
+          "avg_rssi_dbm": { "type": ["number", "null"], "description": "Moving average of the last `window` readings." },
+          "readings": { "type": "integer", "minimum": 0 },
+          "last_seen_ms": { "type": "integer", "description": "Server time of the last scan that saw this tag." },
+          "raw_zone": { "anyOf": [{ "$ref": "defs.json#/$defs/node_id" }, { "type": "null" }], "description": "Zone the current average falls in, before hysteresis. null = beyond every zone or tracking off." },
+          "zone": { "anyOf": [{ "$ref": "defs.json#/$defs/node_id" }, { "type": "null" }], "description": "Committed zone. null with has_zone = beyond every zone." },
+          "has_zone": { "type": "boolean" },
+          "pending_zone": { "anyOf": [{ "$ref": "defs.json#/$defs/node_id" }, { "type": "null" }] },
+          "pending_since_ms": { "type": ["integer", "null"], "description": "When the pending zone (possibly null = beyond every zone) started; null = nothing pending." }
+        }
+      }
+    }
+  }
+}

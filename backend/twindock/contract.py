@@ -27,7 +27,8 @@ MQTT_SCHEMAS = {
     "cmd_led": "gateway_cmd_led",
 }
 CLIENT_TYPES = ("move_unit", "select_unit", "led_command", "set_auto_mode")
-SERVER_TYPES = ("world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event")
+SERVER_TYPES = ("world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event",
+                "ble_tracks")
 
 
 @lru_cache(maxsize=1)

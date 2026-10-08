@@ -55,7 +55,8 @@ Every message is a JSON object with a `type` field.
 | `gateway_update` | `ws/gateway_update.json` | After each device message or online/stale change. Includes `raw` MQTT message for the log. |
 | `selection_changed` | `ws/selection_changed.json` | When any client or BTN1 changes the shared selection. |
 | `command_ack` | `ws/command_ack.json` | Reply to each client command (`ok`, `reason`, planned `path`). |
-| `event` | `ws/event.json` | Event-log notices: BTN0/BTN1 actions, auto mode, LED confirmation timeouts, dropped device messages. |
+| `event` | `ws/event.json` | Event-log notices: BTN0/BTN1 actions, auto mode, LED confirmation timeouts, dropped device messages, BLE tag acquired/lost. |
+| `ble_tracks` | `ws/ble_tracks.json` | After each `twin/gateway/ble` message and when a tag is lost. Per tag: last and smoothed RSSI, raw and committed zone, pending zone. Feeds the /device calibration helper. |
 
 ### Client → server
 
@@ -65,6 +66,15 @@ Every message is a JSON object with a `type` field.
 | `select_unit` | `ws/select_unit.json` | Unit exists (or null to clear). |
 | `led_command` | `ws/led_command.json` | LED is in `hello.leds`; LED0 is rule-driven (Bay 1) and rejected. Forwarded to `twin/gateway/cmd/led`. |
 | `set_auto_mode` | `ws/set_auto_mode.json` | — |
+
+### BLE tags as live forklifts
+
+A tag named `TD-FL01` is forklift `FL-01`. The backend averages each tag's last `window` RSSI
+readings and maps the average to a zone using `backend/world/ble_zones.json` (nodes nearest
+first, each with a `min_rssi_dbm`). A zone is committed only after it has been the answer for
+`stable_s` seconds. On the first committed zone the forklift becomes `source: "device"` and drives
+to that node; manual commands, BTN0 and auto mode then leave it alone. A tag unseen for
+`lost_after_s` hands the forklift back to `manual`. Empty `zones` = tracking off.
 
 ### Gateway state (inside snapshot and updates)
 

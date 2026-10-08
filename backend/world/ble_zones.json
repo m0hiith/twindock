@@ -1,0 +1,16 @@
+{
+  "_doc": [
+    "BLE tag zones for forklifts (tag TD-FL01 = forklift FL-01). Measured on site with the",
+    "calibration helper at /device: stand at each spot with the tag, capture, paste the result here,",
+    "restart the backend. One gateway only measures distance, so pick spots at clearly different",
+    "distances from the board, nearest first. A forklift is placed in the first zone whose",
+    "min_rssi_dbm its smoothed RSSI reaches. Empty zones = BLE tracking off (nothing is placed).",
+    "window: readings in the moving average (scans are every 2 s).",
+    "stable_s: a new zone must hold this long before the forklift switches (hysteresis).",
+    "lost_after_s: a tag not seen this long hands its forklift back to manual control."
+  ],
+  "window": 5,
+  "stable_s": 3,
+  "lost_after_s": 10,
+  "zones": []
+}

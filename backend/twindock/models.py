@@ -262,6 +262,15 @@ class CommandAck(Strict):
         return {k: v for k, v in d.items() if v is not None}
 
 
+class BleTracks(Strict):
+    """Shape is checked against ws/ble_tracks.json; built by BleTracker.wire()."""
+    type: Literal["ble_tracks"] = "ble_tracks"
+    seq: int
+    server_ts_ms: int
+    config: dict[str, Any]
+    tracks: list[dict[str, Any]]
+
+
 class Event(Strict):
     type: Literal["event"] = "event"
     seq: int

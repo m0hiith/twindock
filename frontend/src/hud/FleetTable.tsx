@@ -44,7 +44,7 @@ export function FleetTable() {
           </TabButton>
         ))}
       </div>
-      <div className="mt-2 grid grid-cols-[72px_1fr_92px_88px_16px] gap-3 border-b border-[var(--card-border)] px-2 pb-1.5 text-[12px] text-ink-2">
+      <div className="mt-2 grid grid-cols-[96px_1fr_92px_88px_16px] gap-3 border-b border-[var(--card-border)] px-2 pb-1.5 text-[12px] text-ink-2">
         <span>ID</span><span>Assignment</span><span>Status</span><span>{tab === "forklift" ? "Battery" : "Cargo"}</span><span />
       </div>
       <div className="max-h-[208px] overflow-y-auto">
@@ -53,8 +53,8 @@ export function FleetTable() {
           const sel = u.id === selected;
           return (
             <button key={u.id} type="button" onClick={() => selectAndCenter(u.id)} aria-current={sel}
-              className={`grid w-full grid-cols-[72px_1fr_92px_88px_16px] items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${sel ? "bg-info-bg" : "hover:bg-[#F6F8FC]"}`}>
-              <span className="flex items-center gap-1 font-semibold">{u.kind === "dock" ? u.label : u.id}{u.source === "device" && <LiveBadge />}</span>
+              className={`grid w-full grid-cols-[96px_1fr_92px_88px_16px] items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${sel ? "bg-info-bg" : "hover:bg-[#F6F8FC]"}`}>
+              <span className="flex items-center gap-1 whitespace-nowrap font-semibold">{u.kind === "dock" ? u.label : u.id}{u.source === "device" && <LiveBadge />}</span>
               <span className="truncate text-ink">{u.task}</span>
               <span><StatusPill unit={u} /></span>
               {p ? (

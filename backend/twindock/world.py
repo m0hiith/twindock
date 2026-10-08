@@ -222,14 +222,16 @@ class World:
 
     # ------------------------------------------------------------------ move validation
 
-    def plan_move(self, unit_id: str, target: str, action: Action = "goto", pallet_id: str | None = None) -> MoveResult:
-        """Validate a move and return the planned path. Never mutates state."""
+    def plan_move(self, unit_id: str, target: str, action: Action = "goto", pallet_id: str | None = None,
+                  by_device: bool = False) -> MoveResult:
+        """Validate a move and return the planned path. Never mutates state.
+        by_device: the move comes from the unit's own BLE tag, the only thing that may move it."""
         u = self.entities.get(unit_id)
         if u is None:
             return _fail(f"Unknown unit {unit_id}")
         if u.kind not in ("forklift", "truck"):
             return _fail(f"{u.label or u.id} can't move")
-        if u.source == "device":
+        if u.source == "device" and not by_device:
             return _fail(f"{u.id} is tracked by the board; manual moves are disabled")
         node = self.graph.nodes.get(target)
         if node is None:
@@ -357,7 +359,7 @@ class World:
 
     def command(self, unit_id: str, target: str, action: Action = "goto", pallet_id: str | None = None,
                 source: Source = "manual", dry_run: bool = False) -> MoveResult:
-        r = self.plan_move(unit_id, target, action, pallet_id)
+        r = self.plan_move(unit_id, target, action, pallet_id, by_device=source == "device")
         if not r.ok or dry_run:
             return r
         assert r.path is not None and r.action is not None and r.target is not None
