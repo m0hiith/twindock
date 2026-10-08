@@ -197,12 +197,18 @@ class FakeBoard:
         print(f"[fake] simulating Wi-Fi drop for {seconds:.0f} s")
         self.offline_until = time.monotonic() + seconds
         self.client.disconnect()
+        # paho's network thread exits on an explicit disconnect; without stopping and restarting it
+        # the board could still publish after reconnecting but would never receive LED commands.
+        self.client.loop_stop()
 
         def back() -> None:
             time.sleep(seconds)
             with self.lock:
                 self.reconnects += 1
+                self.connected.clear()
                 self.client.reconnect()
+                self.client.loop_start()
+                self.connected.wait(5)  # on_connect re-subscribes to cmd/led and re-sends hello
                 time.sleep(0.5)
                 n = len(self.buffer)
                 while self.buffer:
