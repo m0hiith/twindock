@@ -10,3 +10,7 @@ broker/log/
 .env
 # Vendor SDK (405 MB), kept locally, not committed
 wiseconnect-*/
+# Copy of /shared/schemas made by the Vercel build (vercel.json)
+backend/shared/
+.vercel
+.env*
