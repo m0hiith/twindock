@@ -19,7 +19,7 @@ export function Lights({ layout }: { layout: Layout }) {
   }, [cx, cz]);
   return (
     <>
-      <hemisphereLight args={["#FFFFFF", "#C8D2EA", 1.25]} />
+      <hemisphereLight args={["#FFFFFF", "#D0D0D0", 1.25]} />
       <directionalLight ref={sun} position={[cx - 45, 90, cz - 30]} intensity={1.9} castShadow
         shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.04} shadow-radius={4} />
     </>

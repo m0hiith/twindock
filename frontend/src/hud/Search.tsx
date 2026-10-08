@@ -62,7 +62,7 @@ export function Search() {
 
   return (
     <div className="relative w-[340px]">
-      <div className="flex h-9 items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[#F6F8FC] px-3 focus-within:border-info focus-within:bg-white">
+      <div className="flex h-9 items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[#F6F6F6] px-3 focus-within:border-info focus-within:bg-white">
         <Icon name="search" className="text-ink-2" />
         <input ref={input} value={q} placeholder="Search sites, trucks, forklifts…" aria-label="Search"
           className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-2"

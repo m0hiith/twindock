@@ -19,7 +19,7 @@ const BUTTON_INFO: Record<string, string> = {
 function Switch({ on, pending, disabled, onClick, label }: { on: boolean; pending: boolean; disabled: boolean; onClick: () => void; label: string }) {
   return (
     <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={onClick}
-      className={`relative h-8 w-14 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${on ? "bg-info" : "bg-[#D5DAE5]"}`}>
+      className={`relative h-8 w-14 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${on ? "bg-info" : "bg-[#D6D6D6]"}`}>
       <span className={`absolute top-1 grid h-6 w-6 place-items-center rounded-full bg-white shadow transition-[left] ${on ? "left-7" : "left-1"}`}>
         {pending && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-info border-t-transparent" />}
       </span>
@@ -81,7 +81,7 @@ export function LedSection({ gw }: { gw: Gateway }) {
   <div className="mt-4 flex items-baseline justify-between">
     <span className="text-[13px] font-semibold">RGB LED</span>
     <span className="flex items-center gap-1.5 text-[12px] text-ink-2">
-      <span className="h-3 w-3 rounded-full ring-1 ring-[var(--card-border)]" style={{ background: mix ?? "#E5E8EF", boxShadow: mix && online ? `0 0 8px ${mix}` : undefined }} />
+      <span className="h-3 w-3 rounded-full ring-1 ring-[var(--card-border)]" style={{ background: mix ?? "#E6E6E6", boxShadow: mix && online ? `0 0 8px ${mix}` : undefined }} />
       {mix ? "Lit" : "Off or unknown"}
     </span>
   </div>
@@ -94,7 +94,7 @@ export function LedSection({ gw }: { gw: Gateway }) {
       const want = st.pending?.on ?? st.on;
       return (
         <div key={name} className="flex items-center gap-3 py-2.5">
-          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: st.on ? info?.colour ?? "var(--live)" : "#D5DAE5" }} />
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: st.on ? info?.colour ?? "var(--live)" : "#D6D6D6" }} />
           <div className="min-w-0 flex-1">
             <div className="font-medium">{name}{info && <span className="font-normal text-ink-2"> · {info.name}</span>}</div>
             <div className="truncate text-[12px] text-ink-2">
@@ -129,7 +129,7 @@ export function ButtonSection({ gw }: { gw: Gateway }) {
         <div key={name} className={`rounded-xl border p-3 transition-colors ${pressed ? "border-live bg-[#F3EDFF]" : "border-[var(--card-border)] bg-white"}`}>
           <div className="flex items-center justify-between">
             <span className="font-semibold">{name}</span>
-            <span className={`h-3 w-3 rounded-full transition-all ${pressed ? "bg-live shadow-[0_0_10px_var(--live)]" : "bg-[#D5DAE5]"}`} aria-label={pressed ? "pressed" : "released"} />
+            <span className={`h-3 w-3 rounded-full transition-all ${pressed ? "bg-live shadow-[0_0_10px_var(--live)]" : "bg-[#D6D6D6]"}`} aria-label={pressed ? "pressed" : "released"} />
           </div>
           <div className="mt-1 text-[12px] text-ink-2">{st ? `${pressed ? "Pressed" : "Released"} · ${ago(st.received_ms)}` : "No press yet"}</div>
           <div className="mt-1 text-[12px] leading-snug text-ink-2">{BUTTON_INFO[name] ?? ""}</div>

@@ -114,12 +114,15 @@ Physical controls (exact mapping finalised after HARDWARE.md):
 Calm, airy, never cartoonish. The 3D scene fills the whole viewport; HUD cards float on top.
 
 **Palette (tokens in `frontend/src/theme.ts` and CSS variables):**
-- `--ground` #E9EDF6 pale blue-grey floor; `--road` #DCE2EE with white dashed lane markings
-- `--structure` #2F5FE0 warehouse walls/roofs; `--structure-dark` #2349B8 roof shading
-- `--card` #FFFFFF at 96% opacity, 1px border #E6E9F0, shadow `0 8px 24px rgba(30,45,90,0.08)`
-- `--ink` #1B2333 primary text; `--ink-2` #6B7385 secondary text
-- `--ok` #16A34A (pill bg #E8F7EE); `--info` #2F5FE0 (bg #EAF0FF); `--warn` #D97706 (bg #FFF4E0);
-  `--crit` #DC2626 (bg #FDECEC); `--idle` #8A93A6 (bg #F1F3F7)
+Silicon Labs theme: red #D91E2A and black, on neutral greys. No blue anywhere (except the board's
+real blue LED channel). Logo: `frontend/public/brand/silicon-labs.png`, shown next to the TwinDock name.
+- `--ground` #EDEDED neutral grey floor; `--road` #DEDEDE with white dashed lane markings
+- `--structure` #D91E2A warehouse walls/roofs; `--structure-dark` #A8141F roof shading
+- `--accent` #D91E2A: selection brackets, map pins, routes, hover, primary buttons, shipment stepper
+- `--card` #FFFFFF at 96% opacity, 1px border #E6E6E6, shadow `0 8px 24px rgba(0,0,0,0.08)`
+- `--ink` #111111 primary text; `--ink-2` #6B6B6B secondary text
+- `--ok` #16A34A (pill bg #E8F7EE); `--info` #111111 (bg #EFEFEF), black so in-progress pills never read
+  as alarms; `--warn` #D97706 (bg #FFF4E0); `--crit` #DC2626 (bg #FDECEC); `--idle` #8C8C8C (bg #F2F2F2)
 - `--live` #7C3AED: reserved exclusively for real board/device data (LIVE badges, gateway range ring)
 - Floor markings yellow #F2C230; cardboard boxes #D9B48A / #C79A6B; pallets #B98A5A; trees #6BBF8A
 
@@ -130,15 +133,15 @@ with tabular numerals; labels 13 regular `--ink-2`. Sentence case everywhere.
 - Orthographic camera, isometric angle (~35° elevation, 45° yaw). Zoom limited 0.6x–2x.
   Pan with drag; rotate in 90° steps via the map controls only.
 - All models built procedurally from primitives (boxes, cylinders, rounded boxes) in a
-  consistent low-poly style: warehouse with ribbed blue roof and roll-up dock doors labelled
-  D1–D3, racks with cardboard pallets, forklifts (yellow body, blue mast, small driver),
-  box trucks (blue cab, white trailer with TwinDock wordmark), shipping container, lollipop trees,
+  consistent low-poly style: warehouse with ribbed red roof and roll-up dock doors labelled
+  D1–D3, racks with cardboard pallets, forklifts (yellow body, black mast, small driver),
+  box trucks (red cab, white trailer with TwinDock wordmark), shipping container, lollipop trees,
   roads with dashed lines, yellow parking and zone outlines.
 - One directional light with soft shadows on units and buildings only, plus hemisphere fill.
   Target 60 fps on a mid-range laptop; use instancing for boxes and pallets.
-- Selected unit: blue corner-bracket frame on the ground around it, plus a floating pill label
+- Selected unit: red corner-bracket frame on the ground around it, plus a floating pill label
   above it ("FL-01 · Loading truck"). Hovered unit: subtle outline.
-- Map pins (blue teardrop) mark points of interest such as the active pallet's destination.
+- Map pins (red teardrop) mark points of interest such as the active pallet's destination.
 - The gateway (board) stands on a pole near the docks with a faint violet BLE range ring.
 
 **HUD layout (desktop 1440 × 900):**
@@ -156,7 +159,7 @@ with tabular numerals; labels 13 regular `--ink-2`. Sentence case everywhere.
 - KPI cards: icon tile, label, big number, green delta pill, small context line.
 - Inspect card (right): icon, eyebrow "Forklift · WH-01", ID, operator and model, actions
   (locate, open, close); status pill + one-line task; battery bar; key-value rows.
-- Shipment tracking: stepper with done (filled blue), current (ring), upcoming (grey) steps.
+- Shipment tracking: stepper with done (filled red), current (ring), upcoming (grey) steps.
 - Bottom-right panel: tabs with counts, rows with ID, assignment, status pill, progress, chevron.
 - Gateway inspect card shows the **board twin** (see below) instead of key-value rows only.
 

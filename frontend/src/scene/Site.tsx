@@ -159,9 +159,9 @@ export function Containers({ layout }: { layout: Layout }) {
         <group key={i} position={[c.x, 0, c.z]} rotation={[0, -c.heading_rad, 0]}>
           <Box size={[6.06, 2.59, 2.44]} color={c.color} />
           {Array.from({ length: 11 }, (_, k) => [1.23, -1.23].map((zz) => (
-            <Box key={`${k}${zz}`} size={[0.12, 2.4, 0.04]} at={[-2.6 + k * 0.52, 0.1, zz]} color={c.color === color.structure ? color.structureDark : "#737C90"} shadow={false} />
+            <Box key={`${k}${zz}`} size={[0.12, 2.4, 0.04]} at={[-2.6 + k * 0.52, 0.1, zz]} color={c.color === color.structure ? color.structureDark : "#777777"} shadow={false} />
           )))}
-          <Box size={[0.04, 2.4, 2.3]} at={[3.04, 0.1, 0]} color={c.color === color.structure ? color.structureDark : "#737C90"} shadow={false} />
+          <Box size={[0.04, 2.4, 2.3]} at={[3.04, 0.1, 0]} color={c.color === color.structure ? color.structureDark : "#777777"} shadow={false} />
         </group>
       ))}
     </group>

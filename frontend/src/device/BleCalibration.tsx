@@ -124,7 +124,7 @@ export function BleCalibration() {
             </select>
           </label>
           <button type="button" onClick={capture} disabled={!ready || !node}
-            className="h-10 rounded-lg bg-info px-4 font-semibold text-white disabled:opacity-50">
+            className="h-10 rounded-lg bg-accent px-4 font-semibold text-white disabled:opacity-50">
             {ready ? `Capture ${chosen.avg_rssi_dbm!.toFixed(1)} dBm` : chosen ? `Waiting for ${config?.window ?? 5} scans (${chosen.readings})` : "No tag"}
           </button>
         </div>
@@ -158,7 +158,7 @@ export function BleCalibration() {
               {nodeLabel(a)} and {nodeLabel(b)} are less than {MIN_GAP_DB} dB apart, too close to tell apart reliably. Drop one or pick spots farther apart.
             </div>
           ))}
-          <pre className="tabular mt-3 overflow-x-auto rounded-lg bg-[#F6F8FC] p-3 text-[12px] leading-relaxed">{json}</pre>
+          <pre className="tabular mt-3 overflow-x-auto rounded-lg bg-[#F6F6F6] p-3 text-[12px] leading-relaxed">{json}</pre>
         </div>
       )}
     </div>

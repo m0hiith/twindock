@@ -6,6 +6,7 @@ import { AutoModeToggle } from "./AutoModeToggle";
 import { LivePill } from "./LivePill";
 import { Search } from "./Search";
 import { ago, Icon, useTick } from "./ui";
+import { Brand } from "./Brand";
 
 /** Closes a popover on outside click or Escape. */
 function usePopover(): [boolean, (v: boolean) => void, React.RefObject<HTMLDivElement | null>] {
@@ -108,12 +109,7 @@ function Notifications() {
 export function TopBar() {
   return (
     <div className="card pointer-events-auto flex h-[60px] items-center gap-4 px-4">
-      <div className="flex items-center gap-2.5">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-structure text-white">
-          <Icon name="logo" size={17} strokeWidth={2.2} />
-        </span>
-        <span className="text-[17px] font-semibold tracking-tight">TwinDock</span>
-      </div>
+      <Brand />
       <div className="ml-4"><Search /></div>
       <div className="ml-auto flex items-center gap-2">
         <SiteSelector />

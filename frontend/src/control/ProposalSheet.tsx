@@ -64,7 +64,7 @@ export function ProposalSheet() {
         <button type="button" onClick={() => propose(null)} disabled={busy}
           className="h-11 flex-1 rounded-xl border border-[var(--card-border)] bg-white font-medium text-ink hover:bg-idle-bg">Cancel</button>
         <button type="button" onClick={confirm} disabled={busy}
-          className="h-11 flex-[2] rounded-xl bg-info font-semibold text-white hover:bg-[var(--structure-dark)] disabled:opacity-60">{busy ? "Sending…" : "Confirm move"}</button>
+          className="h-11 flex-[2] rounded-xl bg-accent font-semibold text-white hover:bg-[var(--structure-dark)] disabled:opacity-60">{busy ? "Sending…" : "Confirm move"}</button>
       </div>
     </div>
   );

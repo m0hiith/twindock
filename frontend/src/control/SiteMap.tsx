@@ -49,7 +49,7 @@ function Static({ layout }: { layout: Layout }) {
       ))}
       {layout.buildings.map((b) => (
         <g key={b.id}>
-          <rect x={b.x} y={b.z} width={b.w} height={b.d} rx={0.4} fill={b.kind === "warehouse" ? model.floor : "#DCE4FB"} stroke={color.structure} strokeWidth={0.5} />
+          <rect x={b.x} y={b.z} width={b.w} height={b.d} rx={0.4} fill={b.kind === "warehouse" ? model.floor : "#F9E1E3"} stroke={color.structure} strokeWidth={0.5} />
           {b.kind === "office" && <Label x={b.x + b.w / 2} z={b.z + b.d / 2}>{b.label ?? "Office"}</Label>}
         </g>
       ))}
@@ -67,7 +67,7 @@ function Static({ layout }: { layout: Layout }) {
       ))}
       {layout.racks.map((r) => (
         <g key={r.id}>
-          <rect x={r.x} y={r.z} width={r.w} height={r.d} fill="#E3E9F8" stroke={model.rackUpright} strokeWidth={0.2} />
+          <rect x={r.x} y={r.z} width={r.w} height={r.d} fill="#E8E8E8" stroke={model.rackUpright} strokeWidth={0.2} />
           {r.slots.slice(1).map((_, i) => {
             const x = r.x + ((i + 1) * r.w) / r.slots.length;
             return <line key={i} x1={x} y1={r.z} x2={x} y2={r.z + r.d} stroke={model.rackUpright} strokeWidth={0.15} />;
@@ -94,8 +94,8 @@ const TARGET_TYPES = new Set<LayoutNode["type"]>(["rack_slot", "zone", "dock", "
 
 function NodeMarker({ n, check, chosen, onTap }: { n: LayoutNode; check: Checked | undefined; chosen: boolean; onTap: (n: LayoutNode) => void }) {
   const ok = check?.ok === true;
-  const fill = chosen ? color.info : ok ? "#FFFFFF" : color.idleBg;
-  const stroke = chosen ? color.info : ok ? color.info : color.idle;
+  const fill = chosen ? color.accent : ok ? "#FFFFFF" : color.idleBg;
+  const stroke = chosen ? color.accent : ok ? color.accent : color.idle;
   return (
     <g onClick={(e) => { e.stopPropagation(); onTap(n); }} style={{ cursor: "pointer" }} role="button" aria-label={`${n.label ?? n.id}${check && !ok ? `, unavailable: ${check.reason}` : ""}`}>
       <circle cx={n.x} cy={n.z} r={2.2} fill="transparent" />
@@ -107,7 +107,7 @@ function NodeMarker({ n, check, chosen, onTap }: { n: LayoutNode; check: Checked
 function UnitGlyph({ u, selected }: { u: Unit; selected: boolean }) {
   const deg = (u.heading_rad * 180) / Math.PI;
   const tap = (e: React.MouseEvent) => { e.stopPropagation(); send({ type: "select_unit", unit_id: u.id }); };
-  const ring = selected && <circle r={u.kind === "truck" ? 6.4 : 2} fill="none" stroke={color.info} strokeWidth={0.35} />;
+  const ring = selected && <circle r={u.kind === "truck" ? 6.4 : 2} fill="none" stroke={color.accent} strokeWidth={0.35} />;
   const live = u.source === "device" && <circle r={u.kind === "truck" ? 6.9 : 2.5} fill="none" stroke={color.live} strokeWidth={0.25} strokeDasharray="0.6 0.4" />;
   if (u.kind === "forklift") {
     return (
@@ -154,8 +154,8 @@ function PathPreview({ unit, path, layout }: { unit: Unit; path: string[]; layou
   const end = pts[pts.length - 1]!;
   return (
     <g style={{ pointerEvents: "none" }}>
-      <polyline points={pts.map((p) => p.join(",")).join(" ")} fill="none" stroke={color.info} strokeWidth={0.5} strokeDasharray="1 0.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={end[0]} cy={end[1]} r={1.5} fill={color.info} fillOpacity={0.18} />
+      <polyline points={pts.map((p) => p.join(",")).join(" ")} fill="none" stroke={color.accent} strokeWidth={0.5} strokeDasharray="1 0.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={end[0]} cy={end[1]} r={1.5} fill={color.accent} fillOpacity={0.18} />
     </g>
   );
 }

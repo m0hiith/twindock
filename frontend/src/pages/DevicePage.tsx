@@ -3,8 +3,8 @@
 import { BleCalibration } from "../device/BleCalibration";
 import { FakeBoardBanner } from "../hud/FakeBoardBanner";
 import { LivePill } from "../hud/LivePill";
-import { Icon } from "../hud/ui";
 import { useWorld } from "../store/world";
+import { Brand } from "../hud/Brand";
 
 export function DevicePage() {
   const site = useWorld((s) => s.layout?.site.short);
@@ -12,7 +12,7 @@ export function DevicePage() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 p-4">
         <header className="flex items-center gap-3">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-structure text-white"><Icon name="logo" size={17} strokeWidth={2.2} /></span>
+          <Brand compact title="" />
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-semibold leading-tight">Device · BLE calibration</div>
             <div className="text-[12px] text-ink-2">{site}</div>

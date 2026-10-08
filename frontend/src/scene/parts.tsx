@@ -32,7 +32,7 @@ export const unitPlane = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
 export const OutlineContext = createContext(false);
 
 /** Unbaked parts (the moving forks) get a back-face hull when their unit is hovered. */
-const hoverMat = new THREE.MeshBasicMaterial({ color: color.info, side: THREE.BackSide });
+const hoverMat = new THREE.MeshBasicMaterial({ color: color.accent, side: THREE.BackSide });
 function HoverOutline() {
   const on = useContext(OutlineContext);
   return on ? <mesh geometry={unitBox} material={hoverMat} scale={[1.08, 1.6, 1.4]} /> : null;

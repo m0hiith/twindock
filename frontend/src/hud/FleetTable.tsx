@@ -53,7 +53,7 @@ export function FleetTable() {
           const sel = u.id === selected;
           return (
             <button key={u.id} type="button" onClick={() => selectAndCenter(u.id)} aria-current={sel}
-              className={`grid w-full grid-cols-[96px_1fr_92px_88px_16px] items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${sel ? "bg-info-bg" : "hover:bg-[#F6F8FC]"}`}>
+              className={`grid w-full grid-cols-[96px_1fr_92px_88px_16px] items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${sel ? "bg-info-bg" : "hover:bg-[#F6F6F6]"}`}>
               <span className="flex items-center gap-1 whitespace-nowrap font-semibold">{u.kind === "dock" ? u.label : u.id}{u.source === "device" && <LiveBadge />}</span>
               <span className="truncate text-ink">{u.task}</span>
               <span><StatusPill unit={u} /></span>

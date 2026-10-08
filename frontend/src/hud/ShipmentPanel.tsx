@@ -32,9 +32,9 @@ function Stepper({ current }: { current: number }) {
         const done = i < current, now = i === current;
         return (
           <li key={label} className="relative flex flex-1 flex-col items-center">
-            {i > 0 && <span className={`absolute left-[-50%] top-[11px] h-0.5 w-full ${i <= current ? "bg-info" : "bg-[var(--card-border)]"}`} />}
-            <span className={`z-10 grid h-6 w-6 place-items-center rounded-full ${done ? "bg-info text-white" : now ? "border-2 border-info bg-white" : "border-2 border-[var(--card-border)] bg-white"}`}>
-              {done ? <Icon name="check" size={13} strokeWidth={2.6} /> : now ? <span className="h-2 w-2 rounded-full bg-info" /> : null}
+            {i > 0 && <span className={`absolute left-[-50%] top-[11px] h-0.5 w-full ${i <= current ? "bg-accent" : "bg-[var(--card-border)]"}`} />}
+            <span className={`z-10 grid h-6 w-6 place-items-center rounded-full ${done ? "bg-accent text-white" : now ? "border-2 border-accent bg-white" : "border-2 border-[var(--card-border)] bg-white"}`}>
+              {done ? <Icon name="check" size={13} strokeWidth={2.6} /> : now ? <span className="h-2 w-2 rounded-full bg-accent" /> : null}
             </span>
             <span className={`mt-1.5 text-[12px] ${done || now ? "font-medium text-ink" : "text-ink-2"}`}>{label}</span>
           </li>
@@ -77,7 +77,7 @@ export function ShipmentPanel() {
       </div>
 
       <button type="button" onClick={() => selectAndCenter(t.id)} aria-label={`Select ${t.id}`}
-        className="w-[230px] shrink-0 rounded-xl border border-[var(--card-border)] bg-[#F8FAFD] p-3 text-left transition-colors hover:border-info">
+        className="w-[230px] shrink-0 rounded-xl border border-[var(--card-border)] bg-[#F8F8F8] p-3 text-left transition-colors hover:border-info">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-[15px] font-semibold">{t.id}{t.source === "device" && <LiveBadge />}</span>
           <StatusPill unit={t} />

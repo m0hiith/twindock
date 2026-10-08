@@ -20,7 +20,7 @@ export function UnitChips() {
         const on = u.id === selected;
         return (
           <button key={u.id} type="button" onClick={() => send({ type: "select_unit", unit_id: on ? null : u.id })} aria-pressed={on}
-            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-semibold transition-colors ${on ? "border-info bg-info text-white" : "border-[var(--card-border)] bg-white text-ink"}`}>
+            className={`flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-semibold transition-colors ${on ? "border-accent bg-accent text-white" : "border-[var(--card-border)] bg-white text-ink"}`}>
             <Icon name={kindIcon[u.kind]} size={15} />
             {u.id}
             {u.source === "device" && <span className={`h-1.5 w-1.5 rounded-full ${on ? "bg-white" : "bg-live"}`} title="Tracked by the board" />}
@@ -55,7 +55,7 @@ function QuickPicker({ unit, kind, onClose }: { unit: Unit; kind: QuickKind; onC
   const list = candidates.map((c) => results.get(c.key)).filter((r): r is Checked => r !== undefined)
     .sort((a, b) => Number(b.ok) - Number(a.ok));
   return (
-    <div className="mt-2 rounded-xl border border-[var(--card-border)] bg-[#F8FAFD] p-1.5">
+    <div className="mt-2 rounded-xl border border-[var(--card-border)] bg-[#F8F8F8] p-1.5">
       <div className="flex items-center justify-between px-2 py-1">
         <span className="text-[13px] font-semibold">{quickLabel[kind]}</span>
         <button type="button" onClick={onClose} aria-label="Close" className="grid h-8 w-8 place-items-center rounded-lg text-ink-2 hover:bg-idle-bg"><Icon name="close" size={14} /></button>

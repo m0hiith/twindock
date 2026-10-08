@@ -1,4 +1,4 @@
-// Selected unit: blue corner brackets on the ground + floating pill label; its destination gets
+// Selected unit: red corner brackets on the ground + floating pill label; its destination gets
 // a map pin and the remaining path is drawn on the ground. Hover gets a lighter bracket.
 import { Line } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
@@ -82,13 +82,13 @@ function MapPin({ x, z }: { x: number; z: number }) {
   return (
     <group position={[x, 0, z]} scale={1.5}>
       <group ref={g}>
-        <mesh rotation={[Math.PI, 0, 0]} position={[0, 0.55, 0]} material={mat(color.info)} castShadow>
+        <mesh rotation={[Math.PI, 0, 0]} position={[0, 0.55, 0]} material={mat(color.accent)} castShadow>
           <coneGeometry args={[0.42, 1.1, 20]} />
         </mesh>
-        <Ball size={[0.86, 0.86, 0.86]} at={[0, 1.1, 0]} color={color.info} />
+        <Ball size={[0.86, 0.86, 0.86]} at={[0, 1.1, 0]} color={color.accent} />
         <Ball size={[0.34, 0.34, 0.34]} at={[0, 1.12, 0.35]} color="#FFFFFF" shadow={false} />
       </group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} material={mat(color.info, { transparent: 0.25 })}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} material={mat(color.accent, { transparent: 0.25 })}>
         <circleGeometry args={[0.7, 32]} />
       </mesh>
     </group>
@@ -108,7 +108,7 @@ function PathLine({ unitId, path }: { unitId: string; path: string[] }) {
     line.current.geometry.setPositions([p.x, 0.06, p.z, ...pts.flat()]);
   });
   if (pts.length === 0) return null;
-  return <Line ref={line as never} points={[pts[0]!, ...pts]} color={color.info} lineWidth={3} dashed dashSize={0.6} gapSize={0.4} />;
+  return <Line ref={line as never} points={[pts[0]!, ...pts]} color={color.accent} lineWidth={3} dashed dashSize={0.6} gapSize={0.4} />;
 }
 
 export function SelectionOverlay() {
@@ -121,13 +121,13 @@ export function SelectionOverlay() {
     <group>
       {hovered && (() => {
         const f = footprint(hovered);
-        return <Follow id={hovered.id} rot={f.rot}><Brackets l={f.l} w={f.w} c={color.info} opacity={0.45} /></Follow>;
+        return <Follow id={hovered.id} rot={f.rot}><Brackets l={f.l} w={f.w} c={color.accent} opacity={0.45} /></Follow>;
       })()}
       {selected && (() => {
         const f = footprint(selected);
         return (
           <>
-            <Follow id={selected.id} rot={f.rot}><Brackets l={f.l} w={f.w} c={color.info} /></Follow>
+            <Follow id={selected.id} rot={f.rot}><Brackets l={f.l} w={f.w} c={color.accent} /></Follow>
             <PillTracker id={selected.id} h={f.h} />
           </>
         );

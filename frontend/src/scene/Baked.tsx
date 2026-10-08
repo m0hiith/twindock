@@ -10,7 +10,7 @@ import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferG
 // Hover outline as an inverted hull: back faces pushed out along smoothed normals by a fixed
 // world thickness. (drei <Outlines> does not render with our orthographic camera.)
 const OUTLINE_M = 0.05;
-const hullMat = new THREE.MeshBasicMaterial({ color: color.info, side: THREE.BackSide });
+const hullMat = new THREE.MeshBasicMaterial({ color: color.accent, side: THREE.BackSide });
 hullMat.onBeforeCompile = (shader) => {
   shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>",
     `#include <begin_vertex>

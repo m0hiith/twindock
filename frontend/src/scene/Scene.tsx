@@ -39,7 +39,7 @@ export function Scene() {
       gl={{ antialias: true, powerPreference: "high-performance" }}
       onPointerMissed={() => { if (!dragState.moved && selected) send({ type: "select_unit", unit_id: null }); }}
       style={{ position: "absolute", inset: 0 }}>
-      <color attach="background" args={["#E9EDF6"]} />
+      <color attach="background" args={["#EDEDED"]} />
       <CameraRig layout={layout} />
       <Lights layout={layout} />
       <Ground layout={layout} />

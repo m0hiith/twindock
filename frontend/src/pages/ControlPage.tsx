@@ -16,6 +16,7 @@ import { Icon, TabButton } from "../hud/ui";
 import type { LayoutNode } from "../layout";
 import { send } from "../store/ws";
 import { useWorld } from "../store/world";
+import { Brand } from "../hud/Brand";
 
 type Tab = "move" | "gateway" | "log";
 
@@ -97,7 +98,7 @@ export function ControlPage() {
     <div className="flex h-full flex-col bg-[var(--ground)] lg:flex-row">
       <div className="flex min-h-0 flex-col lg:flex-1">
         <header className="flex items-center gap-2 px-3 pb-2 pt-3 sm:px-4">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-structure text-white"><Icon name="logo" size={17} strokeWidth={2.2} /></span>
+          <Brand compact title="" />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[15px] font-semibold leading-tight">Control Room</div>
             <div className="hidden truncate text-[12px] text-ink-2 sm:block">{layout?.site.short}</div>
@@ -109,7 +110,7 @@ export function ControlPage() {
         </header>
         <div className="flex justify-center px-3 empty:hidden"><FakeBoardBanner /></div>
         <div className="px-3 sm:px-4"><UnitChips /></div>
-        <div className="relative mx-3 mb-2 mt-1 aspect-[57/86] max-h-[62vh] min-h-0 overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[#EEF1F8] sm:mx-4 lg:mb-4 lg:aspect-auto lg:max-h-none lg:flex-1">
+        <div className="relative mx-3 mb-2 mt-1 aspect-[57/86] max-h-[62vh] min-h-0 overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[#F0F0F0] sm:mx-4 lg:mb-4 lg:aspect-auto lg:max-h-none lg:flex-1">
           <SiteMap checks={perNode} chosen={proposal?.target ?? null} path={proposal?.path ?? null} onNodeTap={onNodeTap}
             onBackground={() => { propose(null); setNotice(null); }} />
         </div>
