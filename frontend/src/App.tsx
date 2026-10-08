@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchLayout } from "./layout";
-import { ControlPlaceholder } from "./pages/ControlPlaceholder";
+import { ControlPage } from "./pages/ControlPage";
 import { TwinPage } from "./pages/TwinPage";
 import { connect } from "./store/ws";
 import { useWorld } from "./store/world";
@@ -26,7 +26,7 @@ export default function App() {
     );
   }
   // Two routes, so plain pathname matching is enough; "/" shows the twin.
-  if (location.pathname.startsWith("/control")) return <ControlPlaceholder />;
+  if (location.pathname.startsWith("/control")) return <ControlPage />;
   if (location.pathname !== "/twin") history.replaceState(null, "", "/twin" + location.search);
   return <TwinPage />;
 }
