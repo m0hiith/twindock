@@ -1,27 +1,34 @@
 import { FakeBoardBanner } from "../hud/FakeBoardBanner";
-import { LivePill } from "../hud/LivePill";
+import { FleetTable } from "../hud/FleetTable";
+import { InspectCard } from "../hud/InspectCard";
+import { KpiCards } from "../hud/KpiCards";
 import { MapControls } from "../hud/MapControls";
 import { SelectionPill } from "../hud/SelectionPill";
+import { ShipmentPanel } from "../hud/ShipmentPanel";
+import { TopBar } from "../hud/TopBar";
 import { Scene } from "../scene/Scene";
-import { useWorld } from "../store/world";
 
+// The scene fills the viewport; HUD cards float over it. The overlay itself ignores the pointer
+// so dragging between cards still pans the map; each card opts back in.
 export function TwinPage() {
-  const site = useWorld((s) => s.layout?.site);
   return (
     <div className="relative h-full w-full">
       <Scene />
       <SelectionPill />
-      <div className="pointer-events-none absolute inset-x-4 top-4 flex items-start justify-between gap-4">
-        <div className="card pointer-events-auto flex items-center gap-3 px-3 py-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-structure text-white">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"><path d="M4 15 12 7l8 8" /><path d="M9 15h6v4H9z" /></svg>
-          </span>
-          <span className="text-[15px] font-semibold">TwinDock</span>
-          {site && <span className="text-ink-2">{site.short}</span>}
-          <LivePill />
+      <div className="pointer-events-none absolute inset-4 z-20 flex flex-col gap-3">
+        <TopBar />
+        <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
+        <div className="flex items-start justify-between gap-3">
+          <KpiCards />
+          <div className="flex items-start gap-3">
+            <div className="pointer-events-auto"><MapControls /></div>
+            <InspectCard />
+          </div>
         </div>
-        <FakeBoardBanner />
-        <div className="pointer-events-auto"><MapControls /></div>
+        <div className="mt-auto flex items-end justify-between gap-3">
+          <ShipmentPanel />
+          <FleetTable />
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import type { CommandAck, Event, Gateway, ServerMessage, Unit } from "../contract";
 import type { Layout } from "../layout";
+import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
 export type Conn = "connecting" | "live" | "reconnecting";
 
@@ -17,12 +18,19 @@ interface WorldState {
   autoMode: boolean;
   events: Event[];
   acks: CommandAck[];
+  /** KPI counts at the last world_snapshot, so KPI cards can show what changed since then. */
+  baseline: { counts: KpiCounts; at_ms: number } | null;
   setConn: (c: Conn) => void;
   setLayout: (l: Layout) => void;
   apply: (m: ServerMessage) => void;
 }
 
 const MAX_LOG = 200;
+
+/** Server time minus local time, from the latest server_ts_ms. Device ages are measured on the
+ *  server clock, so a phone with a skewed clock still shows "12s ago" correctly. */
+export const serverClock = { offsetMs: 0 };
+export const serverNow = () => Date.now() + serverClock.offsetMs;
 
 export const useWorld = create<WorldState>((set) => ({
   conn: "connecting",
@@ -34,11 +42,13 @@ export const useWorld = create<WorldState>((set) => ({
   autoMode: false,
   events: [],
   acks: [],
+  baseline: null,
   setConn: (conn) => set({ conn }),
   setLayout: (layout) => set({ layout }),
   apply: (m) =>
     set((s) => {
       const now = performance.now();
+      if ("server_ts_ms" in m) serverClock.offsetMs = m.server_ts_ms - Date.now();
       switch (m.type) {
         case "world_snapshot": {
           const units: Record<string, Unit> = {};
@@ -47,7 +57,10 @@ export const useWorld = create<WorldState>((set) => ({
             units[u.id] = u;
             unitStamp[u.id] = now;
           }
-          return { units, unitStamp, gateway: m.gateway, selected: m.selected_unit_id ?? null, autoMode: m.auto_mode };
+          return {
+            units, unitStamp, gateway: m.gateway, selected: m.selected_unit_id ?? null, autoMode: m.auto_mode,
+            baseline: { counts: kpiCounts(units), at_ms: m.server_ts_ms },
+          };
         }
         case "unit_update": {
           const units = { ...s.units };
