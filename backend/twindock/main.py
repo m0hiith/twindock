@@ -15,13 +15,14 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .engine import Engine, MqttOut, WsOut
 from .graph import DEFAULT_LAYOUT, load_layout
 from .hub import Hub
 from .mqtt_bridge import MqttBridge
+from .wiring import WiringInvalid, load_wiring
 
 log = logging.getLogger("twindock")
 
@@ -88,6 +89,15 @@ def health() -> dict[str, Any]:
 def layout() -> dict[str, Any]:
     """Static geometry for the 3D scene and the Control Room map."""
     return state.layout_json
+
+
+@app.get("/api/wiring")
+def wiring() -> dict[str, Any]:
+    """hardware/wiring.json for the /wiring page (parts, buses, connections, board drawing)."""
+    try:
+        return load_wiring()
+    except WiringInvalid as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/snapshot")

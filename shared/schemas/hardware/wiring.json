@@ -5,9 +5,14 @@
   "description": "Single source of truth for how the forklift sensor pack is connected. Firmware pins (tools/gen_pins.py), the /wiring page and docs/hardware_sheet.pdf are all generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is \"unverified\".",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "board", "sdk", "buses", "parts", "connections", "boot_sequence", "open_questions"],
+  "required": ["version", "board", "sdk", "board_drawing", "buses", "parts", "connections", "boot_sequence", "open_questions"],
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "pct": { "type": "number", "minimum": 0, "maximum": 100 },
+    "status": {
+      "description": "planned: not connected or not read yet. wired: physically connected (on-board parts and PCB traces are wired by the board itself). verified: firmware has read a plausible value from it.",
+      "enum": ["planned", "wired", "verified"]
+    },
     "pin_ref": {
       "description": "<part id>.<pin name>, e.g. soc.ULP_GPIO_6 or vl53l1x.qwiic_in.SDA",
       "type": "string",
@@ -45,6 +50,62 @@
     "version": { "const": 1 },
     "board": { "type": "string", "minLength": 1 },
     "sdk": { "type": "string", "minLength": 1 },
+    "board_drawing": {
+      "description": "Outline of the bare board for the /wiring page, used until frontend/public/board/top.jpg exists (and for parts whose outline_pct is still null). Positions are % of board width/height, top view, 0,0 = top-left.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_mm", "height_mm", "evidence", "source", "features", "pad_columns"],
+      "properties": {
+        "width_mm": { "type": "number", "exclusiveMinimum": 0 },
+        "height_mm": { "type": "number", "exclusiveMinimum": 0 },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "source": { "type": "string" },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "part", "label", "kind", "x", "y", "w", "h"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "part": { "type": ["string", "null"], "description": "Part id when the feature is in `parts`; null for landmarks drawn only for orientation." },
+              "label": { "type": "string" },
+              "kind": { "enum": ["chip", "connector", "button", "led", "switch", "other"] },
+              "x": { "$ref": "#/$defs/pct" }, "y": { "$ref": "#/$defs/pct" },
+              "w": { "$ref": "#/$defs/pct" }, "h": { "$ref": "#/$defs/pct" }
+            }
+          }
+        },
+        "pad_columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["side", "x", "y_first", "y_last", "pads"],
+            "properties": {
+              "side": { "enum": ["left", "right"] },
+              "x": { "$ref": "#/$defs/pct" },
+              "y_first": { "$ref": "#/$defs/pct" },
+              "y_last": { "$ref": "#/$defs/pct" },
+              "pads": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["number", "net"],
+                  "properties": {
+                    "number": { "type": "integer", "minimum": 1 },
+                    "net": { "type": "string", "minLength": 1 },
+                    "function": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pads_source": { "type": "string" }
+      }
+    },
     "buses": {
       "type": "array",
       "items": {
@@ -69,7 +130,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "part_number", "quantity", "location", "kind", "bus", "address", "status", "pins"],
+        "required": ["id", "name", "part_number", "quantity", "location", "kind", "bus", "address", "caption", "status", "pins"],
         "properties": {
           "id": { "$ref": "#/$defs/id" },
           "name": { "type": "string", "minLength": 1 },
@@ -96,6 +157,7 @@
           "sdk_example": { "type": ["string", "null"] },
           "measures": { "type": "string" },
           "forklift_use": { "type": "string" },
+          "caption": { "type": "string", "minLength": 1, "description": "One plain-language sentence for non-engineers on the /wiring page." },
           "topics": {
             "type": "array",
             "items": { "type": "string", "pattern": "^twin/gateway/" },
@@ -111,10 +173,7 @@
             },
             "description": "Outline on top.jpg in % for on-board parts. null until measured from the photo."
           },
-          "status": {
-            "enum": ["planned", "wired", "verified"],
-            "description": "planned: not connected or not read yet. wired: physically connected. verified: firmware has read a plausible value from it."
-          },
+          "status": { "$ref": "#/$defs/status" },
           "pins": { "type": "array", "items": { "$ref": "#/$defs/pin" } },
           "notes": { "type": "string" }
         }
@@ -125,7 +184,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "from", "to", "signal", "medium", "wire_color", "evidence"],
+        "required": ["id", "from", "to", "signal", "medium", "wire_color", "status", "evidence"],
         "properties": {
           "id": { "$ref": "#/$defs/id" },
           "from": { "$ref": "#/$defs/pin_ref" },
@@ -138,6 +197,7 @@
             "description": "Qwiic code: red 3.3 V, black GND, blue SDA, yellow SCL. null for PCB traces.",
             "enum": ["red", "black", "blue", "yellow", "white", "green", null]
           },
+          "status": { "$ref": "#/$defs/status" },
           "evidence": { "$ref": "#/$defs/evidence" },
           "source": { "type": "string" }
         }

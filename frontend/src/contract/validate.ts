@@ -1,6 +1,6 @@
 // Runtime validation of WebSocket messages against /shared/schemas (the same files the backend uses).
 import Ajv2020, { type ValidateFunction } from "ajv/dist/2020";
-import type { ClientMessage, ServerMessage } from "./index";
+import type { ClientMessage, ServerMessage, Wiring } from "./index";
 
 const files = import.meta.glob<{ default: Record<string, unknown> }>("../../../shared/schemas/*/*.json", { eager: true });
 
@@ -45,4 +45,12 @@ export function parseServerMessage(text: string): ServerMessage | null {
 export function checkClientMessage(msg: ClientMessage): void {
   const v = validatorFor(msg.type);
   if (!v || !v(msg)) throw new Error(`[contract] invalid ${msg.type}: ${ajv.errorsText(v?.errors)}`);
+}
+
+/** Check GET /api/wiring against shared/schemas/hardware/wiring.json. Throws with the first error. */
+export function checkWiring(data: unknown): Wiring {
+  const v = ajv.getSchema("twindock/hardware/wiring.json");
+  if (!v) throw new Error("[contract] wiring schema not loaded");
+  if (!v(data)) throw new Error(`[contract] invalid /api/wiring: ${ajv.errorsText(v.errors)}`);
+  return data as Wiring;
 }

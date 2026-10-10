@@ -2,6 +2,275 @@
   "version": 1,
   "board": "BRD2605A",
   "sdk": "WiSeConnect 3.5.3",
+  "board_drawing": {
+    "width_mm": 30.4,
+    "height_mm": 55.0,
+    "evidence": "user-guide",
+    "source": "UG581 Rev. 1.1 Figure 1.1: 30.4 mm x 55.0 mm. Feature boxes are measured from the top view of that figure (approx. +/- 1 mm) and are only used until outline_pct / x_pct are measured on frontend/public/board/top.jpg.",
+    "features": [
+      {
+        "id": "qwiic",
+        "part": "qwiic",
+        "label": "Qwiic",
+        "kind": "connector",
+        "x": 1.5,
+        "y": 6.4,
+        "w": 12.0,
+        "h": 11.4
+      },
+      {
+        "id": "soc",
+        "part": "soc",
+        "label": "SiWG917",
+        "kind": "chip",
+        "x": 37.7,
+        "y": 31.9,
+        "w": 22.9,
+        "h": 12.8
+      },
+      {
+        "id": "icm40627",
+        "part": "icm40627",
+        "label": "IMU",
+        "kind": "chip",
+        "x": 44.5,
+        "y": 57.7,
+        "w": 9.7,
+        "h": 4.5
+      },
+      {
+        "id": "veml6035",
+        "part": "veml6035",
+        "label": "Light",
+        "kind": "chip",
+        "x": 46.7,
+        "y": 64.6,
+        "w": 6.6,
+        "h": 3.8
+      },
+      {
+        "id": "si7021",
+        "part": "si7021",
+        "label": "RH/T",
+        "kind": "chip",
+        "x": 84.1,
+        "y": 90.8,
+        "w": 11.7,
+        "h": 7.7
+      },
+      {
+        "id": "antenna",
+        "part": null,
+        "label": "2.4 GHz antenna",
+        "kind": "other",
+        "x": 43.7,
+        "y": 1.4,
+        "w": 10.2,
+        "h": 3.0
+      },
+      {
+        "id": "btn1",
+        "part": null,
+        "label": "BTN1",
+        "kind": "button",
+        "x": 25.7,
+        "y": 71.6,
+        "w": 15.4,
+        "h": 5.5
+      },
+      {
+        "id": "btn0",
+        "part": null,
+        "label": "BTN0",
+        "kind": "button",
+        "x": 56.9,
+        "y": 71.6,
+        "w": 15.4,
+        "h": 5.5
+      },
+      {
+        "id": "isp",
+        "part": null,
+        "label": "ISP",
+        "kind": "button",
+        "x": 15.7,
+        "y": 57.0,
+        "w": 16.5,
+        "h": 5.5
+      },
+      {
+        "id": "reset",
+        "part": null,
+        "label": "RESET",
+        "kind": "button",
+        "x": 4.5,
+        "y": 91.2,
+        "w": 15.7,
+        "h": 6.0
+      },
+      {
+        "id": "led0",
+        "part": null,
+        "label": "RGB LED",
+        "kind": "led",
+        "x": 19.8,
+        "y": 85.3,
+        "w": 4.5,
+        "h": 1.8
+      },
+      {
+        "id": "psram_switch",
+        "part": null,
+        "label": "PSRAM",
+        "kind": "switch",
+        "x": 65.4,
+        "y": 57.5,
+        "w": 18.4,
+        "h": 5.0
+      },
+      {
+        "id": "usb_c",
+        "part": null,
+        "label": "USB-C",
+        "kind": "connector",
+        "x": 34.7,
+        "y": 85.3,
+        "w": 28.9,
+        "h": 14.7
+      }
+    ],
+    "pad_columns": [
+      {
+        "side": "left",
+        "x": 6.7,
+        "y_first": 26.5,
+        "y_last": 81.0,
+        "pads": [
+          {
+            "number": 1,
+            "net": "GND"
+          },
+          {
+            "number": 3,
+            "net": "GPIO_25"
+          },
+          {
+            "number": 5,
+            "net": "GPIO_26"
+          },
+          {
+            "number": 7,
+            "net": "GPIO_27"
+          },
+          {
+            "number": 9,
+            "net": "GPIO_28"
+          },
+          {
+            "number": 11,
+            "net": "GPIO_29"
+          },
+          {
+            "number": 13,
+            "net": "GPIO_30"
+          },
+          {
+            "number": 15,
+            "net": "ULP_GPIO_7",
+            "function": "I2C_SCL (Qwiic I2C bus)"
+          },
+          {
+            "number": 17,
+            "net": "BOARD_ID_SCL"
+          },
+          {
+            "number": 19,
+            "net": "BOARD_ID_SDA"
+          },
+          {
+            "number": 21,
+            "net": "GPIO_6"
+          },
+          {
+            "number": 23,
+            "net": "GPIO_10"
+          },
+          {
+            "number": 25,
+            "net": "GPIO_12"
+          }
+        ]
+      },
+      {
+        "side": "right",
+        "x": 91.0,
+        "y_first": 26.5,
+        "y_last": 81.0,
+        "pads": [
+          {
+            "number": 2,
+            "net": "VMCU"
+          },
+          {
+            "number": 4,
+            "net": "ULP_GPIO_1",
+            "function": "SPI_MOSI (IMU & flash)"
+          },
+          {
+            "number": 6,
+            "net": "ULP_GPIO_2",
+            "function": "SPI_MISO (IMU & flash)"
+          },
+          {
+            "number": 8,
+            "net": "ULP_GPIO_8",
+            "function": "SPI_CLK (IMU & flash)"
+          },
+          {
+            "number": 10,
+            "net": "ULP_GPIO_10",
+            "function": "SPI_CS (IMU CS when SENSOR_ENABLE = 1)"
+          },
+          {
+            "number": 12,
+            "net": "ULP_GPIO_11",
+            "function": "UART_TX (VCOM)"
+          },
+          {
+            "number": 14,
+            "net": "ULP_GPIO_9",
+            "function": "UART_RX (VCOM)"
+          },
+          {
+            "number": 16,
+            "net": "ULP_GPIO_6",
+            "function": "I2C_SDA (Qwiic I2C bus)"
+          },
+          {
+            "number": 18,
+            "net": "5V"
+          },
+          {
+            "number": 20,
+            "net": "3V3"
+          },
+          {
+            "number": 22,
+            "net": "GPIO_11"
+          },
+          {
+            "number": 24,
+            "net": "GPIO_7"
+          },
+          {
+            "number": 26,
+            "net": "GND"
+          }
+        ]
+      }
+    ],
+    "pads_source": "UG581 Rev. 1.1 Table 3.2 (Expansion Header Pinout)"
+  },
   "buses": [
     {
       "id": "i2c_ulp",
@@ -68,9 +337,10 @@
       "sdk_example": null,
       "measures": "",
       "forklift_use": "Reads every sensor and publishes over Wi-Fi/MQTT.",
+      "caption": "The brain of the sensor pack: reads every sensor and sends the values over Wi-Fi.",
       "topics": [],
       "outline_pct": null,
-      "status": "planned",
+      "status": "wired",
       "pins": [
         {
           "name": "ULP_GPIO_6",
@@ -166,12 +436,13 @@
       "sdk_example": "examples/si91x_soc/siwx917_dev_kit/sensors/humidity_sensor.c",
       "measures": "Air temperature (°C) and relative humidity (%RH).",
       "forklift_use": "Ambient conditions at the forklift, e.g. cold-zone checks.",
+      "caption": "Tells us how warm and humid the air is around the forklift, for example in cold storage.",
       "topics": [
         "twin/gateway/sensor/temperature",
         "twin/gateway/sensor/humidity"
       ],
       "outline_pct": null,
-      "status": "planned",
+      "status": "wired",
       "pins": [
         {
           "name": "SDA",
@@ -214,11 +485,12 @@
       "sdk_example": "examples/si91x_soc/siwx917_dev_kit/sensors/light_sensor.c",
       "measures": "Ambient light (lux).",
       "forklift_use": "Aisle lighting level; inside vs outside the warehouse.",
+      "caption": "Tells us how bright it is, so we know if the forklift is in a dark aisle or out in the yard.",
       "topics": [
         "twin/gateway/sensor/light"
       ],
       "outline_pct": null,
-      "status": "planned",
+      "status": "wired",
       "pins": [
         {
           "name": "SDA",
@@ -269,12 +541,13 @@
       "sdk_example": "examples/si91x_soc/siwx917_dev_kit/sensors/motion_sensor.c",
       "measures": "3-axis acceleration and 3-axis rotation rate.",
       "forklift_use": "Moving vs idle, impact/collision alert, tilt.",
+      "caption": "Tells us if the forklift is moving or has hit something.",
       "topics": [
         "twin/gateway/sensor/motion",
         "twin/gateway/sensor/impact"
       ],
       "outline_pct": null,
-      "status": "planned",
+      "status": "wired",
       "pins": [
         {
           "name": "MOSI",
@@ -339,9 +612,10 @@
       "sdk_example": null,
       "measures": "",
       "forklift_use": "Plugs the external fork sensors into the board.",
+      "caption": "A small plug on the board where the extra fork sensors connect with one cable.",
       "topics": [],
       "outline_pct": null,
-      "status": "planned",
+      "status": "wired",
       "pins": [
         {
           "name": "GND",
@@ -403,6 +677,7 @@
       "sdk_example": null,
       "measures": "Distance to the nearest object, in mm (up to ~4 m).",
       "forklift_use": "Pallet present on the forks.",
+      "caption": "Measures the distance to the nearest object, so we know if a pallet is on the forks.",
       "topics": [
         "twin/gateway/sensor/fork_distance"
       ],
@@ -504,6 +779,7 @@
       "sdk_example": null,
       "measures": "Load cell bridge voltage, converted to grams after calibration.",
       "forklift_use": "Load on the forks (demo scale).",
+      "caption": "Turns the tiny signal from the load cell into a weight reading.",
       "topics": [
         "twin/gateway/sensor/fork_load"
       ],
@@ -600,6 +876,7 @@
       "sdk_example": null,
       "measures": "Strain from weight on the forks.",
       "forklift_use": "Load on the forks (demo scale).",
+      "caption": "Bends very slightly under weight: this is how we weigh what is on the forks.",
       "topics": [],
       "outline_pct": null,
       "status": "planned",
@@ -649,6 +926,7 @@
       "bus": "i2c_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
     },
@@ -660,6 +938,7 @@
       "bus": "i2c_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
     },
@@ -671,6 +950,7 @@
       "bus": "i2c_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
     },
@@ -682,6 +962,7 @@
       "bus": "i2c_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
     },
@@ -693,6 +974,7 @@
       "bus": null,
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
@@ -704,6 +986,7 @@
       "bus": "spi_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
@@ -715,6 +998,7 @@
       "bus": "spi_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
@@ -726,6 +1010,7 @@
       "bus": "spi_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
@@ -737,6 +1022,7 @@
       "bus": "spi_ulp",
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
@@ -748,6 +1034,7 @@
       "bus": null,
       "medium": "pcb",
       "wire_color": null,
+      "status": "wired",
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
@@ -759,6 +1046,7 @@
       "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "black",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -770,6 +1058,7 @@
       "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "red",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -781,6 +1070,7 @@
       "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "blue",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -792,6 +1082,7 @@
       "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "yellow",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -803,6 +1094,7 @@
       "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "black",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -814,6 +1106,7 @@
       "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "red",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -825,6 +1118,7 @@
       "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "blue",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -836,6 +1130,7 @@
       "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "yellow",
+      "status": "planned",
       "evidence": "datasheet",
       "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
     },
@@ -847,6 +1142,7 @@
       "bus": "bridge",
       "medium": "wire",
       "wire_color": "red",
+      "status": "planned",
       "evidence": "unverified",
       "source": "Common load cell colour convention; varies by model"
     },
@@ -858,6 +1154,7 @@
       "bus": "bridge",
       "medium": "wire",
       "wire_color": "black",
+      "status": "planned",
       "evidence": "unverified",
       "source": "Common load cell colour convention; varies by model"
     },
@@ -869,6 +1166,7 @@
       "bus": "bridge",
       "medium": "wire",
       "wire_color": "white",
+      "status": "planned",
       "evidence": "unverified",
       "source": "Common load cell colour convention; varies by model"
     },
@@ -880,6 +1178,7 @@
       "bus": "bridge",
       "medium": "wire",
       "wire_color": "green",
+      "status": "planned",
       "evidence": "unverified",
       "source": "Common load cell colour convention; varies by model"
     }

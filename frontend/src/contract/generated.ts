@@ -34,6 +34,37 @@ export type Kind = "forklift" | "truck" | "pallet" | "dock" | "rack" | "charger"
  */
 export type Source = "device" | "manual" | "auto";
 /**
+ * sdk-verified: found in the SDK board config (cite `source`). user-guide: from the board user guide UG581. datasheet: from the part's datasheet or a published spec (Qwiic). confirmed: also checked by the developer on the hardware. unverified: not confirmed, must not be used by firmware.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_evidence".
+ */
+export type WiringEvidence = "sdk-verified" | "user-guide" | "datasheet" | "confirmed" | "unverified";
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_id".
+ */
+export type WiringId = string;
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_pct".
+ */
+export type WiringPct = number;
+/**
+ * planned: not connected or not read yet. wired: physically connected (on-board parts and PCB traces are wired by the board itself). verified: firmware has read a plausible value from it.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_status".
+ */
+export type WiringStatus = "planned" | "wired" | "verified";
+/**
+ * <part id>.<pin name>, e.g. soc.ULP_GPIO_6 or vl53l1x.qwiic_in.SDA
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_pin_ref".
+ */
+export type WiringPinRef = string;
+/**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "forklift_state".
  */
@@ -68,6 +99,7 @@ export interface TwinDockContract {
   set_auto_mode?: SetAutoMode;
   unit_update?: UnitUpdate;
   world_snapshot?: WorldSnapshot;
+  wiring?: Wiring;
 }
 /**
  * Every 2 s. Only advertisers whose name starts with TD-. Empty list means a scan ran and found none.
@@ -521,4 +553,254 @@ export interface WorldSnapshot {
   selected_unit_id: UnitId | null;
   units: Unit[];
   gateway: Gateway;
+}
+/**
+ * Single source of truth for how the forklift sensor pack is connected. Firmware pins (tools/gen_pins.py), the /wiring page and docs/hardware_sheet.pdf are all generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is "unverified".
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring".
+ */
+export interface Wiring {
+  version: 1;
+  board: string;
+  sdk: string;
+  /**
+   * Outline of the bare board for the /wiring page, used until frontend/public/board/top.jpg exists (and for parts whose outline_pct is still null). Positions are % of board width/height, top view, 0,0 = top-left.
+   */
+  board_drawing: {
+    width_mm: number;
+    height_mm: number;
+    evidence: WiringEvidence;
+    source: string;
+    features: {
+      id: WiringId;
+      /**
+       * Part id when the feature is in `parts`; null for landmarks drawn only for orientation.
+       */
+      part: string | null;
+      label: string;
+      kind: "chip" | "connector" | "button" | "led" | "switch" | "other";
+      x: WiringPct;
+      y: WiringPct;
+      w: WiringPct;
+      h: WiringPct;
+    }[];
+    pad_columns: {
+      side: "left" | "right";
+      x: WiringPct;
+      y_first: WiringPct;
+      y_last: WiringPct;
+      pads: {
+        number: number;
+        net: string;
+        function?: string;
+      }[];
+    }[];
+    pads_source?: string;
+  };
+  buses: {
+    id: WiringId;
+    name: string;
+    kind: "i2c" | "spi" | "i2s" | "gpio" | "power" | "analog";
+    /**
+     * SoC peripheral, e.g. I2C2 (ULP_I2C). null when not known.
+     */
+    controller: string | null;
+    voltage_v: number | null;
+    evidence: WiringEvidence;
+    source?: string;
+    notes?: string;
+  }[];
+  /**
+   * @minItems 1
+   */
+  parts: [
+    {
+      id: WiringId;
+      name: string;
+      part_number: string;
+      quantity: number;
+      location: "on-board" | "external";
+      kind: "soc" | "sensor" | "connector" | "module" | "transducer";
+      /**
+       * Bus id from `buses`, or null (SoC, connectors, analog parts).
+       */
+      bus: string | null;
+      /**
+       * 7-bit I2C address as 0xNN, or null for non-I2C parts.
+       */
+      address: string | null;
+      address_evidence?: WiringEvidence;
+      /**
+       * Address the firmware moves the part to at boot (see boot_sequence). Clash checks use this when present.
+       */
+      runtime_address?: string;
+      supply?: WiringVoltageRange;
+      /**
+       * Bus id of the power rail feeding this part.
+       */
+      supplied_from?: string | null;
+      /**
+       * pin_ref of a power/enable pin that must be driven before use.
+       */
+      enable_pin?: string | null;
+      sdk_driver?: string | null;
+      sdk_example?: string | null;
+      measures?: string;
+      forklift_use?: string;
+      /**
+       * One plain-language sentence for non-engineers on the /wiring page.
+       */
+      caption: string;
+      /**
+       * MQTT topics this part feeds. Each must exist in /shared (checked in W5).
+       */
+      topics?: string[];
+      /**
+       * Outline on top.jpg in % for on-board parts. null until measured from the photo.
+       */
+      outline_pct?: {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+      } | null;
+      status: WiringStatus;
+      pins: WiringPin[];
+      notes?: string;
+    },
+    ...{
+      id: WiringId;
+      name: string;
+      part_number: string;
+      quantity: number;
+      location: "on-board" | "external";
+      kind: "soc" | "sensor" | "connector" | "module" | "transducer";
+      /**
+       * Bus id from `buses`, or null (SoC, connectors, analog parts).
+       */
+      bus: string | null;
+      /**
+       * 7-bit I2C address as 0xNN, or null for non-I2C parts.
+       */
+      address: string | null;
+      address_evidence?: WiringEvidence;
+      /**
+       * Address the firmware moves the part to at boot (see boot_sequence). Clash checks use this when present.
+       */
+      runtime_address?: string;
+      supply?: WiringVoltageRange;
+      /**
+       * Bus id of the power rail feeding this part.
+       */
+      supplied_from?: string | null;
+      /**
+       * pin_ref of a power/enable pin that must be driven before use.
+       */
+      enable_pin?: string | null;
+      sdk_driver?: string | null;
+      sdk_example?: string | null;
+      measures?: string;
+      forklift_use?: string;
+      /**
+       * One plain-language sentence for non-engineers on the /wiring page.
+       */
+      caption: string;
+      /**
+       * MQTT topics this part feeds. Each must exist in /shared (checked in W5).
+       */
+      topics?: string[];
+      /**
+       * Outline on top.jpg in % for on-board parts. null until measured from the photo.
+       */
+      outline_pct?: {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+      } | null;
+      status: WiringStatus;
+      pins: WiringPin[];
+      notes?: string;
+    }[]
+  ];
+  connections: {
+    id: WiringId;
+    from: WiringPinRef;
+    to: WiringPinRef;
+    signal: string;
+    bus?: string | null;
+    /**
+     * pcb = trace on the dev kit, drawn as a highlight, not a wire.
+     */
+    medium: "pcb" | "qwiic_cable" | "wire";
+    /**
+     * Qwiic code: red 3.3 V, black GND, blue SDA, yellow SCL. null for PCB traces.
+     */
+    wire_color: "red" | "black" | "blue" | "yellow" | "white" | "green" | null;
+    status: WiringStatus;
+    evidence: WiringEvidence;
+    source?: string;
+  }[];
+  /**
+   * Ordered steps the firmware must run before reading sensors (e.g. re-addressing a part whose default address clashes).
+   */
+  boot_sequence: {
+    step: number;
+    action: string;
+    pin?: WiringPinRef;
+    address?: string;
+    reason: string;
+  }[];
+  open_questions: {
+    id: WiringId;
+    question: string;
+    /**
+     * Part or connection ids that stay unverified until answered.
+     */
+    blocks: string[];
+  }[];
+}
+/**
+ * Allowed supply range from the datasheet.
+ */
+export interface WiringVoltageRange {
+  min_v: number;
+  max_v: number;
+}
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_pin".
+ */
+export interface WiringPin {
+  /**
+   * Pin name on this part (SDA, MOSI, qwiic_in.SDA, ULP_GPIO_6).
+   */
+  name: string;
+  /**
+   * Function: SDA, SCL, MOSI, MISO, SCK, CS, INT, 3V3, GND, EN, ...
+   */
+  signal: string;
+  /**
+   * SoC GPIO name when this pin is on the SoC or wired to it, else null.
+   */
+  gpio?: string | null;
+  /**
+   * Position on frontend/public/board/top.jpg (on-board parts and board pads only).
+   */
+  x_pct?: number | null;
+  y_pct?: number | null;
+  evidence: WiringEvidence;
+  /**
+   * File or document the value came from.
+   */
+  source?: string;
+}
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_voltage_range".
+ */
+export interface WiringVoltageRange1 {
+  min_v: number;
+  max_v: number;
 }

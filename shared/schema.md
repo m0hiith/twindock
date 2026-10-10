@@ -46,7 +46,16 @@ banner. Development only, never in the demo.
 
 `schemas/hardware/wiring.json` validates `hardware/wiring.json`, the single source of truth for the
 forklift sensor pack (parts, buses, I2C addresses, pins, wires, evidence and status). It is not a
-message; it is served later by `GET /api/wiring`. See HARDWARE.md.
+message; `GET /api/wiring` serves it as-is (validated) to the `/wiring` page. See HARDWARE.md.
+
+- Parts and connections each carry `status`: `planned`, `wired` (on-board parts and PCB traces are
+  wired by the board itself), `verified` (firmware has read a plausible value; never set by hand
+  before that).
+- Each part has a plain-language `caption` for non-engineers.
+- `board_drawing` is the board outline from UG581 Figure 1.1 (30.4 × 55.0 mm, feature boxes and the
+  26 breakout pads as % of the board). The page draws it until `frontend/public/board/top.jpg`
+  exists, then overlays the photo; a part's `outline_pct` (measured on the photo) wins over it.
+- Live readings are not in this file: the page takes them from `gateway.sensors` (gateway_update).
 
 ## WebSocket (`/ws`, backend <-> browsers)
 

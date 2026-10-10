@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../shared/schemas");
 const load = (p) => JSON.parse(readFileSync(p, "utf8"));
 const files = {};
-for (const dir of ["mqtt", "ws"]) {
+for (const dir of ["mqtt", "ws", "hardware"]) {
   for (const f of readdirSync(join(root, dir)).filter((f) => f.endsWith(".json"))) files[`${dir}/${f}`] = load(join(root, dir, f));
 }
 
@@ -43,9 +43,27 @@ const defs = {};
 const wsDefs = files["ws/defs.json"].$defs;
 for (const [name, d] of Object.entries(wsDefs)) defs[name] = rewrite(d, "ws", defs);
 const combined = { title: "TwinDockContract", type: "object", $defs: defs, properties: {} };
-for (const [key, schema] of Object.entries(files)) {
+// A schema's own $defs (hardware/wiring.json has pin, evidence, ...) are hoisted into the shared
+// $defs with the schema's name as prefix, so "#/$defs/pin" becomes "#/$defs/wiring_pin" (WiringPin).
+function hoistLocal(node, prefix) {
+  if (Array.isArray(node)) return node.map((n) => hoistLocal(n, prefix));
+  if (!node || typeof node !== "object") return node;
+  const out = {};
+  for (const [k, v] of Object.entries(node)) {
+    out[k] = k === "$ref" && typeof v === "string" && v.startsWith("#/$defs/") ? `#/$defs/${prefix}${v.slice(8)}` : hoistLocal(v, prefix);
+  }
+  return out;
+}
+
+for (const [key, raw] of Object.entries(files)) {
   if (key === "ws/defs.json") continue;
   const name = key.split("/").pop().replace(".json", "");
+  let schema = raw;
+  if (raw.$defs) {
+    const { $defs: local, ...rest } = hoistLocal(raw, `${name}_`);
+    for (const [d, def] of Object.entries(local)) defs[`${name}_${d}`] = rewrite(def, dirname(key), defs);
+    schema = rest;
+  }
   defs[name] = rewrite(schema, dirname(key), defs);
   combined.properties[name] = { $ref: `#/$defs/${name}` };
 }

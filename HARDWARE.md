@@ -73,7 +73,11 @@ Qwiic) is described in **`hardware/wiring.json`**, validated by **`shared/schema
 It is the single source of truth for parts, buses, addresses, pins, wires and the boot sequence.
 Firmware pins (`tools/gen_pins.py`), the `/wiring` page and the hardware sheet are generated from it.
 Every value carries `evidence` (`sdk-verified`, `user-guide`, `datasheet`, `confirmed`, `unverified`);
-every part carries `status` (`planned`, `wired`, `verified` = firmware has read a plausible value).
+every part and connection carries `status` (`planned`, `wired`, `verified` = firmware has read a plausible value).
+Status on 2026-10-10: SoC, Qwiic connector, Si7021, VEML6035, ICM-40627 and their PCB traces are
+`wired` (connected by the board); VL53L1X, NAU7802, the load cell and the Qwiic cables are `planned`.
+Nothing is `verified` yet. The `/wiring` page draws all of it (board outline from UG581 Figure 1.1
+until the photo exists).
 
 ### Qwiic connector (UG581 3.6.2, Table 3.3)
 

@@ -14,3 +14,5 @@ wiseconnect-*/
 backend/shared/
 .vercel
 .env*
+# Copy of hardware/wiring.json made by the Vercel build (vercel.json)
+backend/hardware/

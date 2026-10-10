@@ -3,6 +3,7 @@ import { fetchLayout } from "./layout";
 import { ControlPage } from "./pages/ControlPage";
 import { DevicePage } from "./pages/DevicePage";
 import { TwinPage } from "./pages/TwinPage";
+import { WiringPage } from "./pages/WiringPage";
 import { connect } from "./store/ws";
 import { useWorld } from "./store/world";
 
@@ -26,9 +27,10 @@ export default function App() {
       </div>
     );
   }
-  // Three routes, so plain pathname matching is enough; "/" shows the twin.
+  // A handful of routes, so plain pathname matching is enough; "/" shows the twin.
   if (location.pathname.startsWith("/control")) return <ControlPage />;
   if (location.pathname.startsWith("/device")) return <DevicePage />;
+  if (location.pathname.startsWith("/wiring")) return <WiringPage />;
   if (location.pathname !== "/twin") history.replaceState(null, "", "/twin" + location.search);
   return <TwinPage />;
 }

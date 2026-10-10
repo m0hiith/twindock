@@ -20,6 +20,7 @@ export function DevicePage() {
           <LivePill />
           <a href="/twin" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Twin</a>
           <a href="/control" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Control</a>
+          <a href="/wiring" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Wiring</a>
         </header>
         <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
         <BleCalibration />

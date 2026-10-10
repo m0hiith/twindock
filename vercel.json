@@ -5,7 +5,7 @@
       "root": "backend",
       "framework": "fastapi",
       "entrypoint": "twindock.main:app",
-      "buildCommand": "rm -rf shared && mkdir -p shared && cp -R ../shared/schemas shared/schemas"
+      "buildCommand": "rm -rf shared hardware && mkdir -p shared hardware && cp -R ../shared/schemas shared/schemas && cp ../hardware/wiring.json hardware/wiring.json"
     },
     "frontend": {
       "root": "frontend",

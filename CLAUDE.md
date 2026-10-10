@@ -39,6 +39,7 @@ SiWx917 board ──MQTT (Wi-Fi)──► Mosquitto (laptop) ◄──► backen
                                                           ▼ WebSocket
                                   ┌───────────────────────┴───────────────────────┐
                                   │  /twin  3D view + HUD    /control  Control Room │
+                                  │  /device  board page     /wiring  sensor pack   │
                                   └─────────────────────────────────────────────────┘
 ```
 
