@@ -1,0 +1,1062 @@
+{
+  "version": 1,
+  "board": "BRD2605A",
+  "sdk": "WiSeConnect 3.5.3",
+  "buses": [
+    {
+      "id": "i2c_ulp",
+      "name": "ULP I2C (on-board sensors)",
+      "kind": "i2c",
+      "controller": "I2C2 (ULP_I2C)",
+      "voltage_v": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h",
+      "notes": "SDA ULP_GPIO_6, SCL ULP_GPIO_7. The option comment above RTE_I2C2_SCL_PORT_ID is stale; the #define values are used. Pull-up voltage unverified."
+    },
+    {
+      "id": "spi_ulp",
+      "name": "ULP SSI (IMU)",
+      "kind": "spi",
+      "controller": "ULP_SSI",
+      "voltage_v": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "i2s0",
+      "name": "I2S0 (microphones)",
+      "kind": "i2s",
+      "controller": "I2S0",
+      "voltage_v": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+    },
+    {
+      "id": "sensor_rail",
+      "name": "Sensor power (switched)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h SENSOR_ENABLE_GPIO_PIN; light_sensor.c drives it high before any sensor access",
+      "notes": "Enabled by UULP_VBAT_GPIO_1. Rail voltage unverified."
+    },
+    {
+      "id": "i2c_qwiic",
+      "name": "Qwiic I2C",
+      "kind": "i2c",
+      "controller": null,
+      "voltage_v": 3.3,
+      "evidence": "unverified",
+      "notes": "Controller and SoC pins unknown. If this is the same bus as i2c_ulp, VL53L1X (0x29) clashes with VEML6035 (0x29)."
+    },
+    {
+      "id": "qwiic_3v3",
+      "name": "Qwiic 3.3 V",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.3,
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)",
+      "notes": "3.3 V by the Qwiic standard. Whether the board switches it with SENSOR_EN is unverified."
+    },
+    {
+      "id": "bridge",
+      "name": "Load cell bridge",
+      "kind": "analog",
+      "controller": null,
+      "voltage_v": null,
+      "evidence": "datasheet",
+      "source": "NAU7802 datasheet: excitation from AVDD (internal LDO)"
+    }
+  ],
+  "parts": [
+    {
+      "id": "soc",
+      "name": "SiWx917 SoC",
+      "part_number": "SiWG917M111MGTBA",
+      "quantity": 1,
+      "location": "on-board",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "Reads every sensor and publishes over Wi-Fi/MQTT.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "ULP_GPIO_6",
+          "signal": "I2C2_SDA",
+          "gpio": "ULP_GPIO_6",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h RTE_I2C2_SDA_PORT_ID 0 -> (6 + GPIO_MAX_PIN)"
+        },
+        {
+          "name": "ULP_GPIO_7",
+          "signal": "I2C2_SCL",
+          "gpio": "ULP_GPIO_7",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h RTE_I2C2_SCL_PORT_ID 0 -> (7 + GPIO_MAX_PIN)"
+        },
+        {
+          "name": "ULP_GPIO_1",
+          "signal": "ULP_SSI_MOSI",
+          "gpio": "ULP_GPIO_1",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "ULP_GPIO_2",
+          "signal": "ULP_SSI_MISO",
+          "gpio": "ULP_GPIO_2",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "ULP_GPIO_8",
+          "signal": "ULP_SSI_SCK",
+          "gpio": "ULP_GPIO_8",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "ULP_GPIO_10",
+          "signal": "ULP_SSI_CS0",
+          "gpio": "ULP_GPIO_10",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "UULP_VBAT_GPIO_3",
+          "signal": "IMU_ALS_INT",
+          "gpio": "UULP_VBAT_GPIO_3",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h SL_SI91X_IMU_ALS_INT_PIN"
+        },
+        {
+          "name": "UULP_VBAT_GPIO_1",
+          "signal": "SENSOR_EN",
+          "gpio": "UULP_VBAT_GPIO_1",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h SENSOR_ENABLE_GPIO_PIN"
+        },
+        {
+          "name": "GPIO_46",
+          "signal": "I2S0_SCLK",
+          "gpio": "GPIO_46",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+        },
+        {
+          "name": "GPIO_47",
+          "signal": "I2S0_WSCLK",
+          "gpio": "GPIO_47",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+        },
+        {
+          "name": "GPIO_48",
+          "signal": "I2S0_DIN0",
+          "gpio": "GPIO_48",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+        }
+      ]
+    },
+    {
+      "id": "si7021",
+      "name": "Temperature + humidity",
+      "part_number": "Si7021",
+      "quantity": 1,
+      "location": "on-board",
+      "kind": "sensor",
+      "bus": "i2c_ulp",
+      "address": "0x40",
+      "address_evidence": "sdk-verified",
+      "supply": {
+        "min_v": 1.9,
+        "max_v": 3.6
+      },
+      "supplied_from": "sensor_rail",
+      "enable_pin": "soc.UULP_VBAT_GPIO_1",
+      "sdk_driver": "si70xx_sensor (sl_si91x_si70xx.h)",
+      "sdk_example": "examples/si91x_soc/siwx917_dev_kit/sensors/humidity_sensor.c",
+      "measures": "Air temperature (°C) and relative humidity (%RH).",
+      "forklift_use": "Ambient conditions at the forklift, e.g. cold-zone checks.",
+      "topics": [
+        "twin/gateway/sensor/temperature",
+        "twin/gateway/sensor/humidity"
+      ],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "SDA",
+          "signal": "SDA",
+          "gpio": "ULP_GPIO_6",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+        },
+        {
+          "name": "SCL",
+          "signal": "SCL",
+          "gpio": "ULP_GPIO_7",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+        }
+      ],
+      "notes": "Address from si70xx_sensor/config/sl_si91x_si70xx_config.h (SI7021_ADDR 0x40)."
+    },
+    {
+      "id": "veml6035",
+      "name": "Ambient light",
+      "part_number": "VEML6035",
+      "quantity": 1,
+      "location": "on-board",
+      "kind": "sensor",
+      "bus": "i2c_ulp",
+      "address": "0x29",
+      "address_evidence": "sdk-verified",
+      "supply": {
+        "min_v": 1.7,
+        "max_v": 3.6
+      },
+      "supplied_from": "sensor_rail",
+      "enable_pin": "soc.UULP_VBAT_GPIO_1",
+      "sdk_driver": "veml6035 (sl_si91x_veml6035.h)",
+      "sdk_example": "examples/si91x_soc/siwx917_dev_kit/sensors/light_sensor.c",
+      "measures": "Ambient light (lux).",
+      "forklift_use": "Aisle lighting level; inside vs outside the warehouse.",
+      "topics": [
+        "twin/gateway/sensor/light"
+      ],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "SDA",
+          "signal": "SDA",
+          "gpio": "ULP_GPIO_6",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+        },
+        {
+          "name": "SCL",
+          "signal": "SCL",
+          "gpio": "ULP_GPIO_7",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+        },
+        {
+          "name": "INT",
+          "signal": "INT",
+          "gpio": "UULP_VBAT_GPIO_3",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        }
+      ],
+      "notes": "Address from veml6035/config/sl_si91x_veml6035_config.h (VEML6035_SLAVE_ADDR 0x29). Same address as the VL53L1X default."
+    },
+    {
+      "id": "icm40627",
+      "name": "6-axis IMU",
+      "part_number": "ICM-40627",
+      "quantity": 1,
+      "location": "on-board",
+      "kind": "sensor",
+      "bus": "spi_ulp",
+      "address": null,
+      "supply": {
+        "min_v": 1.71,
+        "max_v": 3.6
+      },
+      "supplied_from": "sensor_rail",
+      "enable_pin": "soc.UULP_VBAT_GPIO_1",
+      "sdk_driver": "sl_icm40627 (sl_si91x_icm40627.h)",
+      "sdk_example": "examples/si91x_soc/siwx917_dev_kit/sensors/motion_sensor.c",
+      "measures": "3-axis acceleration and 3-axis rotation rate.",
+      "forklift_use": "Moving vs idle, impact/collision alert, tilt.",
+      "topics": [
+        "twin/gateway/sensor/motion",
+        "twin/gateway/sensor/impact"
+      ],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "MOSI",
+          "signal": "MOSI",
+          "gpio": "ULP_GPIO_1",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "MISO",
+          "signal": "MISO",
+          "gpio": "ULP_GPIO_2",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "SCK",
+          "signal": "SCK",
+          "gpio": "ULP_GPIO_8",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "CS",
+          "signal": "CS",
+          "gpio": "ULP_GPIO_10",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        },
+        {
+          "name": "INT",
+          "signal": "INT",
+          "gpio": "UULP_VBAT_GPIO_3",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+        }
+      ],
+      "notes": "The SDK board config and the dev kit demo use ICM-40627 (device ID check in motion_sensor.c), not ICM-20689."
+    },
+    {
+      "id": "ics43434",
+      "name": "MEMS microphones",
+      "part_number": "ICS-43434",
+      "quantity": 2,
+      "location": "on-board",
+      "kind": "sensor",
+      "bus": "i2s0",
+      "address": null,
+      "supply": {
+        "min_v": 1.65,
+        "max_v": 3.63
+      },
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": "sl_si91x_mic (sl_si91x_mic_config.h)",
+      "sdk_example": null,
+      "measures": "Sound (PCM audio), reduced to a sound level.",
+      "forklift_use": "Optional: sound level, e.g. reversing alarm working.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "SCLK",
+          "signal": "I2S_SCLK",
+          "gpio": "GPIO_46",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+        },
+        {
+          "name": "WS",
+          "signal": "I2S_WS",
+          "gpio": "GPIO_47",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+        },
+        {
+          "name": "SD",
+          "signal": "I2S_DATA",
+          "gpio": "GPIO_48",
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "sdk-verified",
+          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+        }
+      ],
+      "notes": "Optional, not in the first firmware pass. Quantity 2 is from the product page only (unverified). Whether the mics sit on the sensor-enable rail is unverified."
+    },
+    {
+      "id": "qwiic",
+      "name": "Qwiic connector",
+      "part_number": "Qwiic (JST SH 4-pin)",
+      "quantity": 1,
+      "location": "on-board",
+      "kind": "connector",
+      "bus": "i2c_qwiic",
+      "address": null,
+      "supplied_from": "qwiic_3v3",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "Plugs the external fork sensors into the board.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        }
+      ],
+      "notes": "Connector exists per the UG581 feature list. Which SoC pins and which I2C controller it uses is NOT in the WiSeConnect 3.5.3 board config: unverified."
+    },
+    {
+      "id": "vl53l1x",
+      "name": "Time-of-flight distance",
+      "part_number": "VL53L1X",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "i2c_qwiic",
+      "address": "0x29",
+      "address_evidence": "datasheet",
+      "supply": {
+        "min_v": 2.6,
+        "max_v": 3.5
+      },
+      "supplied_from": "qwiic_3v3",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Distance to the nearest object, in mm (up to ~4 m).",
+      "forklift_use": "Pallet present on the forks.",
+      "topics": [
+        "twin/gateway/sensor/fork_distance"
+      ],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "qwiic_in.GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_in.3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_in.SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_in.SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_out.GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_out.3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_out.SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_out.SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        }
+      ],
+      "notes": "Default 7-bit address 0x29 (changeable in software after power-up). No driver in WiSeConnect 3.5.3. Assumes a breakout with two Qwiic connectors for daisy-chaining."
+    },
+    {
+      "id": "nau7802",
+      "name": "24-bit load cell ADC",
+      "part_number": "NAU7802",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "i2c_qwiic",
+      "address": "0x2A",
+      "address_evidence": "datasheet",
+      "supply": {
+        "min_v": 2.7,
+        "max_v": 5.5
+      },
+      "supplied_from": "qwiic_3v3",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Load cell bridge voltage, converted to grams after calibration.",
+      "forklift_use": "Load on the forks (demo scale).",
+      "topics": [
+        "twin/gateway/sensor/fork_load"
+      ],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "qwiic_in.GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_in.3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_in.SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "qwiic_in.SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+        },
+        {
+          "name": "E+",
+          "signal": "EXC+",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "NAU7802 datasheet (AVDD excitation, VIN1P/VIN1N input)"
+        },
+        {
+          "name": "E-",
+          "signal": "EXC-",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "NAU7802 datasheet (AVDD excitation, VIN1P/VIN1N input)"
+        },
+        {
+          "name": "A-",
+          "signal": "VIN1N",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "NAU7802 datasheet (AVDD excitation, VIN1P/VIN1N input)"
+        },
+        {
+          "name": "A+",
+          "signal": "VIN1P",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "datasheet",
+          "source": "NAU7802 datasheet (AVDD excitation, VIN1P/VIN1N input)"
+        }
+      ],
+      "notes": "Fixed 7-bit address 0x2A. No driver in WiSeConnect 3.5.3."
+    },
+    {
+      "id": "load_cell",
+      "name": "Load cell (demo scale)",
+      "part_number": "4-wire bar load cell (model TBD)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": "bridge",
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Strain from weight on the forks.",
+      "forklift_use": "Load on the forks (demo scale).",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "E+",
+          "signal": "EXC+",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "unverified"
+        },
+        {
+          "name": "E-",
+          "signal": "EXC-",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "unverified"
+        },
+        {
+          "name": "A-",
+          "signal": "SIG-",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "unverified"
+        },
+        {
+          "name": "A+",
+          "signal": "SIG+",
+          "gpio": null,
+          "x_pct": null,
+          "y_pct": null,
+          "evidence": "unverified"
+        }
+      ],
+      "notes": "Wire colours vary between load cells; check yours before wiring."
+    }
+  ],
+  "connections": [
+    {
+      "id": "si7021_sda",
+      "from": "soc.ULP_GPIO_6",
+      "to": "si7021.SDA",
+      "signal": "SDA",
+      "bus": "i2c_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+    },
+    {
+      "id": "si7021_scl",
+      "from": "soc.ULP_GPIO_7",
+      "to": "si7021.SCL",
+      "signal": "SCL",
+      "bus": "i2c_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+    },
+    {
+      "id": "veml6035_sda",
+      "from": "soc.ULP_GPIO_6",
+      "to": "veml6035.SDA",
+      "signal": "SDA",
+      "bus": "i2c_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+    },
+    {
+      "id": "veml6035_scl",
+      "from": "soc.ULP_GPIO_7",
+      "to": "veml6035.SCL",
+      "signal": "SCL",
+      "bus": "i2c_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h"
+    },
+    {
+      "id": "veml6035_int",
+      "from": "veml6035.INT",
+      "to": "soc.UULP_VBAT_GPIO_3",
+      "signal": "INT",
+      "bus": null,
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "icm40627_mosi",
+      "from": "soc.ULP_GPIO_1",
+      "to": "icm40627.MOSI",
+      "signal": "MOSI",
+      "bus": "spi_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "icm40627_miso",
+      "from": "soc.ULP_GPIO_2",
+      "to": "icm40627.MISO",
+      "signal": "MISO",
+      "bus": "spi_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "icm40627_sck",
+      "from": "soc.ULP_GPIO_8",
+      "to": "icm40627.SCK",
+      "signal": "SCK",
+      "bus": "spi_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "icm40627_cs",
+      "from": "soc.ULP_GPIO_10",
+      "to": "icm40627.CS",
+      "signal": "CS",
+      "bus": "spi_ulp",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "icm40627_int",
+      "from": "icm40627.INT",
+      "to": "soc.UULP_VBAT_GPIO_3",
+      "signal": "INT",
+      "bus": null,
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
+    },
+    {
+      "id": "ics43434_sclk",
+      "from": "soc.GPIO_46",
+      "to": "ics43434.SCLK",
+      "signal": "SCLK",
+      "bus": "i2s0",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+    },
+    {
+      "id": "ics43434_ws",
+      "from": "soc.GPIO_47",
+      "to": "ics43434.WS",
+      "signal": "WS",
+      "bus": "i2s0",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+    },
+    {
+      "id": "ics43434_sd",
+      "from": "soc.GPIO_48",
+      "to": "ics43434.SD",
+      "signal": "SD",
+      "bus": "i2s0",
+      "medium": "pcb",
+      "wire_color": null,
+      "evidence": "sdk-verified",
+      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
+    },
+    {
+      "id": "qwiic_vl53l1x_gnd",
+      "from": "qwiic.GND",
+      "to": "vl53l1x.qwiic_in.GND",
+      "signal": "GND",
+      "bus": "qwiic_3v3",
+      "medium": "qwiic_cable",
+      "wire_color": "black",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "qwiic_vl53l1x_3v3",
+      "from": "qwiic.3V3",
+      "to": "vl53l1x.qwiic_in.3V3",
+      "signal": "3V3",
+      "bus": "qwiic_3v3",
+      "medium": "qwiic_cable",
+      "wire_color": "red",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "qwiic_vl53l1x_sda",
+      "from": "qwiic.SDA",
+      "to": "vl53l1x.qwiic_in.SDA",
+      "signal": "SDA",
+      "bus": "i2c_qwiic",
+      "medium": "qwiic_cable",
+      "wire_color": "blue",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "qwiic_vl53l1x_scl",
+      "from": "qwiic.SCL",
+      "to": "vl53l1x.qwiic_in.SCL",
+      "signal": "SCL",
+      "bus": "i2c_qwiic",
+      "medium": "qwiic_cable",
+      "wire_color": "yellow",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "vl53l1x_nau7802_gnd",
+      "from": "vl53l1x.qwiic_out.GND",
+      "to": "nau7802.qwiic_in.GND",
+      "signal": "GND",
+      "bus": "qwiic_3v3",
+      "medium": "qwiic_cable",
+      "wire_color": "black",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "vl53l1x_nau7802_3v3",
+      "from": "vl53l1x.qwiic_out.3V3",
+      "to": "nau7802.qwiic_in.3V3",
+      "signal": "3V3",
+      "bus": "qwiic_3v3",
+      "medium": "qwiic_cable",
+      "wire_color": "red",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "vl53l1x_nau7802_sda",
+      "from": "vl53l1x.qwiic_out.SDA",
+      "to": "nau7802.qwiic_in.SDA",
+      "signal": "SDA",
+      "bus": "i2c_qwiic",
+      "medium": "qwiic_cable",
+      "wire_color": "blue",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "vl53l1x_nau7802_scl",
+      "from": "vl53l1x.qwiic_out.SCL",
+      "to": "nau7802.qwiic_in.SCL",
+      "signal": "SCL",
+      "bus": "i2c_qwiic",
+      "medium": "qwiic_cable",
+      "wire_color": "yellow",
+      "evidence": "datasheet",
+      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+    },
+    {
+      "id": "loadcell_exc_p",
+      "from": "load_cell.E+",
+      "to": "nau7802.E+",
+      "signal": "E+",
+      "bus": "bridge",
+      "medium": "wire",
+      "wire_color": "red",
+      "evidence": "unverified",
+      "source": "Common load cell colour convention; varies by model"
+    },
+    {
+      "id": "loadcell_exc_n",
+      "from": "load_cell.E-",
+      "to": "nau7802.E-",
+      "signal": "E-",
+      "bus": "bridge",
+      "medium": "wire",
+      "wire_color": "black",
+      "evidence": "unverified",
+      "source": "Common load cell colour convention; varies by model"
+    },
+    {
+      "id": "loadcell_sig_n",
+      "from": "load_cell.A-",
+      "to": "nau7802.A-",
+      "signal": "A-",
+      "bus": "bridge",
+      "medium": "wire",
+      "wire_color": "white",
+      "evidence": "unverified",
+      "source": "Common load cell colour convention; varies by model"
+    },
+    {
+      "id": "loadcell_sig_p",
+      "from": "load_cell.A+",
+      "to": "nau7802.A+",
+      "signal": "A+",
+      "bus": "bridge",
+      "medium": "wire",
+      "wire_color": "green",
+      "evidence": "unverified",
+      "source": "Common load cell colour convention; varies by model"
+    }
+  ],
+  "open_questions": [
+    {
+      "id": "qwiic_pins",
+      "question": "Which SoC pins and which I2C controller does the BRD2605A Qwiic connector use, and is it the same bus as Si7021/VEML6035? (UG581 schematic or silkscreen; the SDK board config does not say.)",
+      "blocks": [
+        "qwiic",
+        "vl53l1x",
+        "nau7802"
+      ]
+    },
+    {
+      "id": "vl53l1x_addr_clash",
+      "question": "If Qwiic shares I2C2, VL53L1X (0x29) clashes with VEML6035 (0x29). Options: put the VL53L1X on a separate I2C bus via the breakout pads, drop VEML6035, or re-address the VL53L1X at boot while the on-board sensors are unpowered (needs Qwiic power to be independent of SENSOR_EN).",
+      "blocks": [
+        "vl53l1x",
+        "veml6035"
+      ]
+    },
+    {
+      "id": "imu_part",
+      "question": "The SDK and dev kit demo use ICM-40627 (SPI), not ICM-20689. Confirm the marking on the chip.",
+      "blocks": [
+        "icm40627"
+      ]
+    },
+    {
+      "id": "modules",
+      "question": "Which VL53L1X and NAU7802 breakouts do you have (vendor/SKU), and do both have two Qwiic connectors? Which load cell (capacity, wire colours)?",
+      "blocks": [
+        "vl53l1x",
+        "nau7802",
+        "load_cell"
+      ]
+    },
+    {
+      "id": "exposure",
+      "question": "HARDWARE.md (2026-10-07) exposes only temperature and humidity. Approve exposing light, motion/impact, fork_distance and fork_load?",
+      "blocks": [
+        "veml6035",
+        "icm40627",
+        "vl53l1x",
+        "nau7802"
+      ]
+    }
+  ]
+}

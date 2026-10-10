@@ -42,6 +42,12 @@ but never replace the current status.
 `fw_version = "fake"`. The backend sets `gateway.fake = true` and the UI must show a FAKE BOARD
 banner. Development only, never in the demo.
 
+### Hardware wiring
+
+`schemas/hardware/wiring.json` validates `hardware/wiring.json`, the single source of truth for the
+forklift sensor pack (parts, buses, I2C addresses, pins, wires, evidence and status). It is not a
+message; it is served later by `GET /api/wiring`. See HARDWARE.md.
+
 ## WebSocket (`/ws`, backend <-> browsers)
 
 Every message is a JSON object with a `type` field.

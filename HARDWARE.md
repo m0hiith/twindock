@@ -62,6 +62,24 @@ demo drives it high before talking to any sensor (`siwx917_dev_kit/sensors/light
 | 6-axis IMU | ICM-40627 | SPI (ULP SSI primary) | `sl_icm40627` (board override for ULP SSI) | sdk-verified |
 | MEMS microphones | ICS-43434 (x2, per product page) | I2S0 | `sl_si91x_mic` (board override) | sdk-verified driver, count unverified |
 
+Pin-level detail for these sensors (from the same SDK files):
+I2C2 SDA = ULP_GPIO_6, SCL = ULP_GPIO_7; ICM-40627 on ULP SSI with MOSI ULP_GPIO_1, MISO ULP_GPIO_2,
+SCK ULP_GPIO_8, CS ULP_GPIO_10; shared IMU/light interrupt on UULP_VBAT GPIO 3; mics on I2S0 GPIO 46/47/48.
+The IMU is an **ICM-40627**, not an ICM-20689 (device ID check in `siwx917_dev_kit/sensors/motion_sensor.c`).
+
+## Forklift sensor pack: `hardware/wiring.json`
+
+The sensor pack (on-board sensors plus Qwiic VL53L1X and NAU7802 with a load cell) is described in
+**`hardware/wiring.json`**, validated by **`shared/schemas/hardware/wiring.json`**. It is the single
+source of truth for parts, buses, addresses, pins and wires. Firmware pins (`tools/gen_pins.py`), the
+`/wiring` page and the hardware sheet are generated from it. Every value carries `evidence`
+(`sdk-verified`, `datasheet`, `confirmed`, `unverified`); every part carries `status`
+(`planned`, `wired`, `verified`). Its `open_questions` list what still blocks verification, chiefly:
+the Qwiic connector's SoC pins are **not** in the SDK board config, and if Qwiic shares I2C2 the
+VL53L1X default address 0x29 clashes with the VEML6035.
+
+Listing a part in `wiring.json` does not expose it: the "Exposed in TwinDock" table below still decides.
+
 ## Power
 
 | Option | Notes | Status |
