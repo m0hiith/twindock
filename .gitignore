@@ -18,3 +18,5 @@ backend/shared/
 backend/hardware/
 # Codex agent state, not part of the project
 .codex/
+# Local demo recordings, not committed
+videos/
