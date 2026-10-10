@@ -20,3 +20,6 @@ backend/hardware/
 .codex/
 # Local demo recordings, not committed
 videos/
+# Firmware build output and local Wi-Fi/broker secrets
+firmware/*/build/
+firmware/*/td_secrets.h

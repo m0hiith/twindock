@@ -25,7 +25,7 @@ moving forklifts and trucks by hand.
 |---|---|
 | 0. HARDWARE.md | Done (SDK-verified; a few physical checks open) |
 | 1. Scaffold + contract | Done |
-| 2. Firmware | Not started |
+| 2. Firmware | Steps A–D: written, builds, untested on hardware ([firmware/TESTING.md](firmware/TESTING.md)). Steps E–F: not started |
 | 3. Backend world engine | Done (verified end to end with the fake board) |
 | 4. 3D scene | Done |
 | 5. HUD (`/twin`) | Done |
@@ -61,7 +61,7 @@ mosquitto_sub -v -t 'twin/#'
 
 ### 2. Board
 
-Either flash the real firmware (see `firmware/`, coming in step 2) or, **for development only**:
+Either flash the real firmware (Steps A–D in `firmware/twindock_gw`, see [firmware/TESTING.md](firmware/TESTING.md)) or, **for development only**:
 
 ```sh
 .venv/bin/python tools/fake_board.py
