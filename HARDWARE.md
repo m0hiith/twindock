@@ -9,7 +9,7 @@ Status legend:
 The UI and firmware may only expose rows that are **sdk-verified** or **confirmed**, and only the rows
 listed under "Exposed in TwinDock".
 
-SDK paths below are relative to `wiseconnect-3.5.3/components/board/silabs/`.
+SDK paths below are relative to `components/board/silabs/` in the WiSeConnect SDK (3.5.3 and 4.1.1 have identical BRD2605A files).
 
 ## Kit identity
 
@@ -21,7 +21,8 @@ SDK paths below are relative to `wiseconnect-3.5.3/components/board/silabs/`.
 | SoC OPN | SiWG917M111MGTBA | `brd2605a.slcc` (`requires: siwg917m111mgtba`) | sdk-verified |
 | Memory | Common flash mode, 8 MB external PSRAM, no external flash | `brd2605a.slcc` | sdk-verified |
 | Console | VCOM over the onboard debugger USB | `brd2605a.slcc` tag `hardware:has:vcom` | sdk-verified |
-| SDK | WiSeConnect 3.5.3, at `./wiseconnect-3.5.3` (also `~/Downloads/wiseconnect-3.5.3`) | on disk | confirmed |
+| SDK | **WiSeConnect 4.1.1 on Simplicity SDK 2026.6.1** (installed by the Simplicity Installer under `~/.silabs/slt/installs/`). The repo copy `./wiseconnect-3.5.3` needs Simplicity SDK 2025.6.2, which is not installed, so the firmware is built against 4.1.1. The BRD2605A button and RGB LED configs are byte-identical in 3.5.3 and 4.1.1 | on disk, `firmware/TESTING.md` | confirmed |
+| NWP firmware | Must be updated to the 4.1.1 network processor image `SiWG917-B.2.16.5.1.0.8.rps` (`connectivity_firmware/standard/` in the 4.1.1 SDK) **before the first flash** of the TwinDock firmware | WiSeConnect 4.1.1 release | **open** (not done yet, no board) |
 | IDE | Simplicity Studio: _version? not found on this Mac yet (only the installer)_ | — | **open** |
 
 ## User LEDs
@@ -153,7 +154,8 @@ The board twin renders one LED at the RGB LED position whose colour is the mix o
 
 1. Confirm on the board: silkscreen says BRD2605A **A02**, buttons are labelled BTN0/BTN1, IMU marking ICM-40627.
 2. Simplicity Studio: install it (only the installer was found) and note the version above.
-3. Sensor pack parts: VL53L1X and NAU7802 breakouts (two Qwiic connectors each?), load cell model.
+3. Update the network processor firmware to the WiSeConnect 4.1.1 image before flashing (see `firmware/TESTING.md`).
+4. Sensor pack parts: VL53L1X and NAU7802 breakouts (two Qwiic connectors each?), load cell model.
 
 ## Hotspot positions (board twin)
 
