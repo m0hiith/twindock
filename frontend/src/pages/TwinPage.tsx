@@ -9,6 +9,7 @@ import { TopBar } from "../hud/TopBar";
 import { Scene } from "../scene/Scene";
 import { SiteDevicesCard } from "../hud/SiteDevicesCard";
 import { ProductionKpis } from "../hud/ProductionKpis";
+import { SafetyPanel } from "../hud/SafetyPanel";
 import { useView } from "../store/world";
 
 // The scene fills the viewport; HUD cards float over it. The overlay itself ignores the pointer
@@ -31,7 +32,7 @@ export function TwinPage() {
           </div>
         </div>
         <div className="mt-auto flex items-end justify-between gap-3">
-          {warehouse && <ShipmentPanel />}
+          {warehouse ? <ShipmentPanel /> : <SafetyPanel />}
           {warehouse && <FleetTable />}
         </div>
       </div>

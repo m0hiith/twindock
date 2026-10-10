@@ -225,6 +225,17 @@ class ProductionUpdate(Strict):
     config: dict[str, Any]
 
 
+class SafetyUpdate(Strict):
+    """Shape checked against ws/safety_update.json; built by Safety.wire()."""
+    type: Literal["safety_update"] = "safety_update"
+    seq: int
+    server_ts_ms: int
+    workers: list[dict[str, Any]]
+    zone_counts: dict[str, int]
+    today: dict[str, Any]
+    config: dict[str, Any]
+
+
 class DeviceUpdate(Strict):
     type: Literal["device_update"] = "device_update"
     seq: int

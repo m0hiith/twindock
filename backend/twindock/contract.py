@@ -35,7 +35,7 @@ MQTT_SCHEMAS = {
 }
 CLIENT_TYPES = ("move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command")
 SERVER_TYPES = ("world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event",
-                "ble_tracks", "device_update", "production_update")
+                "ble_tracks", "device_update", "production_update", "safety_update")
 
 
 @lru_cache(maxsize=1)

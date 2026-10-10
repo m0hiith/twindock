@@ -41,3 +41,12 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - Auto mode gains a "collect production" job (outbound spot → rack slot, else staging), after unload/load in priority.
 - Simulator commands go on `twin/<site>/<device>/cmd/<action>` (schema `mqtt/site_cmd.json`), only for sim devices (asserted in the engine).
 - The Control Room map still shows WH-01 only; FAC-01 controls are in a new "Factory" tab.
+
+## Stage 4: S3 worker safety
+- Workers walk named routes of layout nodes (forklift lanes and walker-only `WALK_*` nodes with no mover kinds), looping, pausing 5–18 s at work stands. Routes live in `sites.json`.
+- Proximity counts only forklifts moving faster than 0.2 m/s. Warning < 3 m, critical < 1.5 m, cleared above 3.5 m (0.5 m hysteresis) or when the forklift stops. Evaluated 4×/s.
+- A badge that isn't fresh (> 15 s) claims nothing: no proximity, no restricted alert, and the worker isn't drawn.
+- The press area is a sub-zone of Production (listed after it; the last matching zone wins). Restricted: press area (press operators, maintenance, supervisors), cold room (logistics, supervisors).
+- Privacy: no worker names on the wire at all; the demo has no sign-in, so nobody is an "authorised user". Names stay only in `sites.json`.
+- Real path: a tag named `TD-BADGE-01` seen by the real board's BLE scan is the commissioned real device `RB-01` (LIVE). Its RSSI, last seen and calibrated zone come from the existing BLE tracker. It is not in the proximity rule until zones are calibrated, because without a position it can't honestly be near anything.
+- The simulator advances simulated time by `dt` (not wall clock), so tests are fast and deterministic.

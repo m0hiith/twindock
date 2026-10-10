@@ -17,6 +17,7 @@ import { Office, Warehouse } from "./Warehouse";
 import { Factory } from "./Factory";
 import { DevicePucks } from "./DevicePucks";
 import { ProductionLine } from "./ProductionLine";
+import { Workers } from "./Workers";
 
 function DrawCalls() {
   // Exposes renderer stats for the perf check (?stats): window.__twindockGl.
@@ -65,6 +66,7 @@ export function Scene() {
       <StaticHitAreas />
       <Units />
       <DevicePucks />
+      <Workers />
       <Pallets />
       <SelectionOverlay />
       {showStats && <><Stats /><DrawCalls /></>}

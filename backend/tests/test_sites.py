@@ -32,7 +32,8 @@ def test_sites_file_is_valid() -> None:
     assert {z["kind"] for z in next(s for s in cfg["sites"] if s["id"] == "FAC-01")["zones"]} >= {
         "production", "cold_room", "docks", "office"}
     real = [d for d in cfg["devices"] if d["source"] == "device"]
-    assert [d["id"] for d in real] == ["GW-01"]
+    # GW-01 (the board) and RB-01 (a real badge seen only through the board's BLE scans)
+    assert [d["id"] for d in real] == ["GW-01", "RB-01"]
 
 
 def test_snapshot_devices_validate(h: Harness) -> None:

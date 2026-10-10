@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/safety_update.json",
+  "title": "safety_update (server -> client)",
+  "description": "Worker safety from badge positions: proximity to moving forklifts, restricted zones, today's counters. Workers are identified by id and role only (no names on the wire). On connect and at most 2 Hz.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "seq",
+    "server_ts_ms",
+    "workers",
+    "zone_counts",
+    "today",
+    "config"
+  ],
+  "properties": {
+    "type": {
+      "const": "safety_update"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "server_ts_ms": {
+      "type": "integer"
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "role",
+          "badge_id",
+          "zone_id",
+          "x",
+          "z",
+          "fresh",
+          "data_ms",
+          "near",
+          "restricted_zone"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "defs.json#/$defs/unit_id"
+          },
+          "role": {
+            "type": "string"
+          },
+          "badge_id": {
+            "$ref": "defs.json#/$defs/device_id"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "$ref": "defs.json#/$defs/zone_id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fresh": {
+            "type": "boolean",
+            "description": "Badge online (last position at most 15 s old)."
+          },
+          "data_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "near": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "forklift",
+                  "distance_m",
+                  "level"
+                ],
+                "properties": {
+                  "forklift": {
+                    "$ref": "defs.json#/$defs/unit_id"
+                  },
+                  "distance_m": {
+                    "type": "number"
+                  },
+                  "level": {
+                    "enum": [
+                      "warning",
+                      "critical"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "restricted_zone": {
+            "anyOf": [
+              {
+                "$ref": "defs.json#/$defs/zone_id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "zone_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Workers with a fresh badge per zone id."
+    },
+    "today": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warnings",
+        "criticals",
+        "restricted",
+        "closest_m",
+        "closest"
+      ],
+      "properties": {
+        "warnings": {
+          "type": "integer"
+        },
+        "criticals": {
+          "type": "integer"
+        },
+        "restricted": {
+          "type": "integer"
+        },
+        "closest_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "closest": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "worker",
+                "forklift",
+                "at_ms"
+              ],
+              "properties": {
+                "worker": {
+                  "$ref": "defs.json#/$defs/unit_id"
+                },
+                "forklift": {
+                  "$ref": "defs.json#/$defs/unit_id"
+                },
+                "at_ms": {
+                  "type": "integer"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warn_m",
+        "crit_m"
+      ],
+      "properties": {
+        "warn_m": {
+          "type": "number"
+        },
+        "crit_m": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

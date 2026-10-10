@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from .contract import def_validator, first_error, validator
+from .ble_tracker import BleTracker
 from .gateway import GatewayStore
 
 SITES_FILE = Path(__file__).resolve().parents[1] / "world" / "sites.json"
@@ -126,6 +127,8 @@ class DeviceRegistry:
         self.real_history: dict[str, dict[str, deque[tuple[int, float]]]] = {i: {} for i in self.real_ids}
         self._warned: set[tuple[str, str]] = set()
         self.zone_by_id = {z["id"]: z for s in self.sites for z in s["zones"]}
+        self.layout_nodes: dict[str, tuple[float, float]] = {}  # set by the engine (real badge zones)
+        self.real_tags = {d["ble_tag"]: i for i, d in self.defs.items() if d.get("ble_tag")}
 
     # ------------------------------------------------------------------ zones
 
@@ -239,15 +242,34 @@ class DeviceRegistry:
                 "status": st, "fault": None, "readings": readings}
 
     @staticmethod
-    def _base(d: dict[str, Any]) -> dict[str, Any]:
+    def _base(d: dict[str, Any]) -> dict[str, Any]:  # noqa: D102
         out = {k: d[k] for k in ("id", "site_id", "zone_id", "type", "protocol", "capabilities", "source", "label")}
         if d.get("attached_to"):
             out["attached_to"] = d["attached_to"]
         return out
 
-    def wire_device(self, dev: str, gw: GatewayStore, now: int) -> dict[str, Any]:
+    def _real_badge(self, d: dict[str, Any], ble: BleTracker | None, now: int) -> dict[str, Any]:
+        """A phone or tag advertising TD-BADGE-xx, seen by the REAL board's BLE scan (twin/gateway/ble).
+        Everything here comes from the board's scans via the BLE tracker (same RSSI smoothing as the
+        live forklifts). Without a calibrated zone its position is only "near GW-01"."""
+        t = ble.tracks.get(d["ble_tag"]) if ble else None
+        readings: dict[str, Any] = {}
+        last = t.last_seen_ms if t else None
+        if t and t.avg is not None:
+            readings["rssi_dbm"] = {"value": round(t.avg, 1), "unit": "dBm", "received_ms": t.last_seen_ms}
+        x, z = d["x"], d["z"]
+        if t and t.zone and self.layout_nodes and t.zone in self.layout_nodes:
+            x, z = self.layout_nodes[t.zone]
+            readings["ble_zone"] = {"value": t.zone, "received_ms": t.last_seen_ms}
+        return {**self._base(d), "x": x, "z": z, "battery_pct": None, "fw_version": None,
+                "rssi_dbm": t.last_rssi if t else None, "last_seen_ms": last,
+                "status": device_status(last, now), "fault": None, "readings": readings}
+
+    def wire_device(self, dev: str, gw: GatewayStore, now: int, ble: BleTracker | None = None) -> dict[str, Any]:
         d = self.defs[dev]
         if dev in self.real_ids:
+            if d.get("ble_tag"):
+                return self._real_badge(d, ble, now)
             return self._gw01(d, gw, now)
         st = self.sim[dev]
         out = self._base(d)
@@ -265,8 +287,8 @@ class DeviceRegistry:
                     "fault": st.fault, "readings": {k: r.wire() for k, r in st.readings.items()}})
         return out
 
-    def wire(self, gw: GatewayStore, now: int) -> list[dict[str, Any]]:
-        return [self.wire_device(i, gw, now) for i in self.defs]
+    def wire(self, gw: GatewayStore, now: int, ble: BleTracker | None = None) -> list[dict[str, Any]]:
+        return [self.wire_device(i, gw, now, ble) for i in self.defs]
 
     def history(self, dev: str, channel: str) -> list[tuple[int, float]]:
         if dev in self.real_ids:

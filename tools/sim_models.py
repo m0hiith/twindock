@@ -250,7 +250,58 @@ class MachineMonitor(Model):
         return out
 
 
-MODELS: dict[str, type[Model]] = {"machine_monitor": MachineMonitor, "env_sensor": EnvSensor, "door_sensor": DoorSensor,
+@dataclass
+class Badge(Model):
+    """A worker's BLE badge. The worker walks a named route (layout node coordinates, looped) at
+    walking pace, pausing at work stands (WALK_* nodes). Reports its position once a second.
+    The "route" command switches route at the next node (e.g. the visitor's "press_visit")."""
+    route_name: str = "default"
+    leg: int = 0
+    x: float = 0.0
+    z: float = 0.0
+    pause_until: float = 0.0
+    next_route: str | None = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.routes: dict[str, list[tuple[str, float, float]]] = self.d.get("_routes", {})
+        self.speed = float(self.d.get("_walk_speed", 1.3))
+        pts = self.routes.get(self.route_name) or [("", float(self.d["x"]), float(self.d["z"]))]
+        _, self.x, self.z = pts[0]
+        self.leg = 1 % len(pts)
+
+    def command(self, action: str, t: float, ts_ms: int, data: Payload | None = None) -> None:
+        if action == "route" and data and data.get("route") in self.routes:
+            self.next_route = str(data["route"])
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        pts = self.routes.get(self.route_name)
+        if pts and len(pts) > 1 and t >= self.pause_until:
+            name, tx, tz = pts[self.leg]
+            dx, dz = tx - self.x, tz - self.z
+            dist = math.hypot(dx, dz)
+            stepm = self.speed * dt
+            if dist <= stepm:
+                self.x, self.z = tx, tz
+                if name.startswith("WALK_") and name != "WALK_STAFF_DOOR":
+                    self.pause_until = t + self.rng.uniform(5, 18)  # working at a stand
+                if self.next_route:
+                    self.route_name, self.next_route = self.next_route, None
+                    pts = self.routes[self.route_name]
+                    near = min(range(len(pts)), key=lambda i: math.hypot(pts[i][1] - self.x, pts[i][2] - self.z))
+                    self.leg = (near + 1) % len(pts)
+                else:
+                    self.leg = (self.leg + 1) % len(pts)
+            else:
+                self.x += dx / dist * stepm
+                self.z += dz / dist * stepm
+        if self.every("pos", t, 1.0):
+            return [("position", self.reading(ts_ms, [round(self.x, 2), round(self.z, 2)], "m"))]
+        return []
+
+
+MODELS: dict[str, type[Model]] = {"badge": Badge, "machine_monitor": MachineMonitor, "env_sensor": EnvSensor, "door_sensor": DoorSensor,
                                   "occupancy_sensor": Occupancy, "air_quality": AirQuality}
 
 

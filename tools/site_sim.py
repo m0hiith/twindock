@@ -32,6 +32,7 @@ from sim_models import Model, make  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SITES = ROOT / "backend" / "world" / "sites.json"
+LAYOUT = ROOT / "backend" / "world" / "layout.json"
 SCHEMAS = ROOT / "shared" / "schemas"
 
 
@@ -64,11 +65,22 @@ class SiteSim:
     def __init__(self, cfg: dict[str, Any], devices: list[dict[str, Any]], seed: int | None = None) -> None:
         self.cfg = cfg
         self.rng = random.Random(seed)
+        devices = [self.with_routes(d) for d in devices]
         self.models: dict[str, Model] = {d["id"]: make(d, self.rng) for d in devices}
         self.v = load_validators()
-        self.t0 = time.monotonic()
+        self.t = 0.0  # simulated seconds since start (advanced by step(dt), so tests run fast)
         self.client: mqtt.Client | None = None
         self.sent = 0
+
+    def with_routes(self, d: dict[str, Any]) -> dict[str, Any]:
+        """Badges walk their worker's routes: node ids from sites.json -> layout coordinates."""
+        w = next((w for w in self.cfg.get("workers", []) if w["badge"] == d["id"]), None)
+        if w is None:
+            return d
+        nodes = {n["id"]: n for n in json.loads(LAYOUT.read_text())["nodes"]}
+        routes = {name: [(nid, float(nodes[nid]["x"]), float(nodes[nid]["z"])) for nid in ids]
+                  for name, ids in w["routes"].items()}
+        return {**d, "_routes": routes, "_walk_speed": self.cfg.get("safety", {}).get("walk_speed_mps", 1.3)}
 
     def topic(self, m: Model, channel: str) -> str:
         assert m.d["source"] == "sim", "refusing to publish for a real device"
@@ -97,12 +109,14 @@ class SiteSim:
         except (ValueError, jsonschema.ValidationError) as e:
             print(f"[sim] ignored invalid command on {topic}: {e}")
             return
-        t = time.monotonic() - self.t0
+        t = self.t
         action = parts[4]
         if action == "silence":
             m.silent = bool(data.get("on", True))
         elif action == "door_open" and hasattr(m, "force_open"):
             m.force_open(t, float(data.get("seconds", 90)))  # type: ignore[attr-defined]
+        elif action == "route" and hasattr(m, "command"):
+            m.command(action, t, int(t * 1000), data)  # type: ignore[attr-defined]
         elif hasattr(m, "command"):
             m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]
         print(f"[sim] {m.id}: {action} ({data.get('cmd_id')})")
@@ -119,7 +133,8 @@ class SiteSim:
                 m.door_open = any(getattr(dm, "open", False) for dm in doors if dm.d["zone_id"] == m.d["zone_id"])  # type: ignore[attr-defined]
 
     def step(self, dt: float) -> None:
-        t = time.monotonic() - self.t0
+        self.t += dt
+        t = self.t
         ts_ms = int(t * 1000)
         self.couple()
         for m in self.models.values():

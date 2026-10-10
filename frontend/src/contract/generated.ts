@@ -182,6 +182,7 @@ export interface TwinDockContract {
   machine_command?: MachineCommand;
   move_unit?: MoveUnit;
   production_update?: ProductionUpdate;
+  safety_update?: SafetyUpdate;
   select_unit?: SelectUnit;
   selection_changed?: SelectionChanged;
   set_auto_mode?: SetAutoMode;
@@ -708,6 +709,57 @@ export interface ProductionUpdate {
     baseline_s: number;
     window_samples: number;
     units_per_pallet: number;
+  };
+}
+/**
+ * Worker safety from badge positions: proximity to moving forklifts, restricted zones, today's counters. Workers are identified by id and role only (no names on the wire). On connect and at most 2 Hz.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "safety_update".
+ */
+export interface SafetyUpdate {
+  type: "safety_update";
+  seq: number;
+  server_ts_ms: number;
+  workers: {
+    id: UnitId;
+    role: string;
+    badge_id: DeviceId;
+    zone_id: ZoneId | null;
+    x: number | null;
+    z: number | null;
+    /**
+     * Badge online (last position at most 15 s old).
+     */
+    fresh: boolean;
+    data_ms: number | null;
+    near: null | {
+      forklift: UnitId;
+      distance_m: number;
+      level: "warning" | "critical";
+    };
+    restricted_zone: ZoneId | null;
+  }[];
+  /**
+   * Workers with a fresh badge per zone id.
+   */
+  zone_counts: {
+    [k: string]: number | undefined;
+  };
+  today: {
+    warnings: number;
+    criticals: number;
+    restricted: number;
+    closest_m: number | null;
+    closest: null | {
+      worker: UnitId;
+      forklift: UnitId;
+      at_ms: number;
+    };
+  };
+  config: {
+    warn_m: number;
+    crit_m: number;
   };
 }
 /**

@@ -21,13 +21,14 @@ from .ble_tracker import BleConfig, BleTracker, ZoneChange
 from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
 from .devices import DeviceRegistry, load_sites, parse_site_topic
 from .production import Production
+from .safety import Safety
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
 from .models import (BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
-                     MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SelectionChanged, SelectUnit,
-                     SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
+                     MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
+                     SelectUnit, SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
 from .world import Entity, World
 
 TOPIC_PREFIX = "twin/gateway/"
@@ -35,6 +36,8 @@ CMD_LED_TOPIC = "twin/gateway/cmd/led"
 AUTO_PERIOD_S = 1.0  # auto mode re-plans once a second; faster adds nothing visible
 DEVICE_FLUSH_S = 0.5  # device_update at most 2 Hz: sim sensors report every 1-10 s, ages tick in the UI
 PRODUCTION_FLUSH_S = 1.0  # production_update at most 1 Hz: machine monitors report once a second
+SAFETY_EVAL_S = 0.25     # proximity check 4x a second: a forklift at demo pace covers ~1.4 m in that time
+SAFETY_FLUSH_S = 0.5     # safety_update at most 2 Hz
 
 
 @dataclass
@@ -69,6 +72,11 @@ class Engine:
         self._prod_last: dict[str, Any] | None = None
         self._site_cmd_counter = 0
         self._outbound_full_warned = False
+        self.devices.layout_nodes = {n.id: (n.x, n.z) for n in layout.nodes}
+        self.safety = Safety.build(self.devices.cfg["safety"], self.devices.cfg.get("workers", []))
+        self._safety_acc = 0.0
+        self._safety_flush_acc = 0.0
+        self._safety_last: dict[str, Any] | None = None
         graph = Graph(layout)
         self.world = World(layout, graph)
         forklift_nodes = {n.id for n in layout.nodes if "forklift" in n.kinds}
@@ -92,6 +100,7 @@ class Engine:
         self.rng = random.Random(int(seed) if seed else None)
         self.production = self._new_production()
         self._seed_site_units()
+        self._seed_workers()
 
     # ------------------------------------------------------------------ site twin units (FAC-01)
 
@@ -111,9 +120,55 @@ class Engine:
                                          meta={"task": "Waiting for machine monitor", "kind": m["kind"],
                                                "device": pm.device_id if pm else ""}))
 
+    def _seed_workers(self) -> None:
+        """Workers are units at their badge's position. Without a fresh position: state no_data."""
+        for w in self.devices.cfg.get("workers", []):
+            d = self.devices.defs[w["badge"]]
+            self.world.add_entity(Entity(w["id"], "worker", "no_data", d["x"], d["z"], 0.0, source="sim",
+                                         label=f"{w['id']} · {w['role'].replace('_', ' ')}",
+                                         meta={"task": "No data from badge", "role": w["role"], "badge": w["badge"]}))
+
+    def _tick_safety(self, dt: float) -> None:
+        self._safety_acc += dt
+        if self._safety_acc < SAFETY_EVAL_S:
+            return
+        self._safety_acc = 0.0
+        now = self.clock()
+        fresh = {w.badge: self.devices.wire_device(w.badge, self.gw, now, self.ble)["status"] == "online"
+                 for w in self.safety.workers.values()}
+        forklifts = [(f.id, f.x, f.z, f.speed) for f in self.world.of_kind("forklift")]
+        for level, text, uid in self.safety.evaluate(now, forklifts, fresh, self.devices.zone_by_id):
+            self.event(level, text, "safety", uid)
+        for w in self.safety.workers.values():
+            e = self.world.entities.get(w.id)
+            if e is None:
+                continue
+            if not w.fresh or w.x is None or w.z is None:
+                e.state, e.meta["task"] = "no_data", "No data from badge"
+                continue
+            e.x, e.z, e.heading = w.x, w.z, w.heading
+            e.state = "walking" if w.moving else "working"
+            zone = self.devices.zone_by_id.get(w.zone_id or "")
+            where = zone["name"] if zone else "outside the zones"
+            e.meta["task"] = (f"Near moving {w.near.forklift} ({w.near.distance_m:.1f} m)" if w.near else
+                              f"In restricted {where}" if w.restricted else
+                              f"{'Walking' if w.moving else 'Working'} · {where}")
+        self._safety_flush_acc += SAFETY_EVAL_S
+        if self._safety_flush_acc >= SAFETY_FLUSH_S:
+            self._safety_flush_acc = 0.0
+            self._send_safety()
+
+    def _send_safety(self, to: str | None = None) -> None:
+        w = self.safety.wire()
+        if to is None and w == self._safety_last:
+            return
+        if to is None:
+            self._safety_last = w
+        self._send(SafetyUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), **w), to)
+
     def _fresh(self) -> dict[str, bool]:
         now = self.clock()
-        return {m.device_id: self.devices.wire_device(m.device_id, self.gw, now)["status"] == "online"
+        return {m.device_id: self.devices.wire_device(m.device_id, self.gw, now, self.ble)["status"] == "online"
                 for m in self.production.machines.values()}
 
     def _tick_production(self, dt: float) -> None:
@@ -196,7 +251,7 @@ class Engine:
         units = self._all_units()
         self._last_wire = {u.id: u.model_dump(mode="json") for u in units}
         now = self.clock()
-        devices = self.devices.wire(self.gw, now)
+        devices = self.devices.wire(self.gw, now, self.ble)
         self._dev_last = {d["id"]: d for d in devices}
         return WorldSnapshot(seq=self._next_seq(), server_ts_ms=now, layout_version=self.layout.version,
                              auto_mode=self.auto_mode, selected_unit_id=self.selected, units=units,
@@ -205,7 +260,7 @@ class Engine:
     def _flush_devices(self) -> None:
         now = self.clock()
         changed = []
-        for d in self.devices.wire(self.gw, now):
+        for d in self.devices.wire(self.gw, now, self.ble):
             if self._dev_last.get(d["id"]) != d:
                 self._dev_last[d["id"]] = d
                 changed.append(d)
@@ -240,6 +295,7 @@ class Engine:
         self._send(self.snapshot(), client_id)
         self._send_ble_tracks(client_id)
         self._send_production(client_id)
+        self._send_safety(client_id)
 
     def reset(self) -> None:
         """Restore the seed world. Gateway state is real device data and is kept."""
@@ -247,6 +303,7 @@ class Engine:
         self.production = self._new_production()
         self._prod_last = None
         self._seed_site_units()
+        self._seed_workers()
         # Every forklift is back at its seed spot and manual; tags re-acquire after stable_s.
         self.ble.forget_zones()
         self._device_goal.clear()
@@ -303,6 +360,7 @@ class Engine:
                 self._gateway_update()
         self._sync_rule_leds()
         self._tick_production(dt)
+        self._tick_safety(dt)
         self._drain_world_events()
         self._flush_units()
         self._dev_acc += dt
@@ -456,6 +514,11 @@ class Engine:
         for n in notes:
             self.event(n.level, n.text, "sim")
         parsed = parse_site_topic(topic)
+        if changed and parsed and parsed[2] == "position":
+            wk = next((w for w in self.safety.workers.values() if w.badge == changed), None)
+            st = self.devices.sim.get(changed)
+            if wk and st and st.x is not None and st.z is not None:
+                self.safety.set_position(wk.id, st.x, st.z, self.devices.zone_at(st.x, st.z, parsed[0]), now)
         if changed and parsed and changed in self.production.by_device:
             r = self.devices.sim[changed].readings.get(parsed[2])
             if r is not None and r.received_ms == now:
@@ -483,6 +546,8 @@ class Engine:
         for c in changes:
             u = w.entities.get(c.unit_id or "")
             if u is None or u.kind != "forklift":
+                if c.tag in self.devices.real_tags:
+                    continue  # a real badge (TD-BADGE-xx): shown as its own LIVE device, not a forklift
                 if c.first:
                     self.event("warn", f"Tag {c.tag} has no matching forklift", "gateway")
                 continue

@@ -7,6 +7,7 @@ import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
 import { DeviceInspect } from "./DeviceInspect";
 import { MachineRows } from "./MachineRows";
+import { WorkerRows } from "./WorkerRows";
 import { siteAt } from "../sites";
 import { stateLabel } from "../status";
 import { ago, Bar, batteryColor, Icon, kindIcon, kindLabel, LiveBadge, nodeLabel, SimBadge, StatusPill, useTick } from "./ui";
@@ -183,6 +184,7 @@ export function InspectCard() {
         {u.kind === "dock" && <DockRows u={u} />}
         {u.kind === "gateway" && <GatewayRows gw={gw} />}
         {u.kind === "machine" && <MachineRows u={u} />}
+        {u.kind === "worker" && <WorkerRows u={u} />}
         {(u.kind === "rack" || u.kind === "charger") && <Row k="Usage">{u.task}</Row>}
       </div>
     </div>

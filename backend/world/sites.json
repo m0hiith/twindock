@@ -178,6 +178,35 @@
           ]
         },
         {
+          "id": "FAC01_PRESS",
+          "site_id": "FAC-01",
+          "name": "Press area",
+          "kind": "production",
+          "polygon": [
+            [
+              118,
+              5.5
+            ],
+            [
+              126.5,
+              5.5
+            ],
+            [
+              126.5,
+              13
+            ],
+            [
+              118,
+              13
+            ]
+          ],
+          "restricted_roles": [
+            "press_operator",
+            "maintenance",
+            "supervisor"
+          ]
+        },
+        {
           "id": "FAC01_COLD",
           "site_id": "FAC-01",
           "name": "Cold room",
@@ -199,6 +228,10 @@
               130,
               26
             ]
+          ],
+          "restricted_roles": [
+            "logistics",
+            "supervisor"
           ]
         },
         {
@@ -439,6 +472,93 @@
       ],
       "label": "Factory office presence",
       "source": "sim"
+    },
+    {
+      "id": "BG-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 122,
+      "z": 12.2,
+      "capabilities": [
+        "position"
+      ],
+      "label": "Badge of WK-01",
+      "source": "sim",
+      "attached_to": "WK-01",
+      "sim": {
+        "battery_pct": 76
+      }
+    },
+    {
+      "id": "BG-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 96,
+      "z": 29,
+      "capabilities": [
+        "position"
+      ],
+      "label": "Badge of WK-02",
+      "source": "sim",
+      "attached_to": "WK-02",
+      "sim": {
+        "battery_pct": 64
+      }
+    },
+    {
+      "id": "BG-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 102,
+      "z": 12,
+      "capabilities": [
+        "position"
+      ],
+      "label": "Badge of WK-03",
+      "source": "sim",
+      "attached_to": "WK-03",
+      "sim": {
+        "battery_pct": 88
+      }
+    },
+    {
+      "id": "BG-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 96,
+      "z": 29,
+      "capabilities": [
+        "position"
+      ],
+      "label": "Badge of WK-04",
+      "source": "sim",
+      "attached_to": "WK-04",
+      "sim": {
+        "battery_pct": 52
+      }
+    },
+    {
+      "id": "RB-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_DOCKS",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 6.0,
+      "z": 30.5,
+      "capabilities": [
+        "rssi_dbm"
+      ],
+      "label": "Phone as badge TD-BADGE-01 (seen by GW-01)",
+      "source": "device",
+      "ble_tag": "TD-BADGE-01"
     }
   ],
   "production": {
@@ -455,5 +575,103 @@
     },
     "outbound_node": "FAC_OUT",
     "finished_by": "M-02"
+  },
+  "workers": [
+    {
+      "id": "WK-01",
+      "name": "Ana Silva",
+      "role": "press_operator",
+      "badge": "BG-01",
+      "routes": {
+        "default": [
+          "WALK_PRESS",
+          "FAC_AISLE_2",
+          "WALK_EAST",
+          "FAC_AISLE_2"
+        ]
+      }
+    },
+    {
+      "id": "WK-02",
+      "name": "Dev Patel",
+      "role": "logistics",
+      "badge": "BG-02",
+      "routes": {
+        "default": [
+          "WALK_OFFICE",
+          "WALK_STAFF_DOOR",
+          "FAC_AISLE_1",
+          "FAC_OUT",
+          "FAC_W",
+          "FAC_OUT",
+          "FAC_AISLE_1",
+          "FAC_AISLE_2",
+          "WALK_EAST",
+          "WALK_COLD_DOOR",
+          "WALK_COLD",
+          "WALK_COLD_DOOR",
+          "WALK_EAST",
+          "FAC_AISLE_2",
+          "FAC_AISLE_1",
+          "WALK_STAFF_DOOR"
+        ],
+        "outbound": [
+          "FAC_AISLE_1",
+          "FAC_OUT",
+          "FAC_W",
+          "FAC_OUT"
+        ]
+      }
+    },
+    {
+      "id": "WK-03",
+      "name": "Mei Chen",
+      "role": "qc_inspector",
+      "badge": "BG-03",
+      "routes": {
+        "default": [
+          "WALK_QC",
+          "FAC_AISLE_1",
+          "WALK_PACKER",
+          "FAC_AISLE_1",
+          "WALK_DOCK_DOOR",
+          "WALK_DOCKS",
+          "WALK_DOCK_DOOR",
+          "FAC_AISLE_1"
+        ]
+      }
+    },
+    {
+      "id": "WK-04",
+      "name": "Jordan Lee",
+      "role": "visitor",
+      "badge": "BG-04",
+      "routes": {
+        "default": [
+          "WALK_OFFICE",
+          "WALK_STAFF_DOOR",
+          "FAC_AISLE_1",
+          "WALK_STAFF_DOOR"
+        ],
+        "press_visit": [
+          "WALK_OFFICE",
+          "WALK_STAFF_DOOR",
+          "FAC_AISLE_1",
+          "FAC_AISLE_2",
+          "WALK_PRESS",
+          "FAC_AISLE_2",
+          "FAC_AISLE_1",
+          "WALK_STAFF_DOOR"
+        ]
+      }
+    }
+  ],
+  "safety": {
+    "_doc": "Proximity rule (backend/twindock/safety.py): a badge near a MOVING forklift. Warning below warn_m, critical below crit_m; cleared above warn_m + clear_margin_m.",
+    "warn_m": 3.0,
+    "crit_m": 1.5,
+    "clear_margin_m": 0.5,
+    "moving_mps": 0.2,
+    "walk_speed_mps": 1.3
   }
 }
