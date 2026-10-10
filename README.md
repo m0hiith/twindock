@@ -33,6 +33,7 @@ moving forklifts and trucks by hand.
 | 7. Board twin | Blocked: needs `frontend/public/board/top.jpg` and the hotspot table in HARDWARE.md |
 | 8. BLE tags as live forklifts | Done; zones need on-site calibration at `/device` |
 | 9. Demo hardening | Done: [DEMO.md](DEMO.md), reset button, data audit, 15-minute soak (60 fps throughout, no memory growth; Apple M1) |
+| Site extension ([SITE_PROMPTS.md](SITE_PROMPTS.md)) | Planned, starts after firmware Step D |
 
 ## Running
 
