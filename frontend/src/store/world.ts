@@ -121,6 +121,9 @@ interface ViewState {
   /** Site shown on this screen (local, like the camera). */
   site: string;
   setSite: (id: string) => void;
+  /** Site-twin device pucks in the 3D scene (hidden by default). */
+  showDevices: boolean;
+  setShowDevices: (v: boolean) => void;
   setHovered: (id: string | null) => void;
   /** Number of 90° steps from the default south-east view. */
   rotation: number;
@@ -146,6 +149,8 @@ export const useView = create<ViewState>((set) => ({
   hovered: null,
   site: initialSite,
   setSite: (site) => set((s) => ({ site, homeNonce: s.homeNonce + 1, zoom: 1 })),
+  showDevices: new URLSearchParams(location.search).has("devices"),
+  setShowDevices: (showDevices) => set({ showDevices }),
   setHovered: (hovered) => set({ hovered }),
   rotation: 0,
   zoom: 1,

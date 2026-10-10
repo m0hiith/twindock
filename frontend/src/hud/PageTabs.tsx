@@ -3,6 +3,7 @@
 export const PAGES = [
   { path: "/twin", label: "Twin" },
   { path: "/control", label: "Control" },
+  { path: "/fleet", label: "Fleet" },
   { path: "/device", label: "Device" },
   { path: "/wiring", label: "Wiring" },
 ] as const;

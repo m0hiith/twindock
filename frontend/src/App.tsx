@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { fetchLayout } from "./layout";
 import { ControlPage } from "./pages/ControlPage";
 import { DevicePage } from "./pages/DevicePage";
+import { FleetPage } from "./pages/FleetPage";
 import { TwinPage } from "./pages/TwinPage";
 import { WiringPage } from "./pages/WiringPage";
 import { connect } from "./store/ws";
@@ -33,6 +34,7 @@ export default function App() {
   // A handful of routes, so plain pathname matching is enough; "/" shows the twin.
   if (path.startsWith("/control")) return <ControlPage />;
   if (path.startsWith("/device")) return <DevicePage />;
+  if (path.startsWith("/fleet")) return <FleetPage />;
   if (path.startsWith("/wiring")) return <WiringPage />;
   if (path !== "/twin") history.replaceState(null, "", "/twin" + location.search);
   return <TwinPage />;

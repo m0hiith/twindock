@@ -5,6 +5,7 @@ import type { Gateway, Unit } from "../contract";
 import { ButtonSection, LedSection } from "../control/GatewayPanel";
 import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
+import { DeviceInspect } from "./DeviceInspect";
 import { stateLabel } from "../status";
 import { ago, Bar, batteryColor, Icon, kindIcon, kindLabel, LiveBadge, nodeLabel, SimBadge, StatusPill, useTick } from "./ui";
 
@@ -134,9 +135,10 @@ function Action({ label, icon, onClick, href }: { label: string; icon: "locate" 
 
 export function InspectCard() {
   const u = useWorld((s) => (s.selected ? s.units[s.selected] : undefined));
+  const dev = useWorld((s) => (s.selected && !s.units[s.selected] ? s.devices[s.selected] : undefined));
   const site = useWorld((s) => s.layout?.site.id);
   const gw = useWorld((s) => (u?.kind === "gateway" ? s.gateway : null));
-  if (!u) return null;
+  if (!u) return dev ? <DeviceInspect d={dev} /> : null;
   const sub = subtitle(u, gw);
   const live = u.source === "device";
   return (

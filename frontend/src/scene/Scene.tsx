@@ -15,6 +15,7 @@ import { Chargers, Containers, FenceStatic, GateBarrier, Ground, GroundLabels, M
 import { StaticHitAreas, Units } from "./Units";
 import { Office, Warehouse } from "./Warehouse";
 import { Factory } from "./Factory";
+import { DevicePucks } from "./DevicePucks";
 
 function DrawCalls() {
   // Exposes renderer stats for the perf check (?stats): window.__twindockGl.
@@ -61,6 +62,7 @@ export function Scene() {
       <GatewayPole layout={layout} />
       <StaticHitAreas />
       <Units />
+      <DevicePucks />
       <Pallets />
       <SelectionOverlay />
       {showStats && <><Stats /><DrawCalls /></>}
