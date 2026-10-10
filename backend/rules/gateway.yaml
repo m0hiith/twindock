@@ -1,0 +1,11 @@
+# The real board. Facts: online (status within 15 s), was_online (the board has been online since the
+# backend started). A board that was never seen is "Waiting for device", not an alert.
+- id: gateway_offline
+  name: Gateway offline
+  plain: Raise a critical alert when the real board (GW-01) stops sending status for 15 s after having been online; resolve it automatically when it comes back.
+  subject: gateway
+  when:
+    - {field: was_online, op: eq, value: true}
+    - {field: online, op: eq, value: false}
+  severity: critical
+  message: "Gateway GW-01 offline: no status from the board for 15 s"

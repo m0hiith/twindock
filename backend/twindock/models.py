@@ -110,6 +110,13 @@ class SetAutoMode(Strict):
     enabled: bool
 
 
+class AckAlert(Strict):
+    type: Literal["ack_alert"]
+    cmd_id: str
+    alert_id: str
+    by: str
+
+
 class MachineCommand(Strict):
     type: Literal["machine_command"]
     cmd_id: str
@@ -117,7 +124,8 @@ class MachineCommand(Strict):
     action: Literal["degrade", "restore", "maintenance"]
 
 
-ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand], Field(discriminator="type")]
+ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand, AckAlert],
+                          Field(discriminator="type")]
 
 
 # ---------------------------------------------------------------- Wire entities
@@ -225,6 +233,15 @@ class ProductionUpdate(Strict):
     config: dict[str, Any]
 
 
+class AlertsUpdate(Strict):
+    """Shape checked against ws/alerts_update.json; built by Rules.wire()."""
+    type: Literal["alerts_update"] = "alerts_update"
+    seq: int
+    server_ts_ms: int
+    alerts: list[dict[str, Any]]
+    rules: list[dict[str, Any]]
+
+
 class SafetyUpdate(Strict):
     """Shape checked against ws/safety_update.json; built by Safety.wire()."""
     type: Literal["safety_update"] = "safety_update"
@@ -288,7 +305,7 @@ class SelectionChanged(Strict):
 class CommandAck(Strict):
     type: Literal["command_ack"] = "command_ack"
     cmd_id: str
-    command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command"]
+    command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert"]
     ok: bool
     reason: str | None = None
     path: list[str] | None = None

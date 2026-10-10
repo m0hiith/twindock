@@ -139,7 +139,8 @@ class Production:
     # ------------------------------------------------------------------ readings
 
     def on_reading(self, device_id: str, channel: str, value: Any, now: int) -> list[tuple[str, str, str]]:
-        """Returns events (level, text, machine id)."""
+        """Update machine state from one reading. Alerts and their events come from the rules engine
+        (backend/rules/production.yaml); this returns no events itself."""
         m = self.by_device.get(device_id)
         if m is None:
             return []
@@ -149,11 +150,8 @@ class Production:
             prev = m.state
             m.state, m.state_since_ms = value, now
             if value == "fault":
-                text = m.pending_alarm or "Fault"
-                m.last_fault = {"text": text, "at_ms": now}
-                ev.append(("error", f"{m.id} {m.label.lower()}: fault ({text})", m.id))
-            elif prev == "fault":
-                ev.append(("info", f"{m.id} {m.label.lower()} back to {value}", m.id))
+                m.last_fault = {"text": m.pending_alarm or "Fault", "at_ms": now}
+            del prev  # transitions are turned into alerts by the rules engine (machine_fault)
             m.pending_alarm = None
         elif channel == "alarm" and isinstance(value, str):
             if m.state == "fault" and m.last_fault:
@@ -163,12 +161,7 @@ class Production:
         elif channel == "vibration_rms" and isinstance(value, (int, float)):
             m.vibration_rms = float(value)
             if m.state == "running":
-                r = m.base.add(float(value), now)
-                if r == "raised":
-                    ev.append(("warn", f"{m.id} {m.label.lower()}: abnormal vibration compared with baseline "
-                               f"(z = {m.base.z:.1f})", m.id))
-                elif r == "cleared":
-                    ev.append(("info", f"{m.id} {m.label.lower()}: vibration back within baseline", m.id))
+                m.base.add(float(value), now)  # sets abnormal; the abnormal_vibration rule raises the alert
         elif channel == "current_a" and isinstance(value, (int, float)):
             m.current_a = float(value)
         elif channel == "cycle_time_s" and isinstance(value, (int, float)):

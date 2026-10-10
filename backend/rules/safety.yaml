@@ -1,0 +1,28 @@
+# Worker safety from badges. Facts per worker: unit_id, role_text, near_level, near_forklift, distance_m,
+# restricted_zone, restricted_zone_name. Only workers with a fresh badge (<= 15 s) have these facts.
+- id: proximity_warning
+  name: Pedestrian near forklift
+  plain: Warn when a worker's badge is within 3 m of a moving forklift (parked forklifts never count). Clears above 3.5 m or when the forklift stops.
+  subject: worker
+  when:
+    - {field: near_level, op: eq, value: warning}
+  severity: warning
+  message: "Pedestrian near forklift: {unit_id} ({role_text}) {distance_m:.1f} m from moving {near_forklift}"
+
+- id: proximity_critical
+  name: Pedestrian very close to forklift
+  plain: Raise a critical alert when a worker's badge is within 1.5 m of a moving forklift.
+  subject: worker
+  when:
+    - {field: near_level, op: eq, value: critical}
+  severity: critical
+  message: "Pedestrian near forklift: {unit_id} ({role_text}) {distance_m:.1f} m from moving {near_forklift}"
+
+- id: restricted_zone
+  name: Restricted zone entered
+  plain: Raise a critical alert when a worker enters a restricted zone their role is not allowed in (press area, cold room); resolve when they leave.
+  subject: worker
+  when:
+    - {field: restricted_zone, op: present}
+  severity: critical
+  message: "{unit_id} ({role_text}) entered restricted {restricted_zone_name}"

@@ -71,7 +71,9 @@ class Safety:
 
     def evaluate(self, now: int, forklifts: list[tuple[str, float, float, float]], fresh: dict[str, bool],
                  zones: dict[str, dict[str, Any]]) -> list[tuple[str, str, str]]:
-        """forklifts: (id, x, z, speed). Returns events (level, text, unit id)."""
+        """forklifts: (id, x, z, speed). Updates each worker's near/restricted state and today's counters.
+        Alerts (and their events) come from the rules engine (backend/rules/safety.yaml); the returned
+        list is always empty and kept for callers that log observations."""
         warn, crit = float(self.cfg["warn_m"]), float(self.cfg["crit_m"])
         clear = warn + float(self.cfg["clear_margin_m"])
         moving_mps = float(self.cfg["moving_mps"])
@@ -99,9 +101,6 @@ class Safety:
                         self.today.criticals += 1
                     else:
                         self.today.warnings += 1
-                    ev.append(("error" if level == "critical" else "warn",
-                               f"Pedestrian near forklift: {w.id} ({w.role.replace('_', ' ')}) {dist:.1f} m from moving {fid}",
-                               w.id))
                 elif w.near.level == "critical" and level == "warning":
                     level = "critical" if dist < crit + 0.3 else "warning"  # small hysteresis on the way down
                 w.near = Near(fid, round(dist, 2), level)
@@ -109,7 +108,6 @@ class Safety:
                     self.today.closest_m = round(dist, 2)
                     self.today.closest = {"worker": w.id, "forklift": fid, "at_ms": now}
             elif w.near is not None:
-                ev.append(("info", f"{w.id} clear of forklifts again", w.id))
                 w.near = None
             # --- restricted zones
             zn = zones.get(w.zone_id or "")
@@ -118,9 +116,7 @@ class Safety:
                 if w.restricted != zn["id"]:  # type: ignore[index]
                     w.restricted = zn["id"]  # type: ignore[index]
                     self.today.restricted += 1
-                    ev.append(("error", f"{w.id} ({w.role.replace('_', ' ')}) entered restricted {zn['name']}", w.id))  # type: ignore[index]
             elif w.restricted is not None:
-                ev.append(("info", f"{w.id} left the restricted area", w.id))
                 w.restricted = None
         return ev
 

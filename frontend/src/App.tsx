@@ -3,6 +3,7 @@ import { fetchLayout } from "./layout";
 import { ControlPage } from "./pages/ControlPage";
 import { DevicePage } from "./pages/DevicePage";
 import { FleetPage } from "./pages/FleetPage";
+import { RulesPage } from "./pages/RulesPage";
 import { TwinPage } from "./pages/TwinPage";
 import { WiringPage } from "./pages/WiringPage";
 import { connect } from "./store/ws";
@@ -35,6 +36,7 @@ export default function App() {
   if (path.startsWith("/control")) return <ControlPage />;
   if (path.startsWith("/device")) return <DevicePage />;
   if (path.startsWith("/fleet")) return <FleetPage />;
+  if (path.startsWith("/rules")) return <RulesPage />;
   if (path.startsWith("/wiring")) return <WiringPage />;
   if (path !== "/twin") history.replaceState(null, "", "/twin" + location.search);
   return <TwinPage />;

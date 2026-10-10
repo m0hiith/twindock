@@ -21,12 +21,13 @@ from .ble_tracker import BleConfig, BleTracker, ZoneChange
 from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
 from .devices import DeviceRegistry, load_sites, parse_site_topic
 from .production import Production
+from .rules import Rules, load_rules
 from .safety import Safety
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
-from .models import (BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
+from .models import (AckAlert, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
                      SelectUnit, SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
 from .world import Entity, World
@@ -38,6 +39,8 @@ DEVICE_FLUSH_S = 0.5  # device_update at most 2 Hz: sim sensors report every 1-1
 PRODUCTION_FLUSH_S = 1.0  # production_update at most 1 Hz: machine monitors report once a second
 SAFETY_EVAL_S = 0.25     # proximity check 4x a second: a forklift at demo pace covers ~1.4 m in that time
 SAFETY_FLUSH_S = 0.5     # safety_update at most 2 Hz
+RULES_EVAL_S = 0.5       # rules 2x a second: fast enough for 1.5 m proximity at demo pace, cheap
+SEVERITY_LEVEL = {"info": "info", "warning": "warn", "critical": "error"}
 
 
 @dataclass
@@ -71,12 +74,14 @@ class Engine:
         self._prod_acc = 0.0
         self._prod_last: dict[str, Any] | None = None
         self._site_cmd_counter = 0
-        self._outbound_full_warned = False
         self.devices.layout_nodes = {n.id: (n.x, n.z) for n in layout.nodes}
         self.safety = Safety.build(self.devices.cfg["safety"], self.devices.cfg.get("workers", []))
         self._safety_acc = 0.0
         self._safety_flush_acc = 0.0
         self._safety_last: dict[str, Any] | None = None
+        self.rules = Rules(load_rules())
+        self._rules_acc = 0.0
+        self._gw_was_online = False
         graph = Graph(layout)
         self.world = World(layout, graph)
         forklift_nodes = {n.id for n in layout.nodes if "forklift" in n.kinds}
@@ -158,6 +163,77 @@ class Engine:
             self._safety_flush_acc = 0.0
             self._send_safety()
 
+    # ------------------------------------------------------------------ rules and alerts (S6)
+
+    def _facts(self) -> dict[str, list[dict[str, Any]]]:
+        """Plain facts per subject for backend/rules/*.yaml. Only data that actually arrived is a fact."""
+        now = self.clock()
+        fresh = self._fresh()
+        machines = []
+        for mid, pm in self.production.machines.items():
+            e = self.world.entities.get(mid)
+            ok = fresh.get(pm.device_id, False)
+            machines.append({"id": mid, "unit_id": mid, "label": pm.label, "label_lower": pm.label.lower(),
+                             "state": pm.state if ok else None, "abnormal": pm.base.abnormal if ok else None,
+                             "z_score": pm.base.z, "vibration_rms": pm.vibration_rms,
+                             "fault_text": (pm.last_fault or {}).get("text"), "site_id": "FAC-01",
+                             "x": e.x if e else None, "z": e.z if e else None})
+        workers = []
+        for w in self.safety.workers.values():
+            if not w.fresh:
+                continue
+            zn = self.devices.zone_by_id.get(w.restricted or "")
+            workers.append({"id": w.id, "unit_id": w.id, "role_text": w.role.replace("_", " "),
+                            "near_level": w.near.level if w.near else None,
+                            "near_forklift": w.near.forklift if w.near else None,
+                            "distance_m": w.near.distance_m if w.near else None,
+                            "restricted_zone": w.restricted, "restricted_zone_name": zn["name"] if zn else None,
+                            "site_id": "FAC-01", "x": w.x, "z": w.z})
+        devices = []
+        for d in self.devices.wire(self.gw, now, self.ble):
+            if d["source"] != "sim":
+                continue  # real devices have their own rules (gateway) on real data
+            f: dict[str, Any] = {"id": d["id"], "device_id": d["id"], "type": d["type"], "label": d.get("label"),
+                                 "status": d["status"], "zone_id": d["zone_id"], "source": d["source"],
+                                 "zone_name": self.devices.zone_by_id.get(d["zone_id"], {}).get("name"),
+                                 "fault": d.get("fault"), "site_id": d["site_id"], "x": d["x"], "z": d["z"]}
+            if d["status"] in ("online", "fault"):  # a stale reading is not a current condition
+                for ch, r in d["readings"].items():
+                    f.setdefault(ch, r["value"])
+            devices.append(f)
+        g = self.layout.gateway
+        gateway = [{"id": g.id, "unit_id": g.id, "device_id": g.id, "online": self.gw.online,
+                    "was_online": self._gw_was_online, "site_id": "WH-01", "x": g.x, "z": g.z}]
+        out = self.world.graph.nodes.get(self.production.outbound_node)
+        line = [{"id": "FAC-01 line", "pallets_waiting": self.production.pallets_waiting, "site_id": "FAC-01",
+                 "x": out.x if out else None, "z": out.z if out else None}]
+        return {"machine": machines, "worker": workers, "device": devices, "gateway": gateway, "line": line}
+
+    def _tick_rules(self, dt: float) -> None:
+        self._rules_acc += dt
+        if self._rules_acc < RULES_EVAL_S:
+            return
+        self._rules_acc = 0.0
+        if self.gw.online:
+            self._gw_was_online = True
+        raised, resolved = self.rules.evaluate(self._facts(), self.clock())
+        for a in raised:
+            self.event(SEVERITY_LEVEL[a.severity], a.message, "rules", a.target.get("unit_id"))
+        for a in resolved:
+            self.event("info", f"Resolved: {a.message}", "rules", a.target.get("unit_id"))
+        if raised or resolved:
+            self._send_alerts()
+
+    def _send_alerts(self, to: str | None = None) -> None:
+        self._send(AlertsUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), **self.rules.wire()), to)
+
+    def _ack_alert(self, client_id: str, m: AckAlert) -> None:
+        reason = self.rules.acknowledge(m.alert_id, m.by.strip() or client_id, self.clock())
+        self._ack(client_id, m.cmd_id, "ack_alert", reason is None, reason)
+        if reason is None:
+            self.event("info", f"{m.alert_id} acknowledged by {m.by.strip() or client_id}", client_id)
+            self._send_alerts()
+
     def _send_safety(self, to: str | None = None) -> None:
         w = self.safety.wire()
         if to is None and w == self._safety_last:
@@ -196,12 +272,7 @@ class Engine:
                                                 f"Assembled units, {self.production.units_per_pallet} cartons",
                                                 "origin": "FAC-01 line (simulated)"})
             if pid is None:
-                if not self._outbound_full_warned:
-                    self._outbound_full_warned = True
-                    self.event("warn", "Factory outbound is full: finished pallets are waiting for a forklift",
-                               "production")
-                break
-            self._outbound_full_warned = False
+                break  # outbound full: the outbound_backlog rule raises the alert
             self.production.pallets_waiting -= 1
             self.production.pallets_made += 1
             self.event("info", f"{pid} finished on the FAC-01 line, waiting at {self.world.node_label(out)}",
@@ -296,6 +367,7 @@ class Engine:
         self._send_ble_tracks(client_id)
         self._send_production(client_id)
         self._send_safety(client_id)
+        self._send_alerts(client_id)
 
     def reset(self) -> None:
         """Restore the seed world. Gateway state is real device data and is kept."""
@@ -361,6 +433,7 @@ class Engine:
         self._sync_rule_leds()
         self._tick_production(dt)
         self._tick_safety(dt)
+        self._tick_rules(dt)
         self._drain_world_events()
         self._flush_units()
         self._dev_acc += dt
@@ -641,6 +714,8 @@ class Engine:
             self._select(client_id, msg)
         elif isinstance(msg, LedCommand):
             self._led_command(client_id, msg)
+        elif isinstance(msg, AckAlert):
+            self._ack_alert(client_id, msg)
         elif isinstance(msg, MachineCommand):
             self._machine_command(client_id, msg)
         elif isinstance(msg, SetAutoMode):

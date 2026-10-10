@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/ack_alert.json",
+  "title": "ack_alert (client -> server)",
+  "description": "Acknowledge an open alert. `by` is who acknowledged it as shown to everyone (no sign-in on this demo: the screen's name, e.g. \"Control Room (phone)\").",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "cmd_id",
+    "alert_id",
+    "by"
+  ],
+  "properties": {
+    "type": {
+      "const": "ack_alert"
+    },
+    "cmd_id": {
+      "$ref": "defs.json#/$defs/cmd_id"
+    },
+    "alert_id": {
+      "type": "string",
+      "pattern": "^A[0-9]{5,}$"
+    },
+    "by": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+    }
+  }
+}

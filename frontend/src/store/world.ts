@@ -1,7 +1,7 @@
 // Client mirror of server state. It only ever changes in response to server messages:
 // the UI sends intents (ws.ts) and waits for the backend to broadcast the result.
 import { create } from "zustand";
-import type { BleTracks, CommandAck, Device, Event, Gateway, ProductionUpdate, SafetyUpdate, ServerMessage, Site, Unit } from "../contract";
+import type { AlertsUpdate, BleTracks, CommandAck, Device, Event, Gateway, ProductionUpdate, SafetyUpdate, ServerMessage, Site, Unit } from "../contract";
 import type { Layout } from "../layout";
 import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
@@ -21,6 +21,8 @@ interface WorldState {
   production: ProductionUpdate | null;
   /** Worker safety (badges, proximity, restricted zones). No names: role and zone only. */
   safety: SafetyUpdate | null;
+  /** Open + recently resolved alerts and every rule (backend/rules/*.yaml). Shared by all screens. */
+  alerts: AlertsUpdate | null;
   selected: string | null;
   autoMode: boolean;
   events: Event[];
@@ -53,6 +55,7 @@ export const useWorld = create<WorldState>((set) => ({
   devices: {},
   production: null,
   safety: null,
+  alerts: null,
   selected: null,
   autoMode: false,
   events: [],
@@ -98,6 +101,8 @@ export const useWorld = create<WorldState>((set) => ({
           return { production: m };
         case "safety_update":
           return { safety: m };
+        case "alerts_update":
+          return { alerts: m };
         case "device_update": {
           const devices = { ...s.devices };
           for (const d of m.devices) devices[d.id] = d;

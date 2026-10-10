@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/alerts_update.json",
+  "title": "alerts_update (server -> client)",
+  "description": "All open alerts (sorted: critical first, newest first) followed by recently resolved ones, plus every rule from backend/rules/*.yaml. On connect and whenever an alert is raised, acknowledged or resolved.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "seq",
+    "server_ts_ms",
+    "alerts",
+    "rules"
+  ],
+  "properties": {
+    "type": {
+      "const": "alerts_update"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "server_ts_ms": {
+      "type": "integer"
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "rule_id",
+          "severity",
+          "title",
+          "subject_id",
+          "message",
+          "state",
+          "raised_ms",
+          "acknowledged_by",
+          "acknowledged_ms",
+          "resolved_ms",
+          "target"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^A[0-9]{5,}$"
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "raised",
+              "acknowledged",
+              "resolved"
+            ]
+          },
+          "raised_ms": {
+            "type": "integer"
+          },
+          "acknowledged_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "acknowledged_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "unit_id": {
+                "$ref": "defs.json#/$defs/unit_id"
+              },
+              "device_id": {
+                "$ref": "defs.json#/$defs/device_id"
+              },
+              "site_id": {
+                "$ref": "defs.json#/$defs/site_id"
+              },
+              "x": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "description": "Where the alert points: the camera flies to x/z on site_id."
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "plain",
+          "subject",
+          "severity",
+          "for_s",
+          "enabled"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "plain": {
+            "type": "string",
+            "description": "The rule in plain language, for the rules page."
+          },
+          "subject": {
+            "enum": [
+              "machine",
+              "worker",
+              "device",
+              "gateway",
+              "line"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ]
+          },
+          "for_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

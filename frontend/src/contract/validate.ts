@@ -17,7 +17,7 @@ function validatorFor(type: string): ValidateFunction | undefined {
   return v;
 }
 
-const SERVER_TYPES = new Set(["world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event", "ble_tracks", "device_update", "production_update", "safety_update"]);
+const SERVER_TYPES = new Set(["world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event", "ble_tracks", "device_update", "production_update", "safety_update", "alerts_update"]);
 
 /** Parse and validate a server message. Returns null (and logs) if it violates the contract. */
 export function parseServerMessage(text: string): ServerMessage | null {

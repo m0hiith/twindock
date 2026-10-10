@@ -50,3 +50,14 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - Privacy: no worker names on the wire at all; the demo has no sign-in, so nobody is an "authorised user". Names stay only in `sites.json`.
 - Real path: a tag named `TD-BADGE-01` seen by the real board's BLE scan is the commissioned real device `RB-01` (LIVE). Its RSSI, last seen and calibrated zone come from the existing BLE tracker. It is not in the proximity rule until zones are calibrated, because without a position it can't honestly be near anything.
 - The simulator advances simulated time by `dt` (not wall clock), so tests are fast and deterministic.
+
+## Stage 5: S6 rules and alerts
+- Alerts come only from `backend/rules/*.yaml`: production, safety, devices and gateway files. Each rule has a plain-language sentence for `/rules`.
+- Migrated: machine fault, abnormal vibration, outbound full, proximity warning and critical, restricted zone. The production and safety modules now only compute state and counters; they no longer emit alert-like events.
+- Not alerts, still plain events: LED confirmation timeouts, dropped device messages, BLE tag changes. They are command or diagnostic outcomes, not conditions that stay true.
+- Impact (sensor pack) has no rule: that sensor is gated and not built. Dock-door rules wait for S4. Cold-room door and temperature and CO₂ rules were added because those devices already exist (S0).
+- A missing or stale value never satisfies a clause, so no alert is ever raised on data that didn't arrive; device readings count only while the device is online.
+- Gateway offline fires only after the board has been online since the backend started: a board that was never seen is "Waiting for device", not a critical alert.
+- The alert message is rendered when the alert is raised (e.g. "6.6 °C"); the panels show the live value elsewhere.
+- Acknowledged by: there is no sign-in, so the screen names itself ("Control Room", "Twin", "(phone)" under 640 px wide), and that name is shown to everyone.
+- Rules are evaluated at 2 Hz; open alerts are sorted critical first, then newest; the last 30 resolved are kept for the panels.

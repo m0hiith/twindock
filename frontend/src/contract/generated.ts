@@ -36,12 +36,10 @@ export type Channel = string;
  */
 export type Xz = [number, number];
 /**
- * Waypoint graph node, e.g. DOCK_1, RACK_A3, CHARGER_C1, GATE_IN
- *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
- * via the `definition` "node_id".
+ * via the `definition` "cmd_id".
  */
-export type NodeId = string;
+export type CmdId = string;
 /**
  * e.g. FL-01, TR-02, PL-07, GW-01, M-01 (machine), WK-01 (worker)
  *
@@ -49,11 +47,6 @@ export type NodeId = string;
  * via the `definition` "unit_id".
  */
 export type UnitId = string;
-/**
- * This interface was referenced by `TwinDockContract`'s JSON-Schema
- * via the `definition` "cmd_id".
- */
-export type CmdId = string;
 /**
  * e.g. GW-01 (the real board), MM-01, BG-03
  *
@@ -68,6 +61,13 @@ export type DeviceId = string;
  * via the `definition` "site_id".
  */
 export type SiteId = string;
+/**
+ * Waypoint graph node, e.g. DOCK_1, RACK_A3, CHARGER_C1, GATE_IN
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "node_id".
+ */
+export type NodeId = string;
 /**
  * e.g. FAC01_PRODUCTION
  *
@@ -173,6 +173,8 @@ export interface TwinDockContract {
   site_hello?: SiteHello;
   site_reading?: SiteReading;
   site_status?: SiteStatus;
+  ack_alert?: AckAlert;
+  alerts_update?: AlertsUpdate;
   ble_tracks?: BleTracks;
   command_ack?: CommandAck;
   device_update?: DeviceUpdate;
@@ -367,6 +369,64 @@ export interface SiteStatus {
   source: "sim";
 }
 /**
+ * Acknowledge an open alert. `by` is who acknowledged it as shown to everyone (no sign-in on this demo: the screen's name, e.g. "Control Room (phone)").
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "ack_alert".
+ */
+export interface AckAlert {
+  type: "ack_alert";
+  cmd_id: CmdId;
+  alert_id: string;
+  by: string;
+}
+/**
+ * All open alerts (sorted: critical first, newest first) followed by recently resolved ones, plus every rule from backend/rules/*.yaml. On connect and whenever an alert is raised, acknowledged or resolved.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "alerts_update".
+ */
+export interface AlertsUpdate {
+  type: "alerts_update";
+  seq: number;
+  server_ts_ms: number;
+  alerts: {
+    id: string;
+    rule_id: string;
+    severity: "info" | "warning" | "critical";
+    title: string;
+    subject_id: string;
+    message: string;
+    state: "raised" | "acknowledged" | "resolved";
+    raised_ms: number;
+    acknowledged_by: string | null;
+    acknowledged_ms: number | null;
+    resolved_ms: number | null;
+    /**
+     * Where the alert points: the camera flies to x/z on site_id.
+     */
+    target: {
+      unit_id?: UnitId;
+      device_id?: DeviceId;
+      site_id?: SiteId;
+      x?: number;
+      z?: number;
+    };
+  }[];
+  rules: {
+    id: string;
+    name: string;
+    /**
+     * The rule in plain language, for the rules page.
+     */
+    plain: string;
+    subject: "machine" | "worker" | "device" | "gateway" | "line";
+    severity: "info" | "warning" | "critical";
+    for_s: number;
+    enabled: boolean;
+  }[];
+}
+/**
  * BLE tag tracking state after each twin/gateway/ble message and when a tag is lost. Smoothed values are computed by the backend from real sightings only; used by the /device calibration helper.
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -433,7 +493,7 @@ export interface BleTracks {
 export interface CommandAck {
   type: "command_ack";
   cmd_id: CmdId;
-  command: "move_unit" | "select_unit" | "led_command" | "set_auto_mode" | "machine_command";
+  command: "move_unit" | "select_unit" | "led_command" | "set_auto_mode" | "machine_command" | "ack_alert";
   ok: boolean;
   /**
    * Short human reason when ok is false.

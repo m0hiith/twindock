@@ -24,7 +24,8 @@
         "select_unit",
         "led_command",
         "set_auto_mode",
-        "machine_command"
+        "machine_command",
+        "ack_alert"
       ]
     },
     "ok": {

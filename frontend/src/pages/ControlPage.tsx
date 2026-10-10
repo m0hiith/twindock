@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { destinationCandidates, destinationKeys } from "../control/candidates";
 import { EventLog } from "../control/EventLog";
 import { ProductionPanel } from "../control/ProductionPanel";
+import { AlertsList } from "../hud/AlertsPanel";
 import { GatewayPanel } from "../control/GatewayPanel";
 import { MovePanel, UnitChips } from "../control/MovePanel";
 import { ProposalSheet } from "../control/ProposalSheet";
@@ -20,7 +21,7 @@ import { useWorld } from "../store/world";
 import { Brand } from "../hud/Brand";
 import { PageTabs } from "../hud/PageTabs";
 
-type Tab = "move" | "gateway" | "log" | "factory";
+type Tab = "move" | "gateway" | "log" | "factory" | "alerts";
 
 
 /** One click restores the seed world (POST /api/reset). The page then updates from the
@@ -56,6 +57,7 @@ export function ControlPage() {
   const proposal = useControl((s) => s.proposal);
   const { propose, setNotice } = useControl.getState();
   const warnCount = useWorld((s) => s.events.filter((e) => e.level !== "info").length);
+  const openAlerts = useWorld((s) => (s.alerts?.alerts ?? []).filter((a) => a.state !== "resolved").length);
 
   // Re-derive candidates only when what they depend on changes, not on every position update.
   const candKey = unit ? `${unit.id}:${unit.kind}:${Boolean(unit.carrying)}:${unit.source}` : "";
@@ -123,6 +125,9 @@ export function ControlPage() {
           <TabButton active={tab === "move"} onClick={() => setTab("move")}>Move</TabButton>
           <TabButton active={tab === "gateway"} onClick={() => setTab("gateway")}>Gateway</TabButton>
           <TabButton active={tab === "factory"} onClick={() => setTab("factory")}>Factory</TabButton>
+          <TabButton active={tab === "alerts"} onClick={() => setTab("alerts")}>
+            Alerts{openAlerts > 0 && <span className="tabular rounded-full bg-crit-bg px-1.5 text-[11px] text-crit">{openAlerts}</span>}
+          </TabButton>
           <TabButton active={tab === "log"} onClick={() => setTab("log")}>
             Event log{warnCount > 0 && <span className="tabular rounded-full bg-warn-bg px-1.5 text-[11px] text-warn">{warnCount}</span>}
           </TabButton>
@@ -131,6 +136,7 @@ export function ControlPage() {
           {tab === "move" && <MovePanel unit={unit} destinations={[...perNode.values()]} checking={checking} />}
           {tab === "gateway" && <GatewayPanel />}
           {tab === "factory" && <ProductionPanel />}
+          {tab === "alerts" && <AlertsList />}
           {tab === "log" && <EventLog />}
         </div>
       </aside>

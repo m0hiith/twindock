@@ -1,0 +1,29 @@
+# FAC-01 line. Facts per machine: unit_id, label, label_lower, state, abnormal, z_score, vibration_rms,
+# fault_text. Facts for the line: pallets_waiting. (backend/twindock/engine.py, Engine._facts)
+- id: machine_fault
+  name: Machine fault
+  plain: Raise a critical alert while a machine's monitor reports it in fault; resolve when it runs again.
+  subject: machine
+  when:
+    - {field: state, op: eq, value: fault}
+  severity: critical
+  message: "{unit_id} {label_lower}: fault ({fault_text})"
+
+- id: abnormal_vibration
+  name: Abnormal vibration
+  plain: Warn while a machine's vibration is abnormal compared with its own learned baseline (rolling z-score above 3, clears below 2). This is a comparison with normal, not a failure prediction.
+  subject: machine
+  when:
+    - {field: abnormal, op: eq, value: true}
+  severity: warning
+  message: "{unit_id} {label_lower}: abnormal vibration compared with baseline (z = {z_score:.1f})"
+
+- id: outbound_backlog
+  name: Factory outbound full
+  plain: Warn when finished pallets have had no free spot at the factory outbound for 30 s.
+  subject: line
+  when:
+    - {field: pallets_waiting, op: gt, value: 0}
+  for_s: 30
+  severity: warning
+  message: "Factory outbound is full: {pallets_waiting} finished pallet(s) waiting for a forklift"

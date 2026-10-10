@@ -1,0 +1,50 @@
+# Site devices. Facts per device: device_id, type, label, status, zone_id, zone_name, source, and one
+# fact per reading channel holding its latest value (temperature, open, co2_ppm, ...).
+- id: cold_room_door_open
+  name: Cold room door left open
+  plain: Warn when the cold room door has been open for more than 60 s.
+  subject: device
+  where:
+    - {field: type, op: eq, value: door_sensor}
+    - {field: zone_id, op: eq, value: FAC01_COLD}
+  when:
+    - {field: open, op: eq, value: true}
+  for_s: 60
+  severity: warning
+  message: "Cold room door open for over 60 s ({device_id})"
+
+- id: cold_room_temperature
+  name: Cold room temperature out of range
+  plain: Warn when a cold room temperature sensor reads outside 0–5 °C for 30 s.
+  subject: device
+  where:
+    - {field: type, op: eq, value: env_sensor}
+    - {field: zone_id, op: eq, value: FAC01_COLD}
+  when:
+    - {field: temperature, op: outside, value: [0, 5]}
+  for_s: 30
+  severity: warning
+  message: "Cold room at {temperature:.1f} °C, outside 0–5 °C ({device_id})"
+
+- id: air_quality_co2
+  name: High CO₂
+  plain: Warn when an air quality sensor reads more than 1000 ppm CO₂ for 60 s.
+  subject: device
+  where:
+    - {field: type, op: eq, value: air_quality}
+  when:
+    - {field: co2_ppm, op: gt, value: 1000}
+  for_s: 60
+  severity: warning
+  message: "CO₂ at {co2_ppm:.0f} ppm in {zone_name} ({device_id})"
+
+- id: device_fault
+  name: Device fault
+  plain: Warn while a simulated device reports a fault in its status.
+  subject: device
+  where:
+    - {field: source, op: eq, value: sim}
+  when:
+    - {field: status, op: eq, value: fault}
+  severity: warning
+  message: "{device_id} reports a fault: {fault}"
