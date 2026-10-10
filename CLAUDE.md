@@ -117,6 +117,9 @@ Calm, airy, never cartoonish. The 3D scene fills the whole viewport; HUD cards f
 **Palette (tokens in `frontend/src/theme.ts` and CSS variables):**
 Silicon Labs theme: red #D91E2A and black, on neutral greys. No blue anywhere (except the board's
 real blue LED channel). Logo: `frontend/public/brand/silicon-labs.png`, shown next to the TwinDock name.
+Exception: on `/wiring`, wires are drawn in their real physical colours (Qwiic red 3.3 V, black GND,
+blue SDA, yellow SCL; load-cell wires red/black/white/green), including blue. Nothing else on that
+page may use them.
 - `--ground` #EDEDED neutral grey floor; `--road` #DEDEDE with white dashed lane markings
 - `--structure` #D91E2A warehouse walls/roofs; `--structure-dark` #A8141F roof shading
 - `--accent` #D91E2A: selection brackets, map pins, routes, hover, primary buttons, shipment stepper

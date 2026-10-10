@@ -89,6 +89,13 @@ Read CLAUDE.md, /shared and hardware/wiring.json.
 4. Tests for the sensor rules, staleness and the impact event.
 ```
 
+Note for W2 (from the /wiring build, 2026-10-10): `mqtt/gateway_sensor.json` only allows
+`{ts_ms, value: number, unit}`. The W1 IMU messages don't fit it: `/motion` is
+`{moving, accel_rms_g, tilt_deg}` and `/impact` is an event. Give them their own schemas
+(e.g. `mqtt/gateway_motion.json`, `mqtt/gateway_impact.json`), store them alongside
+`gateway.sensors`, and extend `frontend/src/wiring/readings.ts` so the /wiring page can show them
+(today it reads only scalar `gateway.sensors[name]`). Not built yet.
+
 ---
 
 ## Prompt W3: Tinkercad-style wiring page (/wiring)
