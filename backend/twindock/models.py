@@ -9,8 +9,8 @@ from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
-Kind = Literal["forklift", "truck", "pallet", "dock", "rack", "charger", "gateway"]
-Source = Literal["device", "manual", "auto"]
+Kind = Literal["forklift", "truck", "pallet", "dock", "rack", "charger", "gateway", "machine", "worker"]
+Source = Literal["device", "manual", "auto", "sim"]
 Action = Literal["goto", "pick", "drop", "load", "charge", "dock", "depart"]
 MoverKind = Literal["forklift", "truck"]
 
@@ -204,6 +204,15 @@ class WorldSnapshot(Strict):
     selected_unit_id: str | None
     units: list[Unit]
     gateway: Gateway
+    sites: list[dict[str, Any]]    # shape checked against ws/defs.json#/$defs/site
+    devices: list[dict[str, Any]]  # shape checked against ws/defs.json#/$defs/device
+
+
+class DeviceUpdate(Strict):
+    type: Literal["device_update"] = "device_update"
+    seq: int
+    server_ts_ms: int
+    devices: list[dict[str, Any]]
 
 
 class UnitUpdate(Strict):

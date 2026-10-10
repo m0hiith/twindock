@@ -30,6 +30,7 @@ TICK_HZ = float(os.environ.get("TWINDOCK_TICK_HZ", "20"))  # CLAUDE.md: movement
 MQTT_ENABLED = os.environ.get("TWINDOCK_MQTT", "1") != "0"
 MQTT_HOST = os.environ.get("TWINDOCK_MQTT_HOST", "127.0.0.1")
 MQTT_PORT = int(os.environ.get("TWINDOCK_MQTT_PORT", "1883"))
+MQTT_CLIENT_ID = os.environ.get("TWINDOCK_MQTT_CLIENT_ID", "twindock-backend")
 
 
 class App:
@@ -37,7 +38,7 @@ class App:
         self.layout_json: dict[str, Any] = json.loads(DEFAULT_LAYOUT.read_text())
         self.engine = Engine(load_layout())
         self.hub = Hub()
-        self.mqtt = MqttBridge(self.engine, self.flush, MQTT_HOST, MQTT_PORT)
+        self.mqtt = MqttBridge(self.engine, self.flush, MQTT_HOST, MQTT_PORT, MQTT_CLIENT_ID)
 
     def flush(self) -> None:
         for o in self.engine.drain():
@@ -103,6 +104,15 @@ def wiring() -> dict[str, Any]:
 @app.get("/api/snapshot")
 def snapshot() -> dict[str, Any]:
     return state.engine.snapshot().model_dump(mode="json")
+
+
+@app.get("/api/devices/{device_id}/history")
+def device_history(device_id: str, channel: str) -> dict[str, Any]:
+    """Recent numeric values of one device channel, for the /fleet side panel chart."""
+    if device_id not in state.engine.devices.defs:
+        raise HTTPException(status_code=404, detail=f"Unknown device {device_id}")
+    return {"device_id": device_id, "channel": channel,
+            "points": [[t, v] for t, v in state.engine.devices.history(device_id, channel)]}
 
 
 @app.post("/api/reset")

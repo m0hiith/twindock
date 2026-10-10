@@ -34,7 +34,7 @@ MQTT_SCHEMAS = {
 }
 CLIENT_TYPES = ("move_unit", "select_unit", "led_command", "set_auto_mode")
 SERVER_TYPES = ("world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event",
-                "ble_tracks")
+                "ble_tracks", "device_update")
 
 
 @lru_cache(maxsize=1)
@@ -53,6 +53,13 @@ def validator(name: str) -> jsonschema.Draft202012Validator:
     """name is "mqtt/gateway_status", "ws/move_unit", ..."""
     registry, by_path = _registry()
     return jsonschema.Draft202012Validator(by_path[name], registry=registry)
+
+
+@lru_cache(maxsize=None)
+def def_validator(name: str) -> jsonschema.Draft202012Validator:
+    """Validator for one entry of ws/defs.json, e.g. "site" or "device"."""
+    registry, _ = _registry()
+    return jsonschema.Draft202012Validator({"$ref": f"twindock/ws/defs.json#/$defs/{name}"}, registry=registry)
 
 
 def mqtt_validator(kind: str) -> jsonschema.Draft202012Validator:

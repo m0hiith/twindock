@@ -1,7 +1,7 @@
 // Top bar: logo, search, site selector, Live clock, notifications (server events), operator.
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Event } from "../contract";
-import { useWorld } from "../store/world";
+import { useView, useWorld } from "../store/world";
 import { AutoModeToggle } from "./AutoModeToggle";
 import { LivePill } from "./LivePill";
 import { Search } from "./Search";
@@ -33,27 +33,39 @@ function IconButton({ label, onClick, children }: { label: string; onClick?: () 
   );
 }
 
-function SiteSelector() {
-  const site = useWorld((s) => s.layout?.site);
+export function SiteSelector() {
+  const sites = useWorld((s) => s.sites);
+  const devices = useWorld((s) => s.devices);
+  const current = useView((s) => s.site);
   const [open, setOpen, ref] = usePopover();
+  const site = sites.find((s) => s.id === current) ?? sites[0];
   if (!site) return null;
   return (
     <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`Site: ${site.name}`}
         className="flex h-9 items-center gap-2 rounded-xl border border-[var(--card-border)] px-3 text-[13px] font-medium hover:bg-idle-bg">
+        <Icon name={site.kind === "factory" ? "factory" : "dock"} size={15} className="text-ink-2" />
         {site.short}
         <Icon name="chevronDown" size={14} className="text-ink-2" />
       </button>
       {open && (
-        <div className="card absolute right-0 top-11 z-30 w-64 p-1">
-          <div className="flex items-center gap-3 rounded-lg bg-info-bg px-2.5 py-2">
-            <div className="flex-1">
-              <div className="font-semibold">{site.id}</div>
-              <div className="text-[12px] text-ink-2">{site.name}</div>
-            </div>
-            <Icon name="check" className="text-info" />
-          </div>
-          <div className="px-2.5 pb-1.5 pt-2 text-[12px] text-ink-2">This backend serves one site.</div>
+        <div className="card absolute right-0 top-11 z-30 w-72 p-1">
+          {sites.map((s) => {
+            const all = Object.values(devices).filter((d) => d.site_id === s.id);
+            const on = all.filter((d) => d.status === "online").length;
+            const active = s.id === site.id;
+            return (
+              <button key={s.id} type="button" onClick={() => { useView.getState().setSite(s.id); setOpen(false); }}
+                className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left ${active ? "bg-info-bg" : "hover:bg-idle-bg"}`}>
+                <Icon name={s.kind === "factory" ? "factory" : "dock"} size={18} className="text-ink-2" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold">{s.id}</div>
+                  <div className="truncate text-[12px] text-ink-2">{s.name} · {on}/{all.length} devices online</div>
+                </div>
+                {active && <Icon name="check" className="text-info" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

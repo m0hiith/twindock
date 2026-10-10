@@ -4,13 +4,13 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { Layout } from "../layout";
-import { useView } from "../store/world";
+import { useView, useWorld } from "../store/world";
 import { ZOOM_MAX, ZOOM_MIN } from "../store/world";
 import { cameraState, ELEVATION } from "./camera";
 import { dragState } from "./dragState";
 
 const DIST = 200;
-const HOME = new THREE.Vector3(32, 0, 27); // between the warehouse and the yard
+const HOME = new THREE.Vector3(32, 0, 27); // WH-01: between the warehouse and the yard
 const DRAG_PX = 4; // movement before a press counts as a drag rather than a click
 
 export function CameraRig({ layout }: { layout: Layout }) {
@@ -19,12 +19,16 @@ export function CameraRig({ layout }: { layout: Layout }) {
   const zoom = useView((s) => s.zoom);
   const homeNonce = useView((s) => s.homeNonce);
   const focus = useView((s) => s.focus);
+  const siteId = useView((s) => s.site);
+  const siteHome = useWorld((s) => s.sites.find((x) => x.id === siteId)?.home);
+  const home = siteHome ? new THREE.Vector3(siteHome[0], 0, siteHome[1]) : HOME;
 
-  const target = useRef(HOME.clone());
-  const goal = useRef(HOME.clone());
+  const target = useRef(home.clone());
+  const goal = useRef(home.clone());
   const zoomShown = useRef(zoom);
 
-  useEffect(() => { goal.current.copy(HOME); }, [homeNonce]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- home is recomputed every render; nonce/site drive it
+  useEffect(() => { goal.current.copy(home); }, [homeNonce, siteId, siteHome?.[0], siteHome?.[1]]);
   useEffect(() => { if (focus) goal.current.set(focus.x, 0, focus.z); }, [focus]);
 
   // Pan by drag, zoom by wheel.

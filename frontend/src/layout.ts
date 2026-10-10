@@ -14,13 +14,25 @@ export interface LayoutNode {
 }
 
 export interface Rect { x: number; z: number; w: number; d: number }
+export type Wall = "north" | "south" | "east" | "west";
+export interface Opening { wall: Wall; at: number; w: number; label?: string }
+export interface ProductionLine {
+  conveyor: { from: XZ; to: XZ; width: number };
+  machines: { id: string; label: string; x: number; z: number; w: number; d: number; h: number; kind: "press" | "packer" }[];
+  qc: { x: number; z: number; label: string };
+  outbound_node: string;
+}
 
 export interface Layout {
   version: string;
   site: { id: string; name: string; short: string };
   bounds: { x: XZ; z: XZ };
-  buildings: (Rect & { id: string; kind: "warehouse" | "office"; h: number; label?: string;
-    doors?: { id: string; dock: string; wall: "south"; x: number; w: number }[] })[];
+  buildings: (Rect & { id: string; kind: "warehouse" | "office" | "factory" | "cold_room"; h: number; label?: string;
+    doors?: { id: string; dock: string; wall: "south"; x: number; w: number }[];
+    /** Open gaps in a wall: `at` is the x (north/south walls) or z (east/west walls) of the gap centre. */
+    openings?: Opening[];
+    door?: Opening & { wall: Wall } })[];
+  production_line?: ProductionLine;
   racks: (Rect & { id: string; row: string; slots: string[] })[];
   zones: (Rect & { id: string; name: string; purpose: string })[];
   roads: { id: string; points: XZ[]; width: number; dashed: boolean }[];

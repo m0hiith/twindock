@@ -174,6 +174,29 @@ width/height). Pressed buttons visibly depress; LEDs glow with bloom when on; a 
 pulse animates on each BLE scan message; the whole board dims with an "Offline" label when the
 status topic is stale for more than 15 s.
 
+## Site twin
+
+TwinDock also models a **site**: WH-01 (the warehouse) and FAC-01 "Riverside Assembly" (a factory
+east of it, same metre grid and waypoint graph). Sites, zones and commissioned devices are in
+`backend/world/sites.json`; geometry stays in `backend/world/layout.json`. Plan: `docs/site_plan.md`.
+
+- **Every device shows LIVE (violet) or SIM (grey) everywhere it appears.** GW-01, the real
+  SiWx917, is the only LIVE device. Everything from `tools/site_sim.py` is SIM.
+- **Simulated devices never write into real device state and never trigger real LED or board
+  commands.** Sim devices publish on `twin/<site>/<device>/<channel>` (schemas `mqtt/site_*.json`,
+  `source` is the constant `"sim"`). The backend routes `twin/gateway/*` to the board code and
+  everything else to the device registry (`backend/twindock/devices.py`), which has no path to the
+  gateway store, LEDs or MQTT output. A site-topic message naming a real device (GW-01) is
+  dropped. GW-01's device entry is derived from the board's own messages only.
+  `tests/test_sites.py::test_sim_messages_never_touch_the_real_board` must always pass.
+- **No value is shown without a source and an age.** Device readings carry `received_ms`; the UI
+  shows "12s ago" next to them.
+- **Device protocols are labelled honestly**: a simulated Thread device is "SIM · Thread", the
+  board is "LIVE · Wi-Fi".
+- Device status: online (last message ≤ 15 s, same as the board), stale (≤ 60 s), offline (older or
+  never), fault (the device reports one).
+- Never change `firmware/`, the board's topics or GW-01's behaviour for site-twin work.
+
 ## Coding conventions
 
 - TypeScript strict mode; no `any`. Python 3.11 with type hints and pydantic models.

@@ -11,8 +11,9 @@ The backend (pydantic) and frontend (TypeScript) both validate against these fil
   ("12s ago") from `received_ms`, never from `ts_ms`.
 - Coordinates: meters, origin at the warehouse NW corner, `x` east, `z` south.
   `heading_rad` 0 = facing east, increasing towards south.
-- IDs: units `FL-01`, `TR-01`, `PL-01`, `GW-01`; graph nodes `DOCK_1`, `RACK_A3`, `CHARGER_C1`, `GATE_IN`.
-- Every unit has `source`: `device` | `manual` | `auto`.
+- IDs: units `FL-01`, `TR-01`, `PL-01`, `GW-01`, `M-01` (machine), `WK-01` (worker); devices `GW-01`, `MM-01`, `EN-01`, `BG-01`; sites `WH-01`, `FAC-01`; graph nodes `DOCK_1`, `RACK_A3`, `CHARGER_C1`, `GATE_IN`.
+- Every unit has `source`: `device` | `manual` | `auto` | `sim` (machines and workers of the simulated site).
+- Devices (`ws/defs.json#/$defs/device`) have `source`: `device` (GW-01, the real board) | `sim`.
 - **No board value is ever defaulted.** A device field that has never arrived is `null` (or absent),
   and the UI shows "Waiting for device".
 
@@ -57,6 +58,23 @@ message; `GET /api/wiring` serves it as-is (validated) to the `/wiring` page. Se
   exists, then overlays the photo; a part's `outline_pct` (measured on the photo) wins over it.
 - Live readings are not in this file: the page takes them from `gateway.sensors` (gateway_update).
 
+### Simulated site devices (`twin/<site>/<device>/<channel>`)
+
+Published by `tools/site_sim.py` only. Site ids match `^[A-Z]{2,4}-[0-9]{2}$` (WH-01, FAC-01), so
+they can never collide with `twin/gateway/…`. Every payload has `source: "sim"` (a schema
+constant); `fw_version` is `sim-x.y`.
+
+| Topic | Schema | Notes |
+|---|---|---|
+| `twin/<site>/<device>/hello` | `mqtt/site_hello.json` | Retained. Type, protocol and capabilities must match the device's entry in `backend/world/sites.json`. |
+| `twin/<site>/<device>/status` | `mqtt/site_status.json` | Every 10 s: battery, signal, fault. |
+| `twin/<site>/<device>/<channel>` | `mqtt/site_reading.json` | One reading on a channel listed in the hello's `capabilities`. A badge's `position` value is `[x, z]`. |
+
+The backend drops (with a warn event, once per device and reason) messages for devices that are
+not commissioned, that name a real device (GW-01), whose hello disagrees with commissioning, or
+whose channel is not a capability. Same staleness as the board: online ≤ 15 s, stale ≤ 60 s,
+then offline.
+
 ## WebSocket (`/ws`, backend <-> browsers)
 
 Every message is a JSON object with a `type` field.
@@ -72,6 +90,7 @@ Every message is a JSON object with a `type` field.
 | `command_ack` | `ws/command_ack.json` | Reply to each client command (`ok`, `reason`, planned `path`). |
 | `event` | `ws/event.json` | Event-log notices: BTN0/BTN1 actions, auto mode, LED confirmation timeouts, dropped device messages, BLE tag acquired/lost. |
 | `ble_tracks` | `ws/ble_tracks.json` | After each `twin/gateway/ble` message and when a tag is lost. Per tag: last and smoothed RSSI, raw and committed zone, pending zone. Feeds the /device calibration helper. |
+| `device_update` | `ws/device_update.json` | At most 2 Hz: devices whose status, readings, battery or signal changed. `world_snapshot` carries all `sites` (with zones) and `devices`. |
 
 ### Client → server
 

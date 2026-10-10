@@ -1,0 +1,420 @@
+{
+  "_doc": [
+    "Sites, zones and commissioned devices. GW-01 is the real SiWx917 board (source device): its data only ever comes",
+    "from twin/gateway/*. Every other device is simulated by tools/site_sim.py (source sim) on twin/<site>/<device>/<channel>.",
+    "Positions are metres in the layout.json grid (origin = warehouse NW corner, x east, z south)."
+  ],
+  "sites": [
+    {
+      "id": "WH-01",
+      "name": "Riverside Logistics Hub",
+      "short": "WH-01 Riverside",
+      "kind": "warehouse",
+      "layout_ref": "riverside-2",
+      "bounds": {
+        "x": [
+          -14,
+          82
+        ],
+        "z": [
+          -12,
+          62
+        ]
+      },
+      "home": [
+        32,
+        27
+      ],
+      "zones": [
+        {
+          "id": "WH01_STORAGE",
+          "site_id": "WH-01",
+          "name": "Storage",
+          "kind": "storage",
+          "polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              44,
+              0
+            ],
+            [
+              44,
+              28
+            ],
+            [
+              0,
+              28
+            ]
+          ]
+        },
+        {
+          "id": "WH01_DOCKS",
+          "site_id": "WH-01",
+          "name": "Docks",
+          "kind": "docks",
+          "polygon": [
+            [
+              2,
+              28
+            ],
+            [
+              42,
+              28
+            ],
+            [
+              42,
+              40
+            ],
+            [
+              2,
+              40
+            ]
+          ]
+        },
+        {
+          "id": "WH01_YARD",
+          "site_id": "WH-01",
+          "name": "Yard",
+          "kind": "yard",
+          "polygon": [
+            [
+              -4,
+              40
+            ],
+            [
+              62,
+              40
+            ],
+            [
+              62,
+              52
+            ],
+            [
+              -4,
+              52
+            ]
+          ]
+        },
+        {
+          "id": "WH01_OFFICE",
+          "site_id": "WH-01",
+          "name": "Office",
+          "kind": "office",
+          "polygon": [
+            [
+              47,
+              1
+            ],
+            [
+              59,
+              1
+            ],
+            [
+              59,
+              9
+            ],
+            [
+              47,
+              9
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FAC-01",
+      "name": "Riverside Assembly",
+      "short": "FAC-01 Assembly",
+      "kind": "factory",
+      "layout_ref": "riverside-2",
+      "bounds": {
+        "x": [
+          84,
+          150
+        ],
+        "z": [
+          -8,
+          50
+        ]
+      },
+      "home": [
+        114,
+        18
+      ],
+      "zones": [
+        {
+          "id": "FAC01_PRODUCTION",
+          "site_id": "FAC-01",
+          "name": "Production",
+          "kind": "production",
+          "polygon": [
+            [
+              88,
+              0
+            ],
+            [
+              140,
+              0
+            ],
+            [
+              140,
+              16
+            ],
+            [
+              130,
+              16
+            ],
+            [
+              130,
+              26
+            ],
+            [
+              88,
+              26
+            ]
+          ]
+        },
+        {
+          "id": "FAC01_COLD",
+          "site_id": "FAC-01",
+          "name": "Cold room",
+          "kind": "cold_room",
+          "polygon": [
+            [
+              130,
+              16
+            ],
+            [
+              140,
+              16
+            ],
+            [
+              140,
+              26
+            ],
+            [
+              130,
+              26
+            ]
+          ]
+        },
+        {
+          "id": "FAC01_DOCKS",
+          "site_id": "FAC-01",
+          "name": "Docks",
+          "kind": "docks",
+          "polygon": [
+            [
+              104,
+              26
+            ],
+            [
+              122,
+              26
+            ],
+            [
+              122,
+              36
+            ],
+            [
+              104,
+              36
+            ]
+          ]
+        },
+        {
+          "id": "FAC01_OFFICE",
+          "site_id": "FAC-01",
+          "name": "Office",
+          "kind": "office",
+          "polygon": [
+            [
+              88,
+              28
+            ],
+            [
+              104,
+              28
+            ],
+            [
+              104,
+              40
+            ],
+            [
+              88,
+              40
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "devices": [
+    {
+      "id": "GW-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_DOCKS",
+      "type": "gateway",
+      "protocol": "wifi",
+      "x": 6.0,
+      "z": 30.5,
+      "capabilities": [
+        "status",
+        "button",
+        "led",
+        "ble"
+      ],
+      "label": "Dock gateway (SiWx917)",
+      "source": "device"
+    },
+    {
+      "id": "EN-03",
+      "site_id": "WH-01",
+      "zone_id": "WH01_STORAGE",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 22,
+      "z": 8,
+      "capabilities": [
+        "temperature",
+        "humidity"
+      ],
+      "label": "Storage climate",
+      "source": "sim"
+    },
+    {
+      "id": "OC-02",
+      "site_id": "WH-01",
+      "zone_id": "WH01_OFFICE",
+      "type": "occupancy_sensor",
+      "protocol": "matter",
+      "x": 53,
+      "z": 5,
+      "capabilities": [
+        "occupied"
+      ],
+      "label": "Office presence",
+      "source": "sim",
+      "sim": {
+        "rssi_dbm": -89
+      }
+    },
+    {
+      "id": "MM-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "machine_monitor",
+      "protocol": "wifi",
+      "x": 122,
+      "z": 7.2,
+      "capabilities": [
+        "state",
+        "cycle_time_s",
+        "current_a",
+        "vibration_rms",
+        "units"
+      ],
+      "label": "Press monitor",
+      "source": "sim",
+      "attached_to": "M-01"
+    },
+    {
+      "id": "MM-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "machine_monitor",
+      "protocol": "wifi",
+      "x": 111,
+      "z": 7.4,
+      "capabilities": [
+        "state",
+        "cycle_time_s",
+        "current_a",
+        "vibration_rms",
+        "units"
+      ],
+      "label": "Packer monitor",
+      "source": "sim",
+      "attached_to": "M-02"
+    },
+    {
+      "id": "AQ-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "air_quality",
+      "protocol": "wifi",
+      "x": 106,
+      "z": 3,
+      "capabilities": [
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Line air quality",
+      "source": "sim"
+    },
+    {
+      "id": "EN-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_COLD",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 133,
+      "z": 18,
+      "capabilities": [
+        "temperature",
+        "humidity"
+      ],
+      "label": "Cold room climate A",
+      "source": "sim"
+    },
+    {
+      "id": "EN-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_COLD",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 138,
+      "z": 24,
+      "capabilities": [
+        "temperature",
+        "humidity"
+      ],
+      "label": "Cold room climate B",
+      "source": "sim",
+      "sim": {
+        "battery_pct": 14
+      }
+    },
+    {
+      "id": "DR-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_COLD",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 130,
+      "z": 21,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Cold room door",
+      "source": "sim"
+    },
+    {
+      "id": "OC-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_OFFICE",
+      "type": "occupancy_sensor",
+      "protocol": "matter",
+      "x": 96,
+      "z": 34,
+      "capabilities": [
+        "occupied"
+      ],
+      "label": "Factory office presence",
+      "source": "sim"
+    }
+  ]
+}

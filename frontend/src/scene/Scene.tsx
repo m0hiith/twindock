@@ -14,6 +14,7 @@ import { Baked } from "./Baked";
 import { Chargers, Containers, FenceStatic, GateBarrier, Ground, GroundLabels, Markings, Racks, Roads, Trees } from "./Site";
 import { StaticHitAreas, Units } from "./Units";
 import { Office, Warehouse } from "./Warehouse";
+import { Factory } from "./Factory";
 
 function DrawCalls() {
   // Exposes renderer stats for the perf check (?stats): window.__twindockGl.
@@ -53,6 +54,7 @@ export function Scene() {
         <Office layout={layout} />
       </Baked>
       <Warehouse layout={layout} />
+      <Factory layout={layout} />
       <GroundLabels layout={layout} />
       <Chargers layout={layout} />
       <GateBarrier layout={layout} />

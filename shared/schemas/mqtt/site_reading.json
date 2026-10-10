@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/site_reading.json",
+  "title": "twin/<site>/<device>/<channel>",
+  "description": "One reading on a channel listed in the device's hello capabilities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ts_ms",
+    "value",
+    "source"
+  ],
+  "properties": {
+    "ts_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": [
+            "number",
+            "boolean",
+            "string"
+          ]
+        },
+        {
+          "$ref": "../ws/defs.json#/$defs/xz"
+        }
+      ],
+      "description": "Number, flag, state name, or [x, z] metres for a badge position."
+    },
+    "unit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "const": "sim",
+      "description": "Everything on twin/<site>/... is simulated. Real devices other than GW-01 do not exist yet."
+    }
+  }
+}

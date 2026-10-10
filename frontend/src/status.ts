@@ -10,7 +10,15 @@ const TONES: Record<string, Record<string, Tone>> = {
   rack: { available: "ok", full: "warn" },
   pallet: { stored: "idle", staged: "info", carried: "info", loaded: "ok" },
   gateway: { online: "live", offline: "crit", waiting: "idle" },
+  machine: { running: "ok", idle: "idle", fault: "crit", maintenance: "warn" },
+  worker: { walking: "info", working: "ok", idle: "idle" },
 };
+
+/** Device health tone. The real board's online state is violet (live data); a sim device's is green. */
+export function deviceTone(d: { status: string; source: string }): Tone {
+  if (d.status === "online") return d.source === "device" ? "live" : "ok";
+  return d.status === "stale" ? "warn" : d.status === "fault" ? "crit" : "idle";
+}
 
 export function toneOf(u: Pick<Unit, "kind" | "state">): Tone {
   return TONES[u.kind]?.[u.state] ?? "idle";

@@ -15,7 +15,9 @@ log = logging.getLogger("twindock.mqtt")
 
 
 class MqttBridge:
-    def __init__(self, engine: Engine, flush: Callable[[], None], host: str, port: int) -> None:
+    def __init__(self, engine: Engine, flush: Callable[[], None], host: str, port: int,
+                 client_id: str = "twindock-backend") -> None:
+        self.client_id = client_id  # must be unique on the broker, or two backends kick each other off
         self.engine = engine
         self.flush = flush
         self.host = host
@@ -35,12 +37,14 @@ class MqttBridge:
         backoff = 1.0
         while True:
             try:
-                async with aiomqtt.Client(self.host, self.port, identifier="twindock-backend", keepalive=30) as client:
+                async with aiomqtt.Client(self.host, self.port, identifier=self.client_id, keepalive=30) as client:
                     log.info("connected to MQTT %s:%s", self.host, self.port)
                     backoff = 1.0
                     while not self._queue.empty():  # commands queued while offline were already rejected
                         self._queue.get_nowait()
-                    await client.subscribe("twin/gateway/#", qos=1)
+                    # One subscription for the board (twin/gateway/#) and the simulated site devices
+                    # (twin/<site>/<device>/<channel>); the engine routes by prefix.
+                    await client.subscribe("twin/#", qos=1)
                     self.engine.set_mqtt_connected(True)
                     self.flush()
                     pub = asyncio.create_task(self._publisher(client))

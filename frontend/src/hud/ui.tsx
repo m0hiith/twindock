@@ -1,6 +1,6 @@
 // Small HUD building blocks shared by the cards: icons, pills, bars, ages.
 import { useEffect, useState, type ReactNode } from "react";
-import type { Unit } from "../contract";
+import type { Device, Unit } from "../contract";
 import { stateLabel, toneColor, toneOf, type Tone } from "../status";
 import { send } from "../store/ws";
 import { serverNow, useView, useWorld } from "../store/world";
@@ -29,6 +29,12 @@ const PATHS = {
   arrowUp: "M12 19V5M6 11l6-6 6 6",
   arrowDown: "M12 5v14M6 13l6 6 6-6",
   reset: "M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4",
+  machine: "M3 20h18M5 20V9h5v11M10 13h9v7M7 9V5h1.5v4M13 13v-3h3v3",
+  worker: "M12 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM7.5 21v-6l-1.5-1 1.5-4.5h9l1.5 4.5-1.5 1v6M10 21v-5h4v5",
+  sensor: "M12 13a1 1 0 1 0 0-.01M8.5 9.5a5 5 0 0 0 0 7M15.5 9.5a5 5 0 0 1 0 7M6 7a8.5 8.5 0 0 0 0 12M18 7a8.5 8.5 0 0 1 0 12",
+  factory: "M3 21V10l6 3V10l6 3V6h6v15zM7 17h2M12 17h2M17 17h2",
+  shield: "M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z",
+  alert: "M12 4 2.8 20h18.4zM12 10v4M12 17v.01",
 } as const;
 
 export type IconName = keyof typeof PATHS;
@@ -44,10 +50,12 @@ export function Icon({ name, size = 16, className, strokeWidth = 1.8 }: { name: 
 
 export const kindIcon: Record<Unit["kind"], IconName> = {
   forklift: "forklift", truck: "truck", pallet: "pallet", dock: "dock", rack: "rack", charger: "charger", gateway: "gateway",
+  machine: "machine", worker: "worker",
 };
 
 export const kindLabel: Record<Unit["kind"], string> = {
   forklift: "Forklift", truck: "Truck", pallet: "Pallet", dock: "Dock", rack: "Rack", charger: "Charger", gateway: "Gateway",
+  machine: "Machine", worker: "Worker",
 };
 
 export function Pill({ tone, children }: { tone: Tone; children: ReactNode }) {
@@ -67,6 +75,23 @@ export function StatusPill({ unit }: { unit: Pick<Unit, "kind" | "state"> }) {
 /** Violet badge reserved for real board/device data. */
 export function LiveBadge() {
   return <span className="rounded-full bg-[#F3EDFF] px-1.5 py-px text-[11px] font-semibold tracking-wide text-live">LIVE</span>;
+}
+
+/** Grey badge for simulated data (tools/site_sim.py). Never violet. */
+export function SimBadge() {
+  return <span className="rounded-full bg-idle-bg px-1.5 py-px text-[11px] font-semibold tracking-wide text-ink-2">SIM</span>;
+}
+
+export const protocolLabel: Record<Device["protocol"], string> = { wifi: "Wi-Fi", ble: "BLE", thread: "Thread", matter: "Matter" };
+
+/** "LIVE · Wi-Fi" or "SIM · Thread": the protocol is always labelled with where the data comes from. */
+export function SourceProtocol({ d }: { d: Pick<Device, "source" | "protocol"> }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      {d.source === "device" ? <LiveBadge /> : <SimBadge />}
+      <span className="text-ink-2">{protocolLabel[d.protocol]}</span>
+    </span>
+  );
 }
 
 export function Bar({ pct, color = "var(--info)", className = "" }: { pct: number; color?: string; className?: string }) {

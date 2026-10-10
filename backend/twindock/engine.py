@@ -19,11 +19,12 @@ from pydantic import TypeAdapter
 from . import planner
 from .ble_tracker import BleConfig, BleTracker, ZoneChange
 from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
+from .devices import DeviceRegistry, load_sites
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
-from .models import (BleTracks, ButtonState, ClientMessage, CommandAck, Event, GatewayUpdate, Layout, LedCommand,
+from .models import (BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MoveUnit, PendingLed, RawMqtt, SelectionChanged, SelectUnit, SetAutoMode, Timed,
                      UnitUpdate, WorldSnapshot)
 from .world import World
@@ -31,6 +32,7 @@ from .world import World
 TOPIC_PREFIX = "twin/gateway/"
 CMD_LED_TOPIC = "twin/gateway/cmd/led"
 AUTO_PERIOD_S = 1.0  # auto mode re-plans once a second; faster adds nothing visible
+DEVICE_FLUSH_S = 0.5  # device_update at most 2 Hz: sim sensors report every 1-10 s, ages tick in the UI
 
 
 @dataclass
@@ -53,9 +55,14 @@ _client_adapter: TypeAdapter[ClientMessage] = TypeAdapter(ClientMessage)
 
 
 class Engine:
-    def __init__(self, layout: Layout, clock: Callable[[], int] = wall_ms, ble_config: BleConfig | None = None) -> None:
+    def __init__(self, layout: Layout, clock: Callable[[], int] = wall_ms, ble_config: BleConfig | None = None,
+                 sites: dict[str, Any] | None = None) -> None:
         self.layout = layout
         self.clock = clock
+        # Site twin: sim devices live in their own registry, which has no path to self.gw.
+        self.devices = DeviceRegistry(sites if sites is not None else load_sites())
+        self._dev_last: dict[str, dict[str, Any]] = {}
+        self._dev_acc = 0.0
         graph = Graph(layout)
         self.world = World(layout, graph)
         forklift_nodes = {n.id for n in layout.nodes if "forklift" in n.kinds}
@@ -109,9 +116,22 @@ class Engine:
     def snapshot(self) -> WorldSnapshot:
         units = self._all_units()
         self._last_wire = {u.id: u.model_dump(mode="json") for u in units}
-        return WorldSnapshot(seq=self._next_seq(), server_ts_ms=self.clock(), layout_version=self.layout.version,
+        now = self.clock()
+        devices = self.devices.wire(self.gw, now)
+        self._dev_last = {d["id"]: d for d in devices}
+        return WorldSnapshot(seq=self._next_seq(), server_ts_ms=now, layout_version=self.layout.version,
                              auto_mode=self.auto_mode, selected_unit_id=self.selected, units=units,
-                             gateway=self.gw.wire())
+                             gateway=self.gw.wire(), sites=self.devices.sites, devices=devices)
+
+    def _flush_devices(self) -> None:
+        now = self.clock()
+        changed = []
+        for d in self.devices.wire(self.gw, now):
+            if self._dev_last.get(d["id"]) != d:
+                self._dev_last[d["id"]] = d
+                changed.append(d)
+        if changed:
+            self._send(DeviceUpdate(seq=self._next_seq(), server_ts_ms=now, devices=changed))
 
     def _flush_units(self) -> None:
         changed = []
@@ -196,6 +216,10 @@ class Engine:
         self._sync_rule_leds()
         self._drain_world_events()
         self._flush_units()
+        self._dev_acc += dt
+        if self._dev_acc >= DEVICE_FLUSH_S:
+            self._dev_acc = 0.0
+            self._flush_devices()
 
     def _on_online_changed(self) -> None:
         self.world.gateway_state = "online" if self.gw.online else ("offline" if self.gw.last_status_ms else "waiting")
@@ -241,7 +265,10 @@ class Engine:
     # ------------------------------------------------------------------ MQTT in
 
     def on_mqtt(self, topic: str, payload: bytes, retained: bool = False) -> None:
-        if not topic.startswith(TOPIC_PREFIX) or topic.startswith(TOPIC_PREFIX + "cmd/"):
+        if not topic.startswith(TOPIC_PREFIX):
+            self._on_site_mqtt(topic, payload)
+            return
+        if topic.startswith(TOPIC_PREFIX + "cmd/"):
             return  # our own commands echo back through the twin/gateway/# subscription
         rest = topic[len(TOPIC_PREFIX):]
         sensor_name = None
@@ -282,6 +309,8 @@ class Engine:
                 self.gw.replays_received += 1
             else:
                 self.gw.status = Timed(data=data, received_ms=now)
+                if "wifi_rssi_dbm" in data:
+                    self.devices.record_real(self.layout.gateway.id, "wifi_rssi_dbm", now, data["wifi_rssi_dbm"])
             self.gw.last_status_ms = now
             if self.gw.refresh_online(now):
                 self._on_online_changed()
@@ -325,6 +354,15 @@ class Engine:
         self._gateway_update(RawMqtt(topic=topic, payload=data, received_ms=now))
         if kind == "hello":
             self._sync_rule_leds()
+
+    def _on_site_mqtt(self, topic: str, payload: bytes) -> None:
+        """twin/<site>/<device>/<channel> from the simulator. Only the device registry is touched:
+        never self.gw, never an LED, never MQTT out."""
+        if not topic.startswith("twin/"):
+            return
+        notes, _changed = self.devices.on_mqtt(topic, payload, self.clock())
+        for n in notes:
+            self.event(n.level, n.text, "sim")
 
     # ------------------------------------------------------------------ BLE tags -> live forklifts
 
@@ -443,7 +481,7 @@ class Engine:
         self._ack(client_id, m.cmd_id, "move_unit", r.ok, r.reason, r.path)
 
     def _select(self, client_id: str, m: SelectUnit) -> None:
-        if m.unit_id is not None and m.unit_id not in self.world.entities:
+        if m.unit_id is not None and m.unit_id not in self.world.entities and m.unit_id not in self.devices.defs:
             self._ack(client_id, m.cmd_id, "select_unit", False, f"Unknown unit {m.unit_id}")
             return
         self._ack(client_id, m.cmd_id, "select_unit", True)

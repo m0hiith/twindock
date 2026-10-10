@@ -15,7 +15,7 @@ const T = 0.3; // wall thickness
 const DOOR_H = 3.8;
 
 const ribTextures = new Map<number, THREE.MeshStandardMaterial>();
-function ribbedMaterial(lengthM: number): THREE.MeshStandardMaterial {
+export function ribbedMaterial(lengthM: number): THREE.MeshStandardMaterial {
   const key = Math.round(lengthM * 10);
   let m = ribTextures.get(key);
   if (m) return m;
@@ -36,33 +36,48 @@ function ribbedMaterial(lengthM: number): THREE.MeshStandardMaterial {
   return m;
 }
 
-interface Seg { from: number; to: number }
+export interface Seg { from: number; to: number }
+
+/** Split a wall running from `a` to `b` around gaps centred at `at` with width `w`. */
+export function wallSegs(a: number, b: number, gaps: { at: number; w: number }[]): Seg[] {
+  const cuts = gaps.map((g) => [g.at - g.w / 2, g.at + g.w / 2] as const).sort((p, q) => p[0] - q[0]);
+  const segs: Seg[] = [];
+  let at = a;
+  for (const [c0, c1] of cuts) {
+    if (c0 > at) segs.push({ from: at, to: c0 });
+    at = Math.max(at, c1);
+  }
+  if (b > at) segs.push({ from: at, to: b });
+  return segs;
+}
 
 /** One straight wall. `along` is "x" for north/south walls. normal = outward direction. */
-function Wall({ along, fixed, segs, normal, doors }: {
+export function Wall({ along, fixed, segs, normal, doors, material, tall = TALL }: {
   along: "x" | "z"; fixed: number; segs: Seg[]; normal: [number, number];
   doors?: { id: string; dock: string; x: number; w: number }[];
+  /** Plain material (cold room panels); default is the red ribbed cladding. */
+  material?: THREE.Material; tall?: number;
 }) {
   const walls = useRef<THREE.Group>(null);
   const doorGroup = useRef<THREE.Group>(null);
   const h = useRef(TALL);
   useFrame((_, dt) => {
     const facing = Math.cos(cameraState.yaw) * normal[0] + Math.sin(cameraState.yaw) * normal[1] > 0.05;
-    const target = facing ? LOW : TALL;
+    const target = facing ? LOW : tall;
     h.current += (target - h.current) * (1 - Math.exp(-8 * dt));
-    if (walls.current) walls.current.scale.y = h.current / TALL;
+    if (walls.current) walls.current.scale.y = h.current / tall;
     if (doorGroup.current) doorGroup.current.visible = h.current > DOOR_H + 0.4;
   });
   const place = (a: number, b: number): { pos: [number, number, number]; size: [number, number, number] } =>
     along === "x"
-      ? { pos: [(a + b) / 2, 0, fixed], size: [b - a, TALL, T] }
-      : { pos: [fixed, 0, (a + b) / 2], size: [T, TALL, b - a] };
+      ? { pos: [(a + b) / 2, 0, fixed], size: [b - a, tall, T] }
+      : { pos: [fixed, 0, (a + b) / 2], size: [T, tall, b - a] };
   return (
     <group>
       <group ref={walls}>
         {segs.map((s) => {
           const { pos, size } = place(s.from, s.to);
-          return <Box key={s.from} size={size} at={pos} material={ribbedMaterial(s.to - s.from)} />;
+          return <Box key={s.from} size={size} at={pos} material={material ?? ribbedMaterial(s.to - s.from)} />;
         })}
       </group>
       {doors && (
@@ -122,13 +137,14 @@ export function Warehouse({ layout }: { layout: Layout }) {
   }, [b]);
   if (!b) return null;
   const { x, z, w, d } = b;
+  const gaps = (wall: string) => (b.openings ?? []).filter((o) => o.wall === wall);
   return (
     <group>
       <Decal x={x + w / 2} z={z + d / 2} w={w} d={d} c={model.floor} y={0.012} />
-      <Wall along="x" fixed={z} segs={[{ from: x - T / 2, to: x + w + T / 2 }]} normal={[0, -1]} />
+      <Wall along="x" fixed={z} segs={wallSegs(x - T / 2, x + w + T / 2, gaps("north"))} normal={[0, -1]} />
       <Wall along="x" fixed={z + d} segs={southSegs} normal={[0, 1]} doors={b.doors} />
-      <Wall along="z" fixed={x} segs={[{ from: z, to: z + d }]} normal={[-1, 0]} />
-      <Wall along="z" fixed={x + w} segs={[{ from: z, to: z + d }]} normal={[1, 0]} />
+      <Wall along="z" fixed={x} segs={wallSegs(z, z + d, gaps("west"))} normal={[-1, 0]} />
+      <Wall along="z" fixed={x + w} segs={wallSegs(z, z + d, gaps("east"))} normal={[1, 0]} />
       <FloorMarkings layout={layout} />
     </group>
   );
@@ -154,9 +170,13 @@ function FloorMarkings({ layout }: { layout: Layout }) {
 }
 
 export function Office({ layout }: { layout: Layout }) {
-  const b = layout.buildings.find((x) => x.kind === "office");
-  if (!b) return null;
+  return <>{layout.buildings.filter((x) => x.kind === "office").map((b) => <OfficeBlock key={b.id} b={b} />)}</>;
+}
+
+function OfficeBlock({ b }: { b: Layout["buildings"][number] }) {
   const ribs = Math.floor(b.w / 0.7);
+  // The factory office faces north (its door looks at the factory); the warehouse office south.
+  const doorZ = b.z > 20 ? -b.d / 2 - 0.02 : b.d / 2 + 0.02;
   return (
     <group position={[b.x + b.w / 2, 0, b.z + b.d / 2]}>
       <Box size={[b.w, b.h, b.d]} material={ribbedMaterial(b.w)} />
@@ -165,7 +185,7 @@ export function Office({ layout }: { layout: Layout }) {
       {Array.from({ length: ribs }, (_, i) => (
         <Box key={i} size={[0.12, 0.12, b.d + 0.6]} at={[-b.w / 2 + 0.35 + i * 0.7, b.h + 0.25, 0]} color={color.structure} shadow={false} />
       ))}
-      <Box size={[1.4, 2.2, 0.1]} at={[0, 0, b.d / 2 + 0.02]} color={model.door} />
+      <Box size={[1.4, 2.2, 0.1]} at={[0, 0, doorZ]} color={model.door} />
     </group>
   );
 }

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/device_update.json",
+  "title": "device_update (server -> client)",
+  "description": "Devices whose status, readings, battery or signal changed. At most 2 Hz.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "seq",
+    "server_ts_ms",
+    "devices"
+  ],
+  "properties": {
+    "type": {
+      "const": "device_update"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "server_ts_ms": {
+      "type": "integer"
+    },
+    "devices": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.json#/$defs/device"
+      }
+    },
+    "removed": {
+      "type": "array",
+      "items": {
+        "$ref": "defs.json#/$defs/device_id"
+      }
+    }
+  }
+}

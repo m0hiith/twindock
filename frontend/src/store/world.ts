@@ -1,7 +1,7 @@
 // Client mirror of server state. It only ever changes in response to server messages:
 // the UI sends intents (ws.ts) and waits for the backend to broadcast the result.
 import { create } from "zustand";
-import type { BleTracks, CommandAck, Event, Gateway, ServerMessage, Unit } from "../contract";
+import type { BleTracks, CommandAck, Device, Event, Gateway, ServerMessage, Site, Unit } from "../contract";
 import type { Layout } from "../layout";
 import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
@@ -14,6 +14,9 @@ interface WorldState {
   /** Server receive time (performance.now) of each unit's latest update, for interpolation. */
   unitStamp: Record<string, number>;
   gateway: Gateway | null;
+  /** Site twin: sites with zones (static per run) and every device, real (GW-01) and simulated. */
+  sites: Site[];
+  devices: Record<string, Device>;
   selected: string | null;
   autoMode: boolean;
   events: Event[];
@@ -42,6 +45,8 @@ export const useWorld = create<WorldState>((set) => ({
   units: {},
   unitStamp: {},
   gateway: null,
+  sites: [],
+  devices: {},
   selected: null,
   autoMode: false,
   events: [],
@@ -63,8 +68,11 @@ export const useWorld = create<WorldState>((set) => ({
             units[u.id] = u;
             unitStamp[u.id] = now;
           }
+          const devices: Record<string, Device> = {};
+          for (const d of m.devices) devices[d.id] = d;
           return {
             units, unitStamp, gateway: m.gateway, selected: m.selected_unit_id ?? null, autoMode: m.auto_mode,
+            sites: m.sites, devices,
             baseline: { counts: kpiCounts(units), at_ms: m.server_ts_ms },
           };
         }
@@ -80,6 +88,12 @@ export const useWorld = create<WorldState>((set) => ({
         }
         case "gateway_update":
           return { gateway: m.gateway };
+        case "device_update": {
+          const devices = { ...s.devices };
+          for (const d of m.devices) devices[d.id] = d;
+          for (const id of m.removed ?? []) delete devices[id];
+          return { devices };
+        }
         case "selection_changed":
           return { selected: m.selected_unit_id ?? null };
         case "command_ack":
@@ -101,9 +115,12 @@ export const useWorld = create<WorldState>((set) => ({
     }),
 }));
 
-/** Purely local view state (not shared): hover and camera. */
+/** Purely local view state (not shared): hover, camera and which site this screen looks at. */
 interface ViewState {
   hovered: string | null;
+  /** Site shown on this screen (local, like the camera). */
+  site: string;
+  setSite: (id: string) => void;
   setHovered: (id: string | null) => void;
   /** Number of 90° steps from the default south-east view. */
   rotation: number;
@@ -123,8 +140,12 @@ export const ZOOM_MIN = 0.6;
 export const ZOOM_MAX = 2;
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
 
+const initialSite = new URLSearchParams(location.search).get("site") ?? "WH-01";
+
 export const useView = create<ViewState>((set) => ({
   hovered: null,
+  site: initialSite,
+  setSite: (site) => set((s) => ({ site, homeNonce: s.homeNonce + 1, zoom: 1 })),
   setHovered: (hovered) => set({ hovered }),
   rotation: 0,
   zoom: 1,

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/site_hello.json",
+  "title": "twin/<site>/<device>/hello",
+  "description": "Retained. Announces a commissioned device, like the board's hello. The backend checks it against backend/world/sites.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "protocol",
+    "capabilities",
+    "fw_version",
+    "source"
+  ],
+  "properties": {
+    "type": {
+      "$ref": "../ws/defs.json#/$defs/device_type"
+    },
+    "protocol": {
+      "$ref": "../ws/defs.json#/$defs/protocol"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "../ws/defs.json#/$defs/channel"
+      },
+      "uniqueItems": true
+    },
+    "fw_version": {
+      "type": "string",
+      "pattern": "^sim-[0-9]+\\.[0-9]+$"
+    },
+    "source": {
+      "const": "sim",
+      "description": "Everything on twin/<site>/... is simulated. Real devices other than GW-01 do not exist yet."
+    }
+  }
+}

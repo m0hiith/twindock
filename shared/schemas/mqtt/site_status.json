@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/site_status.json",
+  "title": "twin/<site>/<device>/status",
+  "description": "Device health, every 10 s.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ts_ms",
+    "source"
+  ],
+  "properties": {
+    "ts_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "battery_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "rssi_dbm": {
+      "type": "integer",
+      "minimum": -127,
+      "maximum": 0
+    },
+    "fault": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source": {
+      "const": "sim",
+      "description": "Everything on twin/<site>/... is simulated. Real devices other than GW-01 do not exist yet."
+    }
+  }
+}

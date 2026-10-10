@@ -1,6 +1,41 @@
 /* Generated from /shared/schemas by scripts/gen-types.mjs. Do not edit. */
 
 /**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "device_type".
+ */
+export type DeviceType =
+  | "gateway"
+  | "machine_monitor"
+  | "env_sensor"
+  | "door_sensor"
+  | "occupancy_sensor"
+  | "badge"
+  | "asset_tag"
+  | "power_meter"
+  | "light"
+  | "air_quality";
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "protocol".
+ */
+export type Protocol = "wifi" | "ble" | "thread" | "matter";
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "channel".
+ */
+export type Channel = string;
+/**
+ * [x, z] in metres
+ *
+ * @minItems 2
+ * @maxItems 2
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "xz".
+ */
+export type Xz = [number, number];
+/**
  * Waypoint graph node, e.g. DOCK_1, RACK_A3, CHARGER_C1, GATE_IN
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -8,7 +43,7 @@
  */
 export type NodeId = string;
 /**
- * e.g. FL-01, TR-02, PL-07, GW-01
+ * e.g. FL-01, TR-02, PL-07, GW-01, M-01 (machine), WK-01 (worker)
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "unit_id".
@@ -20,19 +55,65 @@ export type UnitId = string;
  */
 export type CmdId = string;
 /**
- * e.g. FL-01, TR-02, PL-07, GW-01
+ * e.g. GW-01 (the real board), MM-01, BG-03
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "device_id".
+ */
+export type DeviceId = string;
+/**
+ * e.g. WH-01, FAC-01. Never 'gateway', so twin/gateway/* can't be a site topic.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "site_id".
+ */
+export type SiteId = string;
+/**
+ * e.g. FAC01_PRODUCTION
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "zone_id".
+ */
+export type ZoneId = string;
+/**
+ * e.g. FL-01, TR-02, PL-07, GW-01, M-01 (machine), WK-01 (worker)
  */
 export type UnitId1 = string;
+/**
+ * online: last message <= 15 s old; stale: <= 60 s; offline: older or never; fault: the device reports a fault.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "device_status".
+ */
+export type DeviceStatus = "online" | "stale" | "offline" | "fault";
+/**
+ * e.g. FL-01, TR-02, PL-07, GW-01, M-01 (machine), WK-01 (worker)
+ */
+export type UnitId2 = string;
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "kind".
  */
-export type Kind = "forklift" | "truck" | "pallet" | "dock" | "rack" | "charger" | "gateway";
+export type Kind = "forklift" | "truck" | "pallet" | "dock" | "rack" | "charger" | "gateway" | "machine" | "worker";
 /**
+ * device = real board data; sim = produced by tools/site_sim.py, never real.
+ *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "source".
  */
-export type Source = "device" | "manual" | "auto";
+export type Source = "device" | "manual" | "auto" | "sim";
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "zone_kind".
+ */
+export type ZoneKind = "storage" | "docks" | "production" | "cold_room" | "office" | "yard";
+/**
+ * [x, z] in metres
+ *
+ * @minItems 2
+ * @maxItems 2
+ */
+export type Xz1 = [number, number];
 /**
  * sdk-verified: found in the SDK board config (cite `source`). user-guide: from the board user guide UG581. datasheet: from the part's datasheet or a published spec (Qwiic). confirmed: also checked by the developer on the hardware. unverified: not confirmed, must not be used by firmware.
  *
@@ -88,8 +169,12 @@ export interface TwinDockContract {
   gateway_led?: GatewayLed;
   gateway_sensor?: GatewaySensor;
   gateway_status?: GatewayStatus;
+  site_hello?: SiteHello;
+  site_reading?: SiteReading;
+  site_status?: SiteStatus;
   ble_tracks?: BleTracks;
   command_ack?: CommandAck;
+  device_update?: DeviceUpdate;
   event?: Event;
   gateway_update?: GatewayUpdate;
   led_command?: LedCommand;
@@ -214,6 +299,56 @@ export interface GatewayStatus {
   replay?: boolean;
 }
 /**
+ * Retained. Announces a commissioned device, like the board's hello. The backend checks it against backend/world/sites.json.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "site_hello".
+ */
+export interface SiteHello {
+  type: DeviceType;
+  protocol: Protocol;
+  capabilities: Channel[];
+  fw_version: string;
+  /**
+   * Everything on twin/<site>/... is simulated. Real devices other than GW-01 do not exist yet.
+   */
+  source: "sim";
+}
+/**
+ * One reading on a channel listed in the device's hello capabilities.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "site_reading".
+ */
+export interface SiteReading {
+  ts_ms: number;
+  /**
+   * Number, flag, state name, or [x, z] metres for a badge position.
+   */
+  value: (number | boolean | string) | Xz;
+  unit?: string;
+  /**
+   * Everything on twin/<site>/... is simulated. Real devices other than GW-01 do not exist yet.
+   */
+  source: "sim";
+}
+/**
+ * Device health, every 10 s.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "site_status".
+ */
+export interface SiteStatus {
+  ts_ms: number;
+  battery_pct?: number;
+  rssi_dbm?: number;
+  fault?: string | null;
+  /**
+   * Everything on twin/<site>/... is simulated. Real devices other than GW-01 do not exist yet.
+   */
+  source: "sim";
+}
+/**
  * BLE tag tracking state after each twin/gateway/ble message and when a tag is lost. Smoothed values are computed by the backend from real sightings only; used by the /device calibration helper.
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -290,6 +425,60 @@ export interface CommandAck {
    * Planned path for an accepted (or dry-run) move_unit.
    */
   path?: NodeId[];
+}
+/**
+ * Devices whose status, readings, battery or signal changed. At most 2 Hz.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "device_update".
+ */
+export interface DeviceUpdate {
+  type: "device_update";
+  seq: number;
+  server_ts_ms: number;
+  devices: Device[];
+  removed?: DeviceId[];
+}
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "device".
+ */
+export interface Device {
+  id: DeviceId;
+  site_id: SiteId;
+  zone_id: ZoneId;
+  type: DeviceType;
+  protocol: Protocol;
+  capabilities: Channel[];
+  x: number;
+  z: number;
+  label?: string;
+  attached_to?: UnitId1;
+  battery_pct?: number | null;
+  fw_version?: string | null;
+  rssi_dbm?: number | null;
+  /**
+   * Backend time of the last message; null if never.
+   */
+  last_seen_ms: number | null;
+  source: "device" | "sim";
+  status: DeviceStatus;
+  fault?: string | null;
+  /**
+   * Latest value per channel, each with its own receive time.
+   */
+  readings: {
+    [k: string]: Reading | undefined;
+  };
+}
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "reading".
+ */
+export interface Reading {
+  value: (number | boolean | string) | Xz;
+  unit?: string;
+  received_ms: number;
 }
 /**
  * Human-readable notice for the event log: physical button actions, auto mode, LED timeouts, dropped device messages.
@@ -423,7 +612,7 @@ export interface MoveUnit {
    * Validate and return the planned path without moving (for the Control Room preview).
    */
   dry_run?: boolean;
-  pallet_id?: UnitId1;
+  pallet_id?: UnitId2;
 }
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -553,6 +742,43 @@ export interface WorldSnapshot {
   selected_unit_id: UnitId | null;
   units: Unit[];
   gateway: Gateway;
+  sites: Site[];
+  devices: Device[];
+}
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "site".
+ */
+export interface Site {
+  id: SiteId;
+  name: string;
+  short: string;
+  kind: "warehouse" | "factory" | "mixed";
+  layout_ref: string;
+  bounds: {
+    x: Xz;
+    z: Xz;
+  };
+  zones: Zone[];
+  home?: Xz1;
+}
+/**
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "zone".
+ */
+export interface Zone {
+  id: ZoneId;
+  site_id: SiteId;
+  name: string;
+  kind: ZoneKind;
+  /**
+   * @minItems 3
+   */
+  polygon: [Xz, Xz, Xz, ...Xz[]];
+  /**
+   * If present, only these worker roles may enter (S3).
+   */
+  restricted_roles?: string[];
 }
 /**
  * Single source of truth for how the forklift sensor pack is connected. Firmware pins (tools/gen_pins.py), the /wiring page and docs/hardware_sheet.pdf are all generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is "unverified".

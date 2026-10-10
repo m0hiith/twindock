@@ -19,6 +19,11 @@ export function footprint(u: Pick<Unit, "kind" | "id">, layout = useWorld.getSta
     case "dock": return { l: 4.6, w: 3.4, h: 4.6, rot: false };
     case "charger": return { l: 1.6, w: 1.6, h: 2.0, rot: false };
     case "gateway": return { l: 1.8, w: 1.8, h: 4.2, rot: false };
+    case "machine": {
+      const m = layout?.production_line?.machines.find((x) => x.id === u.id);
+      return { l: (m?.w ?? 4) + 1, w: (m?.d ?? 3) + 1, h: (m?.h ?? 3) + 1, rot: false };
+    }
+    case "worker": return { l: 1.2, w: 1.2, h: 2.4, rot: false };
     case "rack": {
       const r = layout?.racks.find((x) => x.id === u.id);
       return { l: (r?.w ?? 26) + 1, w: (r?.d ?? 2.5) + 1, h: 5, rot: false };

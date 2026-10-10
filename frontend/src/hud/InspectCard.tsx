@@ -6,7 +6,7 @@ import { ButtonSection, LedSection } from "../control/GatewayPanel";
 import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
 import { stateLabel } from "../status";
-import { ago, Bar, batteryColor, Icon, kindIcon, kindLabel, LiveBadge, nodeLabel, StatusPill, useTick } from "./ui";
+import { ago, Bar, batteryColor, Icon, kindIcon, kindLabel, LiveBadge, nodeLabel, SimBadge, StatusPill, useTick } from "./ui";
 
 function Row({ k, children, dim }: { k: string; children: ReactNode; dim?: boolean }) {
   return (
@@ -17,10 +17,10 @@ function Row({ k, children, dim }: { k: string; children: ReactNode; dim?: boole
   );
 }
 
-const sourceText: Record<Unit["source"], string> = { device: "Board", manual: "Manual", auto: "Auto mode" };
+const sourceText: Record<Unit["source"], string> = { device: "Board", manual: "Manual", auto: "Auto mode", sim: "Simulated" };
 
 function SourceRow({ u }: { u: Unit }) {
-  return <Row k="Source"><span className="inline-flex items-center gap-1.5">{sourceText[u.source]}{u.source === "device" && <LiveBadge />}</span></Row>;
+  return <Row k="Source"><span className="inline-flex items-center gap-1.5">{sourceText[u.source]}{u.source === "device" && <LiveBadge />}{u.source === "sim" && <SimBadge />}</span></Row>;
 }
 
 const actionText: Record<string, string> = { goto: "Drive to", pick: "Pick at", drop: "Drop at", load: "Load at", charge: "Charge at", dock: "Dock at", depart: "Depart via" };
