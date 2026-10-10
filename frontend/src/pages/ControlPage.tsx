@@ -17,6 +17,7 @@ import type { LayoutNode } from "../layout";
 import { send } from "../store/ws";
 import { useWorld } from "../store/world";
 import { Brand } from "../hud/Brand";
+import { PageTabs } from "../hud/PageTabs";
 
 type Tab = "move" | "gateway" | "log";
 
@@ -106,7 +107,7 @@ export function ControlPage() {
           <ResetButton />
           <AutoModeToggle />
           <LivePill />
-          <a href="/twin" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Open twin</a>
+          <PageTabs className="hidden md:flex" />
         </header>
         <div className="flex justify-center px-3 empty:hidden"><FakeBoardBanner /></div>
         <div className="px-3 sm:px-4"><UnitChips /></div>

@@ -7,6 +7,7 @@ import { LivePill } from "./LivePill";
 import { Search } from "./Search";
 import { ago, Icon, useTick } from "./ui";
 import { Brand } from "./Brand";
+import { PageTabs } from "./PageTabs";
 
 /** Closes a popover on outside click or Escape. */
 function usePopover(): [boolean, (v: boolean) => void, React.RefObject<HTMLDivElement | null>] {
@@ -110,7 +111,8 @@ export function TopBar() {
   return (
     <div className="card pointer-events-auto flex h-[60px] items-center gap-4 px-4">
       <Brand />
-      <div className="ml-4"><Search /></div>
+      <PageTabs className="ml-2" />
+      <div className="ml-2 hidden xl:block"><Search /></div>
       <div className="ml-auto flex items-center gap-2">
         <SiteSelector />
         <AutoModeToggle />

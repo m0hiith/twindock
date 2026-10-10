@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { fetchLayout } from "./layout";
 import { ControlPage } from "./pages/ControlPage";
 import { DevicePage } from "./pages/DevicePage";
@@ -7,7 +7,10 @@ import { WiringPage } from "./pages/WiringPage";
 import { connect } from "./store/ws";
 import { useWorld } from "./store/world";
 
+const subscribePath = (cb: () => void) => { addEventListener("popstate", cb); return () => removeEventListener("popstate", cb); };
+
 export default function App() {
+  const path = useSyncExternalStore(subscribePath, () => location.pathname);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     fetchLayout()
@@ -28,9 +31,9 @@ export default function App() {
     );
   }
   // A handful of routes, so plain pathname matching is enough; "/" shows the twin.
-  if (location.pathname.startsWith("/control")) return <ControlPage />;
-  if (location.pathname.startsWith("/device")) return <DevicePage />;
-  if (location.pathname.startsWith("/wiring")) return <WiringPage />;
-  if (location.pathname !== "/twin") history.replaceState(null, "", "/twin" + location.search);
+  if (path.startsWith("/control")) return <ControlPage />;
+  if (path.startsWith("/device")) return <DevicePage />;
+  if (path.startsWith("/wiring")) return <WiringPage />;
+  if (path !== "/twin") history.replaceState(null, "", "/twin" + location.search);
   return <TwinPage />;
 }

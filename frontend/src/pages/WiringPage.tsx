@@ -5,6 +5,7 @@ import type { Wiring } from "../contract";
 import { Brand } from "../hud/Brand";
 import { FakeBoardBanner } from "../hud/FakeBoardBanner";
 import { LivePill } from "../hud/LivePill";
+import { PageTabs } from "../hud/PageTabs";
 import { TabButton } from "../hud/ui";
 import { useWorld } from "../store/world";
 import { BreadboardView } from "../wiring/BreadboardView";
@@ -92,8 +93,7 @@ export function WiringPage() {
           <span className={`h-2 w-2 rounded-full ${online ? "bg-live" : "bg-idle"}`} />
           {online ? "Board online" : "Board offline"}
         </span>
-        <a href="/twin" className="flex h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium hover:bg-idle-bg">Twin</a>
-        <a href="/device" className="flex h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium hover:bg-idle-bg">Device</a>
+        <PageTabs />
       </header>
       <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
 

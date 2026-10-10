@@ -5,6 +5,7 @@ import { FakeBoardBanner } from "../hud/FakeBoardBanner";
 import { LivePill } from "../hud/LivePill";
 import { useWorld } from "../store/world";
 import { Brand } from "../hud/Brand";
+import { PageTabs } from "../hud/PageTabs";
 
 export function DevicePage() {
   const site = useWorld((s) => s.layout?.site.short);
@@ -18,9 +19,7 @@ export function DevicePage() {
             <div className="text-[12px] text-ink-2">{site}</div>
           </div>
           <LivePill />
-          <a href="/twin" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Twin</a>
-          <a href="/control" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Control</a>
-          <a href="/wiring" className="hidden h-9 items-center rounded-xl border border-[var(--card-border)] bg-white px-3 text-[13px] font-medium sm:flex">Wiring</a>
+          <PageTabs className="hidden sm:flex" />
         </header>
         <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
         <BleCalibration />
