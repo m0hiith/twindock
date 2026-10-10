@@ -11,7 +11,7 @@
       "voltage_v": null,
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h",
-      "notes": "SDA ULP_GPIO_6, SCL ULP_GPIO_7. The option comment above RTE_I2C2_SCL_PORT_ID is stale; the #define values are used. Pull-up voltage unverified."
+      "notes": "Shared by Si7021, VEML6035 (behind the SENSOR_EN switch), the Qwiic connector and breakout pads 15/16 (UG581 3.6.2, Table 3.3). SDA ULP_GPIO_6, SCL ULP_GPIO_7. The option comment above RTE_I2C2_SCL_PORT_ID is stale; the #define values are used. Pull-up voltage unverified."
     },
     {
       "id": "spi_ulp",
@@ -23,15 +23,6 @@
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
     {
-      "id": "i2s0",
-      "name": "I2S0 (microphones)",
-      "kind": "i2s",
-      "controller": "I2S0",
-      "voltage_v": null,
-      "evidence": "sdk-verified",
-      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-    },
-    {
       "id": "sensor_rail",
       "name": "Sensor power (switched)",
       "kind": "power",
@@ -39,26 +30,17 @@
       "voltage_v": null,
       "evidence": "sdk-verified",
       "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h SENSOR_ENABLE_GPIO_PIN; light_sensor.c drives it high before any sensor access",
-      "notes": "Enabled by UULP_VBAT_GPIO_1. Rail voltage unverified."
+      "notes": "UULP_VBAT_GPIO_1 high powers Si7021, VEML6035 and ICM-40627 (VDD_SENSOR from VMCU) and connects their I2C/SPI lines through a switch; a pull-down keeps it low by default (UG581 3.4.1, 3.4.3, 3.4.4)."
     },
     {
-      "id": "i2c_qwiic",
-      "name": "Qwiic I2C",
-      "kind": "i2c",
-      "controller": null,
-      "voltage_v": 3.3,
-      "evidence": "unverified",
-      "notes": "Controller and SoC pins unknown. If this is the same bus as i2c_ulp, VL53L1X (0x29) clashes with VEML6035 (0x29)."
-    },
-    {
-      "id": "qwiic_3v3",
-      "name": "Qwiic 3.3 V",
+      "id": "vmcu",
+      "name": "VMCU 3.3 V (Qwiic power)",
       "kind": "power",
       "controller": null,
       "voltage_v": 3.3,
-      "evidence": "datasheet",
-      "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)",
-      "notes": "3.3 V by the Qwiic standard. Whether the board switches it with SENSOR_EN is unverified."
+      "evidence": "user-guide",
+      "source": "UG581 Rev. 1.1 Table 3.1 and Table 3.3",
+      "notes": "USB power: on-board LDO regulates VBUS to 3.3 V. Not switched by SENSOR_EN."
     },
     {
       "id": "bridge",
@@ -161,33 +143,6 @@
           "y_pct": null,
           "evidence": "sdk-verified",
           "source": "components/board/silabs/config/brd2605a/RTE_Device_917.h SENSOR_ENABLE_GPIO_PIN"
-        },
-        {
-          "name": "GPIO_46",
-          "signal": "I2S0_SCLK",
-          "gpio": "GPIO_46",
-          "x_pct": null,
-          "y_pct": null,
-          "evidence": "sdk-verified",
-          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-        },
-        {
-          "name": "GPIO_47",
-          "signal": "I2S0_WSCLK",
-          "gpio": "GPIO_47",
-          "x_pct": null,
-          "y_pct": null,
-          "evidence": "sdk-verified",
-          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-        },
-        {
-          "name": "GPIO_48",
-          "signal": "I2S0_DIN0",
-          "gpio": "GPIO_48",
-          "x_pct": null,
-          "y_pct": null,
-          "evidence": "sdk-verified",
-          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
         }
       ]
     },
@@ -367,60 +322,7 @@
           "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
         }
       ],
-      "notes": "The SDK board config and the dev kit demo use ICM-40627 (device ID check in motion_sensor.c), not ICM-20689."
-    },
-    {
-      "id": "ics43434",
-      "name": "MEMS microphones",
-      "part_number": "ICS-43434",
-      "quantity": 2,
-      "location": "on-board",
-      "kind": "sensor",
-      "bus": "i2s0",
-      "address": null,
-      "supply": {
-        "min_v": 1.65,
-        "max_v": 3.63
-      },
-      "supplied_from": null,
-      "enable_pin": null,
-      "sdk_driver": "sl_si91x_mic (sl_si91x_mic_config.h)",
-      "sdk_example": null,
-      "measures": "Sound (PCM audio), reduced to a sound level.",
-      "forklift_use": "Optional: sound level, e.g. reversing alarm working.",
-      "topics": [],
-      "outline_pct": null,
-      "status": "planned",
-      "pins": [
-        {
-          "name": "SCLK",
-          "signal": "I2S_SCLK",
-          "gpio": "GPIO_46",
-          "x_pct": null,
-          "y_pct": null,
-          "evidence": "sdk-verified",
-          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-        },
-        {
-          "name": "WS",
-          "signal": "I2S_WS",
-          "gpio": "GPIO_47",
-          "x_pct": null,
-          "y_pct": null,
-          "evidence": "sdk-verified",
-          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-        },
-        {
-          "name": "SD",
-          "signal": "I2S_DATA",
-          "gpio": "GPIO_48",
-          "x_pct": null,
-          "y_pct": null,
-          "evidence": "sdk-verified",
-          "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-        }
-      ],
-      "notes": "Optional, not in the first firmware pass. Quantity 2 is from the product page only (unverified). Whether the mics sit on the sensor-enable rail is unverified."
+      "notes": "ICM-40627 per UG581 3.4.3 and the SDK (device ID check in motion_sensor.c). Chip marking to be confirmed from the board photo."
     },
     {
       "id": "qwiic",
@@ -429,9 +331,9 @@
       "quantity": 1,
       "location": "on-board",
       "kind": "connector",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "address": null,
-      "supplied_from": "qwiic_3v3",
+      "supplied_from": "vmcu",
       "enable_pin": null,
       "sdk_driver": null,
       "sdk_example": null,
@@ -447,8 +349,8 @@
           "gpio": null,
           "x_pct": null,
           "y_pct": null,
-          "evidence": "datasheet",
-          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+          "evidence": "user-guide",
+          "source": "UG581 Rev. 1.1 Table 3.3"
         },
         {
           "name": "3V3",
@@ -456,29 +358,29 @@
           "gpio": null,
           "x_pct": null,
           "y_pct": null,
-          "evidence": "datasheet",
-          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+          "evidence": "user-guide",
+          "source": "UG581 Rev. 1.1 Table 3.3: 3.3V = VMCU (not switched by SENSOR_EN)"
         },
         {
           "name": "SDA",
           "signal": "SDA",
-          "gpio": null,
+          "gpio": "ULP_GPIO_6",
           "x_pct": null,
           "y_pct": null,
-          "evidence": "datasheet",
-          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+          "evidence": "user-guide",
+          "source": "UG581 Rev. 1.1 Table 3.3"
         },
         {
           "name": "SCL",
           "signal": "SCL",
-          "gpio": null,
+          "gpio": "ULP_GPIO_7",
           "x_pct": null,
           "y_pct": null,
-          "evidence": "datasheet",
-          "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
+          "evidence": "user-guide",
+          "source": "UG581 Rev. 1.1 Table 3.3"
         }
       ],
-      "notes": "Connector exists per the UG581 feature list. Which SoC pins and which I2C controller it uses is NOT in the WiSeConnect 3.5.3 board config: unverified."
+      "notes": "Same I2C2 bus as Si7021 and VEML6035 (UG581 3.6.2), also on breakout pads 15/16. Power is VMCU directly, so Qwiic devices stay powered when SENSOR_EN is low."
     },
     {
       "id": "vl53l1x",
@@ -487,14 +389,15 @@
       "quantity": 1,
       "location": "external",
       "kind": "module",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "address": "0x29",
       "address_evidence": "datasheet",
+      "runtime_address": "0x30",
       "supply": {
         "min_v": 2.6,
         "max_v": 3.5
       },
-      "supplied_from": "qwiic_3v3",
+      "supplied_from": "vmcu",
       "enable_pin": null,
       "sdk_driver": null,
       "sdk_example": null,
@@ -579,7 +482,7 @@
           "source": "SparkFun Qwiic connector standard (JST SH 4-pin: 1 GND, 2 3.3 V, 3 SDA, 4 SCL)"
         }
       ],
-      "notes": "Default 7-bit address 0x29 (changeable in software after power-up). No driver in WiSeConnect 3.5.3. Assumes a breakout with two Qwiic connectors for daisy-chaining."
+      "notes": "Powers up at 0x29, the same address as the on-board VEML6035. Firmware moves it to 0x30 at boot (see boot_sequence); the new address holds until the VL53L1X loses power. No driver in WiSeConnect 3.5.3. Assumes a breakout with two Qwiic connectors (modules question open)."
     },
     {
       "id": "nau7802",
@@ -588,14 +491,14 @@
       "quantity": 1,
       "location": "external",
       "kind": "module",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "address": "0x2A",
       "address_evidence": "datasheet",
       "supply": {
         "min_v": 2.7,
         "max_v": 5.5
       },
-      "supplied_from": "qwiic_3v3",
+      "supplied_from": "vmcu",
       "enable_pin": null,
       "sdk_driver": null,
       "sdk_example": null,
@@ -849,44 +752,11 @@
       "source": "components/board/silabs/config/brd2605a/sl_icm40627_config/sl_si91x_icm40627_config.h"
     },
     {
-      "id": "ics43434_sclk",
-      "from": "soc.GPIO_46",
-      "to": "ics43434.SCLK",
-      "signal": "SCLK",
-      "bus": "i2s0",
-      "medium": "pcb",
-      "wire_color": null,
-      "evidence": "sdk-verified",
-      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-    },
-    {
-      "id": "ics43434_ws",
-      "from": "soc.GPIO_47",
-      "to": "ics43434.WS",
-      "signal": "WS",
-      "bus": "i2s0",
-      "medium": "pcb",
-      "wire_color": null,
-      "evidence": "sdk-verified",
-      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-    },
-    {
-      "id": "ics43434_sd",
-      "from": "soc.GPIO_48",
-      "to": "ics43434.SD",
-      "signal": "SD",
-      "bus": "i2s0",
-      "medium": "pcb",
-      "wire_color": null,
-      "evidence": "sdk-verified",
-      "source": "components/board/silabs/config/brd2605a/sl_mic_config/sl_si91x_mic_config.h"
-    },
-    {
       "id": "qwiic_vl53l1x_gnd",
       "from": "qwiic.GND",
       "to": "vl53l1x.qwiic_in.GND",
       "signal": "GND",
-      "bus": "qwiic_3v3",
+      "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "black",
       "evidence": "datasheet",
@@ -897,7 +767,7 @@
       "from": "qwiic.3V3",
       "to": "vl53l1x.qwiic_in.3V3",
       "signal": "3V3",
-      "bus": "qwiic_3v3",
+      "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "red",
       "evidence": "datasheet",
@@ -908,7 +778,7 @@
       "from": "qwiic.SDA",
       "to": "vl53l1x.qwiic_in.SDA",
       "signal": "SDA",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "blue",
       "evidence": "datasheet",
@@ -919,7 +789,7 @@
       "from": "qwiic.SCL",
       "to": "vl53l1x.qwiic_in.SCL",
       "signal": "SCL",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "yellow",
       "evidence": "datasheet",
@@ -930,7 +800,7 @@
       "from": "vl53l1x.qwiic_out.GND",
       "to": "nau7802.qwiic_in.GND",
       "signal": "GND",
-      "bus": "qwiic_3v3",
+      "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "black",
       "evidence": "datasheet",
@@ -941,7 +811,7 @@
       "from": "vl53l1x.qwiic_out.3V3",
       "to": "nau7802.qwiic_in.3V3",
       "signal": "3V3",
-      "bus": "qwiic_3v3",
+      "bus": "vmcu",
       "medium": "qwiic_cable",
       "wire_color": "red",
       "evidence": "datasheet",
@@ -952,7 +822,7 @@
       "from": "vl53l1x.qwiic_out.SDA",
       "to": "nau7802.qwiic_in.SDA",
       "signal": "SDA",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "blue",
       "evidence": "datasheet",
@@ -963,7 +833,7 @@
       "from": "vl53l1x.qwiic_out.SCL",
       "to": "nau7802.qwiic_in.SCL",
       "signal": "SCL",
-      "bus": "i2c_qwiic",
+      "bus": "i2c_ulp",
       "medium": "qwiic_cable",
       "wire_color": "yellow",
       "evidence": "datasheet",
@@ -1014,34 +884,49 @@
       "source": "Common load cell colour convention; varies by model"
     }
   ],
+  "boot_sequence": [
+    {
+      "step": 1,
+      "action": "Drive SENSOR_EN (UULP_VBAT_GPIO_1) low.",
+      "pin": "soc.UULP_VBAT_GPIO_1",
+      "reason": "Disconnects Si7021/VEML6035 from I2C2 and unpowers them (UG581 3.4.4), so only Qwiic devices answer. Qwiic power is VMCU, so the VL53L1X stays powered."
+    },
+    {
+      "step": 2,
+      "action": "Probe 0x30. If it ACKs and register 0x010F reads model ID 0xEACC, the VL53L1X is already moved (MCU-only reset): go to step 5.",
+      "address": "0x30",
+      "reason": "The VL53L1X keeps its new address until it loses power, and an MCU reset does not cut VMCU."
+    },
+    {
+      "step": 3,
+      "action": "Probe 0x29 and check model ID 0xEACC. Write 0x30 to I2C_SLAVE__DEVICE_ADDRESS (register 0x0001).",
+      "address": "0x29",
+      "reason": "With the on-board sensors disconnected, 0x29 can only be the VL53L1X."
+    },
+    {
+      "step": 4,
+      "action": "Confirm the model ID at 0x30. If neither address answers, publish a sensor_error for fork_distance and never publish a value.",
+      "address": "0x30",
+      "reason": "No made-up values."
+    },
+    {
+      "step": 5,
+      "action": "Drive SENSOR_EN high, wait for the sensors to power up, then initialise Si7021 (0x40) and VEML6035 (0x29).",
+      "pin": "soc.UULP_VBAT_GPIO_1",
+      "reason": "From here the bus holds VEML6035 0x29, NAU7802 0x2A, VL53L1X 0x30, Si7021 0x40: no clashes."
+    }
+  ],
   "open_questions": [
     {
-      "id": "qwiic_pins",
-      "question": "Which SoC pins and which I2C controller does the BRD2605A Qwiic connector use, and is it the same bus as Si7021/VEML6035? (UG581 schematic or silkscreen; the SDK board config does not say.)",
-      "blocks": [
-        "qwiic",
-        "vl53l1x",
-        "nau7802"
-      ]
-    },
-    {
-      "id": "vl53l1x_addr_clash",
-      "question": "If Qwiic shares I2C2, VL53L1X (0x29) clashes with VEML6035 (0x29). Options: put the VL53L1X on a separate I2C bus via the breakout pads, drop VEML6035, or re-address the VL53L1X at boot while the on-board sensors are unpowered (needs Qwiic power to be independent of SENSOR_EN).",
-      "blocks": [
-        "vl53l1x",
-        "veml6035"
-      ]
-    },
-    {
-      "id": "imu_part",
-      "question": "The SDK and dev kit demo use ICM-40627 (SPI), not ICM-20689. Confirm the marking on the chip.",
+      "id": "imu_marking",
+      "question": "Confirm the ICM-40627 marking on the chip when photographing the board (UG581 and the SDK both say ICM-40627).",
       "blocks": [
         "icm40627"
       ]
     },
     {
       "id": "modules",
-      "question": "Which VL53L1X and NAU7802 breakouts do you have (vendor/SKU), and do both have two Qwiic connectors? Which load cell (capacity, wire colours)?",
+      "question": "Which VL53L1X and NAU7802 breakouts (vendor/SKU), does each have two Qwiic connectors, and which load cell (capacity, wire colours)?",
       "blocks": [
         "vl53l1x",
         "nau7802",
@@ -1049,13 +934,10 @@
       ]
     },
     {
-      "id": "exposure",
-      "question": "HARDWARE.md (2026-10-07) exposes only temperature and humidity. Approve exposing light, motion/impact, fork_distance and fork_load?",
+      "id": "pullups_with_sensors_off",
+      "question": "With SENSOR_EN low, are there still I2C pull-ups on the Qwiic side of the switch? UG581 does not show where the pull-ups are. Most Qwiic breakouts carry their own; if the bus reads stuck low in step 2 of boot_sequence, enable the breakout pull-ups.",
       "blocks": [
-        "veml6035",
-        "icm40627",
-        "vl53l1x",
-        "nau7802"
+        "vl53l1x"
       ]
     }
   ]

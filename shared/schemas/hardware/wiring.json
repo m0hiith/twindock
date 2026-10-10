@@ -5,7 +5,7 @@
   "description": "Single source of truth for how the forklift sensor pack is connected. Firmware pins (tools/gen_pins.py), the /wiring page and docs/hardware_sheet.pdf are all generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is \"unverified\".",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "board", "sdk", "buses", "parts", "connections", "open_questions"],
+  "required": ["version", "board", "sdk", "buses", "parts", "connections", "boot_sequence", "open_questions"],
   "$defs": {
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "pin_ref": {
@@ -14,8 +14,8 @@
       "pattern": "^[a-z][a-z0-9_]*\\.[A-Za-z0-9_.+-]+$"
     },
     "evidence": {
-      "description": "sdk-verified: found in the SDK board config (cite `source`). datasheet: from the part's datasheet or a published spec (Qwiic). confirmed: also checked by the developer on the hardware. unverified: not confirmed, must not be used by firmware.",
-      "enum": ["sdk-verified", "datasheet", "confirmed", "unverified"]
+      "description": "sdk-verified: found in the SDK board config (cite `source`). user-guide: from the board user guide UG581. datasheet: from the part's datasheet or a published spec (Qwiic). confirmed: also checked by the developer on the hardware. unverified: not confirmed, must not be used by firmware.",
+      "enum": ["sdk-verified", "user-guide", "datasheet", "confirmed", "unverified"]
     },
     "voltage_range": {
       "type": "object",
@@ -84,6 +84,11 @@
             "description": "7-bit I2C address as 0xNN, or null for non-I2C parts."
           },
           "address_evidence": { "$ref": "#/$defs/evidence" },
+          "runtime_address": {
+            "type": "string",
+            "pattern": "^0x[0-9A-F]{2}$",
+            "description": "Address the firmware moves the part to at boot (see boot_sequence). Clash checks use this when present."
+          },
           "supply": { "$ref": "#/$defs/voltage_range", "description": "Allowed supply range from the datasheet." },
           "supplied_from": { "type": ["string", "null"], "description": "Bus id of the power rail feeding this part." },
           "enable_pin": { "type": ["string", "null"], "description": "pin_ref of a power/enable pin that must be driven before use." },
@@ -135,6 +140,22 @@
           },
           "evidence": { "$ref": "#/$defs/evidence" },
           "source": { "type": "string" }
+        }
+      }
+    },
+    "boot_sequence": {
+      "description": "Ordered steps the firmware must run before reading sensors (e.g. re-addressing a part whose default address clashes).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step", "action", "reason"],
+        "properties": {
+          "step": { "type": "integer", "minimum": 1 },
+          "action": { "type": "string", "minLength": 1 },
+          "pin": { "$ref": "#/$defs/pin_ref" },
+          "address": { "type": "string", "pattern": "^0x[0-9A-F]{2}$" },
+          "reason": { "type": "string", "minLength": 1 }
         }
       }
     },

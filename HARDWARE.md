@@ -51,45 +51,75 @@ The reset button is not a user button and is not exposed.
 
 ## Onboard sensors
 
-All sit on the ULP I2C bus (I2C2) behind a **sensor power enable** pin:
-`SENSOR_ENABLE_GPIO_PIN = RTE_UULP_GPIO_1_PIN` (UULP GPIO 1, `RTE_Device_917.h` line ~5563). The dev kit
-demo drives it high before talking to any sensor (`siwx917_dev_kit/sensors/light_sensor.c`).
+Si7021, VEML6035 and ICM-40627 sit behind a switch controlled by **SENSOR_ENABLE** = UULP_VBAT GPIO 1
+(`SENSOR_ENABLE_GPIO_PIN` in `RTE_Device_917.h`; UG581 3.4.1, 3.4.3, 3.4.4). Driving it high powers them
+from VMCU *and* connects their I2C/SPI lines to the SoC; a pull-down keeps it low by default. The
+microphones have their own enable (MIC_ENABLE = UULP_VBAT GPIO 0, UG581 3.4.2).
 
-| Sensor | Part | Bus / address | SDK driver | Status |
-|---|---|---|---|---|
-| Relative humidity + temperature | Si7021 | ULP_I2C / 0x40 | `si70xx_sensor` (`SI7021_ADDR 0x40`) | sdk-verified |
-| Ambient light | VEML6035 | ULP_I2C / 0x29 | `veml6035` (`VEML6035_SLAVE_ADDR 0x29`) | sdk-verified |
-| 6-axis IMU | ICM-40627 | SPI (ULP SSI primary) | `sl_icm40627` (board override for ULP SSI) | sdk-verified |
-| MEMS microphones | ICS-43434 (x2, per product page) | I2S0 | `sl_si91x_mic` (board override) | sdk-verified driver, count unverified |
+| Sensor | Part | Bus / address | Pins | SDK driver | Status |
+|---|---|---|---|---|---|
+| Relative humidity + temperature | Si7021 | I2C2 (ULP_I2C) / 0x40 | SDA ULP_GPIO_6, SCL ULP_GPIO_7 | `si70xx_sensor` | sdk-verified + UG581 |
+| Ambient light | VEML6035 | I2C2 (ULP_I2C) / 0x29 | same; ALS_INT UULP_VBAT GPIO 3 | `veml6035` | sdk-verified + UG581 |
+| 6-axis IMU | ICM-40627 | SPI (ULP SSI) | MOSI ULP_GPIO_1, MISO ULP_GPIO_2, SCK ULP_GPIO_8, CS ULP_GPIO_10, INT UULP_VBAT GPIO 3 | `sl_icm40627` | sdk-verified + UG581 (chip marking: check when photographing) |
+| MEMS microphones | ICS-43434 x2 | I2S0 | GPIO 46/47/48 | `sl_si91x_mic` | UG581, **skipped** (not used by TwinDock) |
 
-Pin-level detail for these sensors (from the same SDK files):
-I2C2 SDA = ULP_GPIO_6, SCL = ULP_GPIO_7; ICM-40627 on ULP SSI with MOSI ULP_GPIO_1, MISO ULP_GPIO_2,
-SCK ULP_GPIO_8, CS ULP_GPIO_10; shared IMU/light interrupt on UULP_VBAT GPIO 3; mics on I2S0 GPIO 46/47/48.
-The IMU is an **ICM-40627**, not an ICM-20689 (device ID check in `siwx917_dev_kit/sensors/motion_sensor.c`).
+The IMU and light sensor share one interrupt line (UULP_VBAT GPIO 3). The IMU CS (ULP_GPIO_10) is also on
+breakout pad 10.
 
 ## Forklift sensor pack: `hardware/wiring.json`
 
-The sensor pack (on-board sensors plus Qwiic VL53L1X and NAU7802 with a load cell) is described in
-**`hardware/wiring.json`**, validated by **`shared/schemas/hardware/wiring.json`**. It is the single
-source of truth for parts, buses, addresses, pins and wires. Firmware pins (`tools/gen_pins.py`), the
-`/wiring` page and the hardware sheet are generated from it. Every value carries `evidence`
-(`sdk-verified`, `datasheet`, `confirmed`, `unverified`); every part carries `status`
-(`planned`, `wired`, `verified`). Its `open_questions` list what still blocks verification, chiefly:
-the Qwiic connector's SoC pins are **not** in the SDK board config, and if Qwiic shares I2C2 the
-VL53L1X default address 0x29 clashes with the VEML6035.
+The sensor pack (Si7021, VEML6035, ICM-40627 on board, plus VL53L1X and NAU7802 with a load cell over
+Qwiic) is described in **`hardware/wiring.json`**, validated by **`shared/schemas/hardware/wiring.json`**.
+It is the single source of truth for parts, buses, addresses, pins, wires and the boot sequence.
+Firmware pins (`tools/gen_pins.py`), the `/wiring` page and the hardware sheet are generated from it.
+Every value carries `evidence` (`sdk-verified`, `user-guide`, `datasheet`, `confirmed`, `unverified`);
+every part carries `status` (`planned`, `wired`, `verified` = firmware has read a plausible value).
 
-Listing a part in `wiring.json` does not expose it: the "Exposed in TwinDock" table below still decides.
+### Qwiic connector (UG581 3.6.2, Table 3.3)
+
+| Qwiic pin | Connection | Wire |
+|---|---|---|
+| GND | GND | black |
+| 3.3V | **VMCU** (not switched by SENSOR_ENABLE) | red |
+| SDA | ULP_GPIO_6, shared with on-board I2C sensors and breakout pad 16 | blue |
+| SCL | ULP_GPIO_7, shared with on-board I2C sensors and breakout pad 15 | yellow |
+
+Daisy chain: board → VL53L1X → NAU7802 → load cell (4 wires: E+, E-, A-, A+).
+
+### I2C2 addresses and the VL53L1X boot sequence
+
+The VL53L1X powers up at **0x29**, the same as the VEML6035. Firmware moves it to **0x30** at boot:
+
+1. Drive SENSOR_ENABLE low: Si7021/VEML6035 are unpowered and disconnected from the bus; Qwiic devices
+   stay powered (VMCU).
+2. Probe 0x30. If it answers with model ID 0xEACC (register 0x010F), the VL53L1X was already moved
+   (MCU-only reset does not cut its power): go to step 5.
+3. Probe 0x29, check model ID 0xEACC, write 0x30 to `I2C_SLAVE__DEVICE_ADDRESS` (register 0x0001).
+4. Confirm at 0x30. If neither address answers: `sensor_error` for fork_distance, no value published.
+5. Drive SENSOR_ENABLE high, then initialise Si7021 and VEML6035.
+
+Why 0x30: free on this bus (0x29 VEML6035, 0x2A NAU7802, 0x40 Si7021), outside the reserved ranges
+0x00–0x07 and 0x78–0x7F, and not adjacent to 0x29/0x2A, so a bus scan shows at a glance whether the
+move worked (0x29 alone = not moved yet). Resulting bus:
+**0x29 VEML6035, 0x2A NAU7802, 0x30 VL53L1X, 0x40 Si7021.**
+
+Open: whether the bus still has pull-ups with SENSOR_ENABLE low (UG581 doesn't show where they are;
+most Qwiic breakouts carry their own), the exact breakouts and load cell, and the IMU chip marking.
 
 ## Power
 
+From UG581 2.1 and 3.2.
+
 | Option | Notes | Status |
 |---|---|---|
-| USB (debugger connector) | Power + debug + VCOM | unverified (developer: confirm connector) |
-| Other (battery / coin cell) | User guide not readable from here (403) | unverified |
+| USB Type-C (debugger connector) | 5 V VBUS, on-board LDO to 3.3 V VMCU; power + debug + VCOM | user-guide |
+| Mini Simplicity connector / breakout pads | 3.3 V injected on VMCU (1.9–3.6 V); remove USB first. Connector not mounted | user-guide |
+
+No battery holder on the board.
 
 ## Exposed in TwinDock
 
-Decided by the developer on 2026-10-07. Nothing else may appear in the UI or firmware.
+Decided by the developer on 2026-10-07, extended on 2026-10-10. Nothing else may appear in the UI or firmware.
 
 | TwinDock name | Hardware | Driven by | Status |
 |---|---|---|---|
@@ -99,20 +129,27 @@ Decided by the developer on 2026-10-07. Nothing else may appear in the UI or fir
 | LED1 | `led0` **blue** channel (HP GPIO 15) | manual from the twin | confirmed |
 | `temperature` (°C) | Si7021 | `twin/gateway/sensor/temperature` every 10 s | confirmed |
 | `humidity` (%RH) | Si7021 | `twin/gateway/sensor/humidity` every 10 s | confirmed |
+| `light` (lux) | VEML6035 | `twin/gateway/sensor/light` | approved, gated |
+| `motion`, `impact` | ICM-40627 | `twin/gateway/sensor/motion`, `/impact` | approved, gated |
+| `fork_distance` (mm) | VL53L1X (Qwiic) | `twin/gateway/sensor/fork_distance` | approved, gated |
+| `fork_load` (g, demo scale) | NAU7802 + load cell (Qwiic) | `twin/gateway/sensor/fork_load` | approved, gated |
 
-The red channel, VEML6035, ICM-40627 and the microphones are **not** exposed.
+**Gated** = approved on 2026-10-10, but it appears in the UI and in `hello.sensors` only once its part
+has `status: "verified"` in `hardware/wiring.json` (firmware has read real values from it).
+
+The red channel and the microphones are **not** exposed.
 
 LED0 and LED1 are two colours of the **same** physical LED: green only, blue only, both on = cyan.
 The board twin renders one LED at the RGB LED position whose colour is the mix of LED0/LED1.
 
-`hello` payload the firmware must send:
+`hello` payload the firmware must send (sensors list grows as gated sensors are verified):
 `{"board":"BRD2605A","radio_board":"","fw_version":"<ver>","leds":["LED0","LED1"],"buttons":["BTN0","BTN1"],"sensors":["temperature","humidity"]}`
 
 ## Open items
 
-1. Confirm on the board: silkscreen says BRD2605A **A02**, buttons are labelled BTN0/BTN1.
+1. Confirm on the board: silkscreen says BRD2605A **A02**, buttons are labelled BTN0/BTN1, IMU marking ICM-40627.
 2. Simplicity Studio: install it (only the installer was found) and note the version above.
-3. Power options: confirm from the user guide.
+3. Sensor pack parts: VL53L1X and NAU7802 breakouts (two Qwiic connectors each?), load cell model.
 
 ## Hotspot positions (board twin)
 
