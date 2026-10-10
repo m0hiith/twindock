@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/machine_command.json",
+  "title": "machine_command (client -> server)",
+  "description": "Simulation control for a FAC-01 machine (the 'degrade' demo control on /control). Forwarded to tools/site_sim.py on twin/<site>/<device>/cmd/<action>; never to the real board.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "cmd_id",
+    "machine_id",
+    "action"
+  ],
+  "properties": {
+    "type": {
+      "const": "machine_command"
+    },
+    "cmd_id": {
+      "$ref": "defs.json#/$defs/cmd_id"
+    },
+    "machine_id": {
+      "$ref": "defs.json#/$defs/unit_id"
+    },
+    "action": {
+      "enum": [
+        "degrade",
+        "restore",
+        "maintenance"
+      ]
+    }
+  }
+}

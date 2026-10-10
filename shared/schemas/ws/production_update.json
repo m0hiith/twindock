@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/production_update.json",
+  "title": "production_update (server -> client)",
+  "description": "FAC-01 production analytics from the (simulated) machine monitors. On connect and at most 1 Hz.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "seq",
+    "server_ts_ms",
+    "machines",
+    "line",
+    "config"
+  ],
+  "properties": {
+    "type": {
+      "const": "production_update"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "server_ts_ms": {
+      "type": "integer"
+    },
+    "machines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "device_id",
+          "label",
+          "state",
+          "state_since_ms",
+          "data_ms",
+          "cycle_time_s",
+          "ideal_cycle_s",
+          "current_a",
+          "vibration_rms",
+          "baseline",
+          "z",
+          "abnormal",
+          "units_today",
+          "rejects_today",
+          "last_fault",
+          "availability",
+          "performance",
+          "quality",
+          "oee"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "defs.json#/$defs/unit_id"
+          },
+          "device_id": {
+            "$ref": "defs.json#/$defs/device_id"
+          },
+          "label": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "running",
+              "idle",
+              "fault",
+              "maintenance",
+              "no_data"
+            ],
+            "description": "no_data: the machine monitor is not online, so the state is unknown."
+          },
+          "state_since_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cycle_time_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ideal_cycle_s": {
+            "type": "number"
+          },
+          "current_a": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vibration_rms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "baseline": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "learned",
+              "samples",
+              "mean",
+              "std"
+            ],
+            "properties": {
+              "learned": {
+                "type": "boolean"
+              },
+              "samples": {
+                "type": "integer"
+              },
+              "mean": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "std": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "abnormal": {
+            "type": "boolean",
+            "description": "Abnormal compared with this machine's learned baseline. Not a failure prediction."
+          },
+          "units_today": {
+            "type": "integer"
+          },
+          "rejects_today": {
+            "type": "integer"
+          },
+          "last_fault": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "text",
+                  "at_ms"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "at_ms": {
+                    "type": "integer"
+                  }
+                }
+              }
+            ]
+          },
+          "availability": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "performance": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oee": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "units_today",
+        "pallets_made",
+        "pallets_waiting",
+        "units_toward_pallet",
+        "availability",
+        "performance",
+        "quality",
+        "oee"
+      ],
+      "properties": {
+        "units_today": {
+          "type": "integer"
+        },
+        "pallets_made": {
+          "type": "integer"
+        },
+        "pallets_waiting": {
+          "type": "integer",
+          "description": "Full pallets with no free outbound spot."
+        },
+        "units_toward_pallet": {
+          "type": "integer"
+        },
+        "availability": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "performance": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quality": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oee": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "z_threshold",
+        "z_clear",
+        "baseline_s",
+        "window_samples",
+        "units_per_pallet"
+      ],
+      "properties": {
+        "z_threshold": {
+          "type": "number"
+        },
+        "z_clear": {
+          "type": "number"
+        },
+        "baseline_s": {
+          "type": "number"
+        },
+        "window_samples": {
+          "type": "integer"
+        },
+        "units_per_pallet": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

@@ -28,3 +28,16 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - On the twin page, the warehouse KPI, shipment and fleet panels show only while WH-01 is the site on screen; FAC-01 shows a device-health card instead of misleading warehouse numbers.
 - Device pucks are hidden by default (map control "Devices", or `?devices` in the URL); GW-01 has no puck because its pole already marks it.
 - A device can be the shared selection (`select_unit` accepts a device id); the inspect card then shows the device with every reading's age.
+
+## Stage 3: S2 production line
+- Machine physics (states, cycles, current, vibration, degrade) lives in the simulator; baseline learning, z-score, OEE and pallets live in the backend, the way a real twin would analyse real monitors.
+- Machines are units (`M-01`, `M-02`, kind `machine`, source `sim`). With no fresh monitor data their state is `no_data`, never a guessed "running".
+- Baseline: learned from running-state readings only, over 90 s and at least 40 readings. z = (mean of last 10 readings − baseline mean) / baseline std; raise above 3.0, clear below 2.0 (hysteresis). Configurable in `sites.json` → `production`.
+- "Degrade" adds +0.015 mm/s per second (a worn bearing): it is flagged about 30–60 s after the click, visible on cue but not instant.
+- OEE per machine: A = running/planned (planned = time with data, excluding maintenance), P = ideal cycle × units/running time (capped at 1), Q = good/all. Zone OEE = mean A × mean P × product of Q.
+- A machine's units counter is counted from the first reading the backend sees (the simulator may already be running), so a backend restart starts "units today" at 0.
+- Every 6 packer units become one finished pallet (`FG-xx`, source `sim`) at the factory outbound spot. If the spot is full, pallets wait (counted) and one warn event is raised.
+- Finished pallets leave the world when their truck departs (delivered); other cargo still comes back with the truck as before. This keeps pallet counts and ids bounded.
+- Auto mode gains a "collect production" job (outbound spot → rack slot, else staging), after unload/load in priority.
+- Simulator commands go on `twin/<site>/<device>/cmd/<action>` (schema `mqtt/site_cmd.json`), only for sim devices (asserted in the engine).
+- The Control Room map still shows WH-01 only; FAC-01 controls are in a new "Factory" tab.

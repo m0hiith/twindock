@@ -43,7 +43,10 @@ class Harness:
                 assert err is None, f"{o.msg['type']} violates schema: {err}\n{o.msg}"
                 self.ws.append(o)
             else:
-                err = first_error(validator("mqtt/gateway_cmd_led"), o.payload)
+                # The board only ever gets LED commands; simulated devices get site commands.
+                schema = "mqtt/gateway_cmd_led" if o.topic == "twin/gateway/cmd/led" else "mqtt/site_cmd"
+                assert o.topic == "twin/gateway/cmd/led" or "/cmd/" in o.topic, o.topic
+                err = first_error(validator(schema), o.payload)
                 assert err is None, err
                 self.mqtt.append(o)
 

@@ -19,20 +19,22 @@ from pydantic import TypeAdapter
 from . import planner
 from .ble_tracker import BleConfig, BleTracker, ZoneChange
 from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
-from .devices import DeviceRegistry, load_sites
+from .devices import DeviceRegistry, load_sites, parse_site_topic
+from .production import Production
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
 from .models import (BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
-                     MoveUnit, PendingLed, RawMqtt, SelectionChanged, SelectUnit, SetAutoMode, Timed,
-                     UnitUpdate, WorldSnapshot)
-from .world import World
+                     MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SelectionChanged, SelectUnit,
+                     SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
+from .world import Entity, World
 
 TOPIC_PREFIX = "twin/gateway/"
 CMD_LED_TOPIC = "twin/gateway/cmd/led"
 AUTO_PERIOD_S = 1.0  # auto mode re-plans once a second; faster adds nothing visible
 DEVICE_FLUSH_S = 0.5  # device_update at most 2 Hz: sim sensors report every 1-10 s, ages tick in the UI
+PRODUCTION_FLUSH_S = 1.0  # production_update at most 1 Hz: machine monitors report once a second
 
 
 @dataclass
@@ -63,6 +65,10 @@ class Engine:
         self.devices = DeviceRegistry(sites if sites is not None else load_sites())
         self._dev_last: dict[str, dict[str, Any]] = {}
         self._dev_acc = 0.0
+        self._prod_acc = 0.0
+        self._prod_last: dict[str, Any] | None = None
+        self._site_cmd_counter = 0
+        self._outbound_full_warned = False
         graph = Graph(layout)
         self.world = World(layout, graph)
         forklift_nodes = {n.id for n in layout.nodes if "forklift" in n.kinds}
@@ -84,6 +90,79 @@ class Engine:
         # Auto mode's dice. TWINDOCK_AUTO_SEED makes a run repeatable (tests, debugging).
         seed = os.environ.get("TWINDOCK_AUTO_SEED")
         self.rng = random.Random(int(seed) if seed else None)
+        self.production = self._new_production()
+        self._seed_site_units()
+
+    # ------------------------------------------------------------------ site twin units (FAC-01)
+
+    def _line(self) -> dict[str, Any]:
+        return dict((self.layout.model_extra or {}).get("production_line") or {"machines": []})
+
+    def _new_production(self) -> Production:
+        return Production(self.devices.cfg["production"], self._line()["machines"], self.devices.cfg["devices"])
+
+    def _seed_site_units(self) -> None:
+        """Machines are units (selectable, shown in the 3D line). Their state only ever comes from
+        their machine monitor's readings; with no fresh data it is "no_data"."""
+        for m in self._line()["machines"]:
+            pm = self.production.machines.get(m["id"])
+            self.world.add_entity(Entity(m["id"], "machine", "no_data", m["x"], m["z"], 0.0, source="sim",
+                                         label=f"{m['id']} {m['label']}",
+                                         meta={"task": "Waiting for machine monitor", "kind": m["kind"],
+                                               "device": pm.device_id if pm else ""}))
+
+    def _fresh(self) -> dict[str, bool]:
+        now = self.clock()
+        return {m.device_id: self.devices.wire_device(m.device_id, self.gw, now)["status"] == "online"
+                for m in self.production.machines.values()}
+
+    def _tick_production(self, dt: float) -> None:
+        now = self.clock()
+        fresh = self._fresh()
+        self.production.tick(now, fresh)
+        task = {"running": "Running", "idle": "Idle, waiting for material", "fault": "Fault",
+                "maintenance": "Under maintenance", "no_data": "No data from machine monitor"}
+        for mid, pm in self.production.machines.items():
+            e = self.world.entities.get(mid)
+            if e is None:
+                continue
+            e.state = self.production.machine_state(mid, fresh.get(pm.device_id, False))
+            t = task[e.state]
+            if e.state == "fault" and pm.last_fault:
+                t = f"Fault: {pm.last_fault['text']}"
+            elif e.state == "running" and pm.base.abnormal:
+                t = "Running · abnormal vibration"
+            e.meta["task"] = t
+        # Finished units become pallets at the factory outbound spot (forklifts take them away).
+        out = self.production.outbound_node
+        while self.production.pallets_waiting > 0 and out in self.world.graph.nodes:
+            n = self.production.pallets_made + 1
+            pid = self.world.spawn_pallet(out, {"sku": f"FG-{n:04d}", "contents":
+                                                f"Assembled units, {self.production.units_per_pallet} cartons",
+                                                "origin": "FAC-01 line (simulated)"})
+            if pid is None:
+                if not self._outbound_full_warned:
+                    self._outbound_full_warned = True
+                    self.event("warn", "Factory outbound is full: finished pallets are waiting for a forklift",
+                               "production")
+                break
+            self._outbound_full_warned = False
+            self.production.pallets_waiting -= 1
+            self.production.pallets_made += 1
+            self.event("info", f"{pid} finished on the FAC-01 line, waiting at {self.world.node_label(out)}",
+                       "production", pid)
+        self._prod_acc += dt
+        if self._prod_acc >= PRODUCTION_FLUSH_S:
+            self._prod_acc = 0.0
+            self._send_production()
+
+    def _send_production(self, to: str | None = None) -> None:
+        w = self.production.wire(self._fresh())
+        if to is None and w == self._prod_last:
+            return
+        if to is None:
+            self._prod_last = w
+        self._send(ProductionUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), **w), to)
 
     # ------------------------------------------------------------------ output helpers
 
@@ -140,8 +219,13 @@ class Engine:
             if self._last_wire.get(u.id) != d:
                 self._last_wire[u.id] = d
                 changed.append(u)
-        if changed or self._auto_mode_dirty:
+        removed = list(dict.fromkeys(self.world.removed))
+        self.world.removed.clear()
+        for rid in removed:
+            self._last_wire.pop(rid, None)
+        if changed or removed or self._auto_mode_dirty:
             self._send(UnitUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), units=changed,
+                                  removed=removed or None,
                                   auto_mode=self.auto_mode if self._auto_mode_dirty else None))
             self._auto_mode_dirty = False
 
@@ -155,10 +239,14 @@ class Engine:
     def on_connect(self, client_id: str) -> None:
         self._send(self.snapshot(), client_id)
         self._send_ble_tracks(client_id)
+        self._send_production(client_id)
 
     def reset(self) -> None:
         """Restore the seed world. Gateway state is real device data and is kept."""
         self.world.reset()
+        self.production = self._new_production()
+        self._prod_last = None
+        self._seed_site_units()
         # Every forklift is back at its seed spot and manual; tags re-acquire after stable_s.
         self.ble.forget_zones()
         self._device_goal.clear()
@@ -214,6 +302,7 @@ class Engine:
                            f"{LED_CONFIRM_TIMEOUT_MS // 1000} s", "gateway")
                 self._gateway_update()
         self._sync_rule_leds()
+        self._tick_production(dt)
         self._drain_world_events()
         self._flush_units()
         self._dev_acc += dt
@@ -360,9 +449,29 @@ class Engine:
         never self.gw, never an LED, never MQTT out."""
         if not topic.startswith("twin/"):
             return
-        notes, _changed = self.devices.on_mqtt(topic, payload, self.clock())
+        if "/cmd/" in topic:
+            return  # our own simulation commands echo back through twin/#
+        now = self.clock()
+        notes, changed = self.devices.on_mqtt(topic, payload, now)
         for n in notes:
             self.event(n.level, n.text, "sim")
+        parsed = parse_site_topic(topic)
+        if changed and parsed and changed in self.production.by_device:
+            r = self.devices.sim[changed].readings.get(parsed[2])
+            if r is not None and r.received_ms == now:
+                for level, text, mid in self.production.on_reading(changed, parsed[2], r.value, now):
+                    self.event(level, text, "production", mid)
+
+    def _site_command(self, device_id: str, action: str, extra: dict[str, Any] | None = None) -> str:
+        """Command to a SIMULATED device via tools/site_sim.py. Never the real board."""
+        d = self.devices.defs[device_id]
+        assert d["source"] == "sim" and device_id not in self.devices.real_ids, "site commands are for sim devices only"
+        self._site_cmd_counter += 1
+        payload = {"cmd_id": f"S{self._site_cmd_counter:06d}", **(extra or {})}
+        err = first_error(mqtt_validator("site_cmd"), payload)
+        assert err is None, err
+        self.out.append(MqttOut(f"twin/{d['site_id']}/{device_id}/cmd/{action}", payload))
+        return str(payload["cmd_id"])
 
     # ------------------------------------------------------------------ BLE tags -> live forklifts
 
@@ -467,6 +576,8 @@ class Engine:
             self._select(client_id, msg)
         elif isinstance(msg, LedCommand):
             self._led_command(client_id, msg)
+        elif isinstance(msg, MachineCommand):
+            self._machine_command(client_id, msg)
         elif isinstance(msg, SetAutoMode):
             self.auto_mode = msg.enabled
             self._auto_mode_dirty = True
@@ -475,6 +586,20 @@ class Engine:
         self._sync_rule_leds()
         self._drain_world_events()
         self._flush_units()
+
+    def _machine_command(self, client_id: str, m: MachineCommand) -> None:
+        pm = self.production.machines.get(m.machine_id)
+        if pm is None:
+            self._ack(client_id, m.cmd_id, "machine_command", False, f"{m.machine_id} is not a machine")
+            return
+        if not self.mqtt_connected:
+            self._ack(client_id, m.cmd_id, "machine_command", False, "Not connected to the MQTT broker")
+            return
+        self._site_command(pm.device_id, m.action)
+        self._ack(client_id, m.cmd_id, "machine_command", True)
+        text = {"degrade": "slowly rising vibration injected (simulation)", "restore": "vibration restored (simulation)",
+                "maintenance": "maintenance started (simulation)"}[m.action]
+        self.event("info", f"{pm.id} {pm.label.lower()}: {text}", client_id, pm.id)
 
     def _move(self, client_id: str, m: MoveUnit) -> None:
         r = self.world.command(m.unit_id, m.target_node, m.action, m.pallet_id, source="manual", dry_run=m.dry_run)

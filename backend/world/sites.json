@@ -315,11 +315,23 @@
         "cycle_time_s",
         "current_a",
         "vibration_rms",
-        "units"
+        "units",
+        "rejects",
+        "alarm"
       ],
       "label": "Press monitor",
       "source": "sim",
-      "attached_to": "M-01"
+      "attached_to": "M-01",
+      "sim": {
+        "cycle_s": 6.0,
+        "vibration_mm_s": 2.8,
+        "current_a": 14.0,
+        "reject_rate": 0.0,
+        "alarms": [
+          "Die jam",
+          "Hydraulic pressure low"
+        ]
+      }
     },
     {
       "id": "MM-02",
@@ -334,11 +346,23 @@
         "cycle_time_s",
         "current_a",
         "vibration_rms",
-        "units"
+        "units",
+        "rejects",
+        "alarm"
       ],
       "label": "Packer monitor",
       "source": "sim",
-      "attached_to": "M-02"
+      "attached_to": "M-02",
+      "sim": {
+        "cycle_s": 8.0,
+        "vibration_mm_s": 1.6,
+        "current_a": 6.5,
+        "reject_rate": 0.03,
+        "alarms": [
+          "Film break",
+          "Carton feed empty"
+        ]
+      }
     },
     {
       "id": "AQ-01",
@@ -416,5 +440,20 @@
       "label": "Factory office presence",
       "source": "sim"
     }
-  ]
+  ],
+  "production": {
+    "_doc": "Production analytics (backend/twindock/production.py). Vibration is flagged 'abnormal compared with baseline' when the rolling mean's z-score against the learned baseline exceeds z_threshold. It is never a failure prediction.",
+    "z_threshold": 3.0,
+    "z_clear": 2.0,
+    "baseline_s": 90,
+    "baseline_min_samples": 40,
+    "window_samples": 10,
+    "units_per_pallet": 6,
+    "ideal_cycle_s": {
+      "M-01": 6.0,
+      "M-02": 8.0
+    },
+    "outbound_node": "FAC_OUT",
+    "finished_by": "M-02"
+  }
 }

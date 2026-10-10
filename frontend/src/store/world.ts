@@ -1,7 +1,7 @@
 // Client mirror of server state. It only ever changes in response to server messages:
 // the UI sends intents (ws.ts) and waits for the backend to broadcast the result.
 import { create } from "zustand";
-import type { BleTracks, CommandAck, Device, Event, Gateway, ServerMessage, Site, Unit } from "../contract";
+import type { BleTracks, CommandAck, Device, Event, Gateway, ProductionUpdate, ServerMessage, Site, Unit } from "../contract";
 import type { Layout } from "../layout";
 import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
@@ -17,6 +17,8 @@ interface WorldState {
   /** Site twin: sites with zones (static per run) and every device, real (GW-01) and simulated. */
   sites: Site[];
   devices: Record<string, Device>;
+  /** FAC-01 line analytics from the (simulated) machine monitors. */
+  production: ProductionUpdate | null;
   selected: string | null;
   autoMode: boolean;
   events: Event[];
@@ -47,6 +49,7 @@ export const useWorld = create<WorldState>((set) => ({
   gateway: null,
   sites: [],
   devices: {},
+  production: null,
   selected: null,
   autoMode: false,
   events: [],
@@ -88,6 +91,8 @@ export const useWorld = create<WorldState>((set) => ({
         }
         case "gateway_update":
           return { gateway: m.gateway };
+        case "production_update":
+          return { production: m };
         case "device_update": {
           const devices = { ...s.devices };
           for (const d of m.devices) devices[d.id] = d;

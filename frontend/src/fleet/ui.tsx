@@ -74,3 +74,32 @@ export function MiniMap({ layout, site, device, others }: { layout: Layout; site
     </svg>
   );
 }
+
+/** Vibration (or any value) over time with a shaded "normal" band (baseline mean ± k·std). */
+export function BandChart({ points, band, mean, unit, height = 110 }: {
+  points: [number, number][]; band: [number, number] | null; mean: number | null; unit?: string; height?: number;
+}) {
+  const W = 300, H = height, pad = { l: 34, r: 6, t: 8, b: 16 };
+  if (points.length < 2) {
+    return <div className="grid place-items-center rounded-lg bg-[#F8F8F8] text-[12px] text-ink-2" style={{ height: H }}>Collecting history…</div>;
+  }
+  const vals = points.map((p) => p[1]).concat(band ? [band[0], band[1]] : []);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const padV = (hi - lo) * 0.1 || 0.5;
+  lo -= padV; hi += padV;
+  const t0 = points[0]![0], t1 = points.at(-1)![0];
+  const x = (t: number) => pad.l + ((t - t0) / Math.max(1, t1 - t0)) * (W - pad.l - pad.r);
+  const y = (v: number) => pad.t + (1 - (v - lo) / (hi - lo)) * (H - pad.t - pad.b);
+  const d = points.map(([t, v], i) => `${i ? "L" : "M"}${x(t)},${y(v)}`).join("");
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Vibration with its baseline band">
+      {band && <rect x={pad.l} width={W - pad.l - pad.r} y={y(band[1])} height={Math.max(1, y(band[0]) - y(band[1]))} fill={color.okBg} />}
+      {mean !== null && <line x1={pad.l} x2={W - pad.r} y1={y(mean)} y2={y(mean)} stroke={color.ok} strokeDasharray="3 3" />}
+      <path d={d} fill="none" stroke={color.ink} strokeWidth="1.5" strokeLinejoin="round" />
+      <text x={pad.l - 4} y={y(hi) + 10} textAnchor="end" fontSize="10" fill={color.ink2}>{hi.toFixed(1)}</text>
+      <text x={pad.l - 4} y={y(lo)} textAnchor="end" fontSize="10" fill={color.ink2}>{lo.toFixed(1)}</text>
+      <text x={pad.l} y={H - 2} fontSize="10" fill={color.ink2}>{band ? "Green band: learned baseline" : "Learning baseline…"}{unit ? ` · ${unit}` : ""}</text>
+      <text x={W - pad.r} y={H - 2} textAnchor="end" fontSize="10" fill={color.ink2}>now</text>
+    </svg>
+  );
+}

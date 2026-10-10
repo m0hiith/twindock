@@ -31,10 +31,11 @@ MQTT_SCHEMAS = {
     "ble": "gateway_ble",
     "sensor": "gateway_sensor",
     "cmd_led": "gateway_cmd_led",
+    "site_cmd": "site_cmd",
 }
-CLIENT_TYPES = ("move_unit", "select_unit", "led_command", "set_auto_mode")
+CLIENT_TYPES = ("move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command")
 SERVER_TYPES = ("world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event",
-                "ble_tracks", "device_update")
+                "ble_tracks", "device_update", "production_update")
 
 
 @lru_cache(maxsize=1)

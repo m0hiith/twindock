@@ -21,7 +21,7 @@ export function showInTwin(d: Pick<Device, "id" | "site_id" | "x" | "z">): void 
   navigate("/twin");
 }
 
-function useHistory(id: string, channel: string | null): [number, number][] {
+export function useHistory(id: string, channel: string | null): [number, number][] {
   const [points, setPoints] = useState<[number, number][]>([]);
   useEffect(() => {
     setPoints([]);

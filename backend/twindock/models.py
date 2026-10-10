@@ -110,7 +110,14 @@ class SetAutoMode(Strict):
     enabled: bool
 
 
-ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode], Field(discriminator="type")]
+class MachineCommand(Strict):
+    type: Literal["machine_command"]
+    cmd_id: str
+    machine_id: str
+    action: Literal["degrade", "restore", "maintenance"]
+
+
+ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand], Field(discriminator="type")]
 
 
 # ---------------------------------------------------------------- Wire entities
@@ -208,6 +215,16 @@ class WorldSnapshot(Strict):
     devices: list[dict[str, Any]]  # shape checked against ws/defs.json#/$defs/device
 
 
+class ProductionUpdate(Strict):
+    """Shape checked against ws/production_update.json; built by Production.wire()."""
+    type: Literal["production_update"] = "production_update"
+    seq: int
+    server_ts_ms: int
+    machines: list[dict[str, Any]]
+    line: dict[str, Any]
+    config: dict[str, Any]
+
+
 class DeviceUpdate(Strict):
     type: Literal["device_update"] = "device_update"
     seq: int
@@ -260,7 +277,7 @@ class SelectionChanged(Strict):
 class CommandAck(Strict):
     type: Literal["command_ack"] = "command_ack"
     cmd_id: str
-    command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode"]
+    command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command"]
     ok: bool
     reason: str | None = None
     path: list[str] | None = None

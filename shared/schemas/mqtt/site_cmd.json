@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/mqtt/site_cmd.json",
+  "title": "twin/<site>/<device>/cmd/<action>",
+  "description": "Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); door_open (door sensors); silence (any sim device stops publishing, to demonstrate staleness).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cmd_id"
+  ],
+  "properties": {
+    "cmd_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 36
+    },
+    "on": {
+      "type": "boolean"
+    },
+    "seconds": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 600
+    },
+    "x": {
+      "type": "number"
+    },
+    "z": {
+      "type": "number"
+    },
+    "route": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    }
+  }
+}

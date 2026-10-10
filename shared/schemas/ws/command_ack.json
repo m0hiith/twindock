@@ -23,7 +23,8 @@
         "move_unit",
         "select_unit",
         "led_command",
-        "set_auto_mode"
+        "set_auto_mode",
+        "machine_command"
       ]
     },
     "ok": {

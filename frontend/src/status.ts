@@ -10,7 +10,7 @@ const TONES: Record<string, Record<string, Tone>> = {
   rack: { available: "ok", full: "warn" },
   pallet: { stored: "idle", staged: "info", carried: "info", loaded: "ok" },
   gateway: { online: "live", offline: "crit", waiting: "idle" },
-  machine: { running: "ok", idle: "idle", fault: "crit", maintenance: "warn" },
+  machine: { running: "ok", idle: "idle", fault: "crit", maintenance: "warn", no_data: "idle" },
   worker: { walking: "info", working: "ok", idle: "idle" },
 };
 
@@ -34,4 +34,4 @@ export const toneColor: Record<Tone, { fg: string; bg: string }> = {
 };
 
 /** Sentence-case state for pills: "charging" -> "Charging". */
-export const stateLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+export const stateLabel = (s: string) => (s.charAt(0).toUpperCase() + s.slice(1)).replace(/_/g, " ");

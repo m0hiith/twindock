@@ -165,7 +165,92 @@ class AirQuality(Model):
         return []
 
 
-MODELS: dict[str, type[Model]] = {"env_sensor": EnvSensor, "door_sensor": DoorSensor,
+@dataclass
+class MachineMonitor(Model):
+    """A press or packer seen through its monitor: state machine, cycles, motor current, vibration.
+
+    State machine: running -> (idle | fault) -> running, with random dwell times; maintenance
+    only on command. Vibration RMS sits around the machine's own baseline with noise; the
+    "degrade" command adds a slowly rising offset (a worn bearing), "restore" removes it.
+    """
+    state: str = "running"
+    state_until: float = 0.0
+    units: int = 0
+    rejects: int = 0
+    next_cycle: float = 0.0
+    vib_offset: float = 0.0
+    degrade_rate: float = 0.0  # mm/s per second while degrading
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        p = self.d.get("sim", {})
+        self.cycle_s = float(p.get("cycle_s", 6.0))
+        self.vib_base = float(p.get("vibration_mm_s", 2.0))
+        self.i_run = float(p.get("current_a", 10.0))
+        self.reject_rate = float(p.get("reject_rate", 0.0))
+        self.alarms = list(p.get("alarms", ["Fault"]))
+        self.state_until = self.rng.uniform(40, 90)
+        self.pending: list[tuple[str, Payload]] = []
+
+    def set_state(self, state: str, t: float, dwell: float, ts_ms: int) -> None:
+        self.state, self.state_until = state, t + dwell
+        self.pending.append(("state", self.reading(ts_ms, state)))
+        if state == "fault":
+            self.pending.append(("alarm", self.reading(ts_ms, self.rng.choice(self.alarms))))
+        if state == "running":
+            self.next_cycle = t + self.cycle_s
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action == "degrade":
+            self.degrade_rate = 0.015  # +0.9 mm/s per minute: visible within a minute, not instant
+        elif action == "restore":
+            self.degrade_rate, self.vib_offset = 0.0, 0.0
+        elif action == "maintenance":
+            self.set_state("maintenance", t, 30.0, ts_ms)
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        out: Out = []
+        if t >= self.state_until and self.state != "running":
+            self.set_state("running", t, self.rng.uniform(40, 120), ts_ms)
+        elif t >= self.state_until:
+            r = self.rng.random()
+            if r < 0.08:
+                self.set_state("fault", t, self.rng.uniform(15, 40), ts_ms)
+            elif r < 0.22:
+                self.set_state("idle", t, self.rng.uniform(8, 25), ts_ms)  # starved: waiting for material
+            else:
+                self.state_until = t + self.rng.uniform(40, 120)
+        self.vib_offset += self.degrade_rate * dt
+        if self.state == "running" and t >= self.next_cycle:
+            # Each cycle runs a little slower than ideal (micro-stops); a worn machine slows more.
+            took = self.cycle_s * self.rng.uniform(1.0, 1.12) * (1 + 0.05 * self.vib_offset)
+            self.next_cycle = t + took
+            if self.rng.random() < self.reject_rate:
+                self.rejects += 1
+                out.append(("rejects", self.reading(ts_ms, self.rejects)))
+            else:
+                self.units += 1
+                out.append(("units", self.reading(ts_ms, self.units)))
+            out.append(("cycle_time_s", self.reading(ts_ms, round(took, 2), "s")))
+        out += self.pending
+        self.pending = []
+        if self.every("fast", t, 1.0):
+            if self.state == "running":
+                vib = self.vib_base + self.vib_offset + self.rng.gauss(0, 0.06 * self.vib_base)
+                cur = self.i_run * (1 + self.rng.gauss(0, 0.03)) + 0.8 * self.vib_offset
+            else:
+                vib, cur = 0.15 + abs(self.rng.gauss(0, 0.03)), (1.2 if self.state == "idle" else 0.0)
+            out.append(("vibration_rms", self.reading(ts_ms, round(max(0.0, vib), 3), "mm/s")))
+            out.append(("current_a", self.reading(ts_ms, round(max(0.0, cur), 2), "A")))
+        if self.every("state", t, 5.0):
+            out.append(("state", self.reading(ts_ms, self.state)))
+            out.append(("units", self.reading(ts_ms, self.units)))
+            out.append(("rejects", self.reading(ts_ms, self.rejects)))
+        return out
+
+
+MODELS: dict[str, type[Model]] = {"machine_monitor": MachineMonitor, "env_sensor": EnvSensor, "door_sensor": DoorSensor,
                                   "occupancy_sensor": Occupancy, "air_quality": AirQuality}
 
 

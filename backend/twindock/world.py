@@ -41,6 +41,7 @@ BATTERY_FLOOR_PCT = 15.0
 FORK_OFFSET_M = 1.1         # carried pallet sits this far ahead of the forklift centre
 
 BAY1_DOCK_NODE = "DOCK_1"   # LED0 rule: on while a truck is docked at Bay 1
+FINISHED_PREFIX = "FG-"     # finished-goods pallets made by the FAC-01 line; delivered when their truck departs
 
 
 def wrap(a: float) -> float:
@@ -122,6 +123,7 @@ class World:
         self.dock_by_bay = {d.bay_node: d for d in layout.docks}
         self.charger_by_node = {c.node: c for c in layout.chargers}
         self.events: list[tuple[str, str, str | None]] = []  # (level, text, unit_id), drained by the engine
+        self.removed: list[str] = []  # unit ids that left the world (delivered pallets), drained by the engine
         self.entities: dict[str, Entity] = {}
         self.time = 0.0
         self.gateway_state = "waiting"
@@ -400,7 +402,7 @@ class World:
 
     def tick(self, dt: float) -> None:
         self.time += dt
-        for u in self.entities.values():
+        for u in list(self.entities.values()):  # a departing truck can deliver (remove) pallets mid-loop
             if u.kind not in ("forklift", "truck"):
                 continue
             if u.path:
@@ -467,8 +469,17 @@ class World:
                 u.heading = math.pi / 2  # parked square to the door, cab facing the yard
             elif a == "depart":
                 u.state = "gone"
-                # It comes back with whatever it left with; that cargo is then unloaded.
                 assert u.cargo is not None
+                # Finished goods from the factory (FG-..) are delivered and leave the world; any other
+                # cargo comes back with the truck and is unloaded (the warehouse's closed loop).
+                delivered = [p for p in u.cargo if p.startswith(FINISHED_PREFIX)]
+                for pid in delivered:
+                    self.entities.pop(pid, None)
+                    self.removed.append(pid)
+                u.cargo = [p for p in u.cargo if not p.startswith(FINISHED_PREFIX)]
+                if delivered:
+                    self.events.append(("info", f"{u.id} delivered {len(delivered)} finished pallet"
+                                        f"{'s' if len(delivered) > 1 else ''} from FAC-01", u.id))
                 u.inbound = bool(u.cargo)
             u.action, u.target, u.idle_since = None, None, self.time
             return
@@ -581,6 +592,26 @@ class World:
             self.entities[r.id].state = "full" if used == len(r.slots) else "available"
         self.entities[self.layout.gateway.id].state = self.gateway_state
 
+    def add_entity(self, e: Entity) -> None:
+        """Site-twin units (machines, workers) that are not part of the warehouse seed."""
+        self.entities[e.id] = e
+
+    def spawn_pallet(self, node_id: str, meta: dict[str, str | float | bool], source: Source = "sim") -> str | None:
+        """New finished-goods pallet at a zone node. Returns its id, or None if the node is full or
+        every FG id is in use."""
+        node = self.graph.nodes[node_id]
+        if self.free_spots(node) <= 0:
+            return None
+        pid = next((f"{FINISHED_PREFIX}{i:02d}" for i in range(1, 100) if f"{FINISHED_PREFIX}{i:02d}" not in self.entities), None)
+        if pid is None:
+            return None
+        used = {p.spot for p in self.pallets_at(node_id)}
+        e = Entity(pid, "pallet", "staged", node.x, node.z, label=str(meta.get("sku", pid)), node=node_id, source=source,
+                   meta=dict(meta), spot=next(i for i in range(len(node.spots)) if i not in used))
+        self.entities[pid] = e
+        self._update_derived()
+        return pid
+
     def task_text(self, u: Entity) -> str:
         nl = self.node_label
         if u.kind == "forklift":
@@ -622,6 +653,8 @@ class World:
         if u.kind == "charger":
             who = self.charger_taken_by(u.node or "", exclude="")
             return f"{who} charging" if who else "Free"
+        if u.kind in ("machine", "worker"):
+            return str(u.meta.get("task", u.state))
         if u.kind == "pallet":
             p = u
             if p.holder:

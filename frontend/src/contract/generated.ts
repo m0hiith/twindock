@@ -169,6 +169,7 @@ export interface TwinDockContract {
   gateway_led?: GatewayLed;
   gateway_sensor?: GatewaySensor;
   gateway_status?: GatewayStatus;
+  site_cmd?: SiteCmd;
   site_hello?: SiteHello;
   site_reading?: SiteReading;
   site_status?: SiteStatus;
@@ -178,7 +179,9 @@ export interface TwinDockContract {
   event?: Event;
   gateway_update?: GatewayUpdate;
   led_command?: LedCommand;
+  machine_command?: MachineCommand;
   move_unit?: MoveUnit;
+  production_update?: ProductionUpdate;
   select_unit?: SelectUnit;
   selection_changed?: SelectionChanged;
   set_auto_mode?: SetAutoMode;
@@ -299,6 +302,20 @@ export interface GatewayStatus {
   replay?: boolean;
 }
 /**
+ * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); door_open (door sensors); silence (any sim device stops publishing, to demonstrate staleness).
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "site_cmd".
+ */
+export interface SiteCmd {
+  cmd_id: string;
+  on?: boolean;
+  seconds?: number;
+  x?: number;
+  z?: number;
+  route?: string;
+}
+/**
  * Retained. Announces a commissioned device, like the board's hello. The backend checks it against backend/world/sites.json.
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -415,7 +432,7 @@ export interface BleTracks {
 export interface CommandAck {
   type: "command_ack";
   cmd_id: CmdId;
-  command: "move_unit" | "select_unit" | "led_command" | "set_auto_mode";
+  command: "move_unit" | "select_unit" | "led_command" | "set_auto_mode" | "machine_command";
   ok: boolean;
   /**
    * Short human reason when ok is false.
@@ -597,6 +614,18 @@ export interface LedCommand {
   on: boolean;
 }
 /**
+ * Simulation control for a FAC-01 machine (the 'degrade' demo control on /control). Forwarded to tools/site_sim.py on twin/<site>/<device>/cmd/<action>; never to the real board.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "machine_command".
+ */
+export interface MachineCommand {
+  type: "machine_command";
+  cmd_id: CmdId;
+  machine_id: UnitId;
+  action: "degrade" | "restore" | "maintenance";
+}
+/**
  * Intent to move a unit to a node, optionally performing an action there. The server validates and plans the path.
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -613,6 +642,73 @@ export interface MoveUnit {
    */
   dry_run?: boolean;
   pallet_id?: UnitId2;
+}
+/**
+ * FAC-01 production analytics from the (simulated) machine monitors. On connect and at most 1 Hz.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "production_update".
+ */
+export interface ProductionUpdate {
+  type: "production_update";
+  seq: number;
+  server_ts_ms: number;
+  machines: {
+    id: UnitId;
+    device_id: DeviceId;
+    label: string;
+    /**
+     * no_data: the machine monitor is not online, so the state is unknown.
+     */
+    state: "running" | "idle" | "fault" | "maintenance" | "no_data";
+    state_since_ms: number | null;
+    data_ms: number | null;
+    cycle_time_s: number | null;
+    ideal_cycle_s: number;
+    current_a: number | null;
+    vibration_rms: number | null;
+    baseline: {
+      learned: boolean;
+      samples: number;
+      mean: number | null;
+      std: number | null;
+    };
+    z: number | null;
+    /**
+     * Abnormal compared with this machine's learned baseline. Not a failure prediction.
+     */
+    abnormal: boolean;
+    units_today: number;
+    rejects_today: number;
+    last_fault: null | {
+      text: string;
+      at_ms: number;
+    };
+    availability: number | null;
+    performance: number | null;
+    quality: number | null;
+    oee: number | null;
+  }[];
+  line: {
+    units_today: number;
+    pallets_made: number;
+    /**
+     * Full pallets with no free outbound spot.
+     */
+    pallets_waiting: number;
+    units_toward_pallet: number;
+    availability: number | null;
+    performance: number | null;
+    quality: number | null;
+    oee: number | null;
+  };
+  config: {
+    z_threshold: number;
+    z_clear: number;
+    baseline_s: number;
+    window_samples: number;
+    units_per_pallet: number;
+  };
 }
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema

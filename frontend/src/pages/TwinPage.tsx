@@ -8,6 +8,7 @@ import { ShipmentPanel } from "../hud/ShipmentPanel";
 import { TopBar } from "../hud/TopBar";
 import { Scene } from "../scene/Scene";
 import { SiteDevicesCard } from "../hud/SiteDevicesCard";
+import { ProductionKpis } from "../hud/ProductionKpis";
 import { useView } from "../store/world";
 
 // The scene fills the viewport; HUD cards float over it. The overlay itself ignores the pointer
@@ -23,7 +24,7 @@ export function TwinPage() {
         <TopBar />
         <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
         <div className="flex items-start justify-between gap-3">
-          {warehouse ? <KpiCards /> : <SiteDevicesCard />}
+          {warehouse ? <KpiCards /> : <div className="flex items-start gap-3"><ProductionKpis /><SiteDevicesCard /></div>}
           <div className="flex items-start gap-3">
             <div className="pointer-events-auto"><MapControls /></div>
             <InspectCard />

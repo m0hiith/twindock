@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { destinationCandidates, destinationKeys } from "../control/candidates";
 import { EventLog } from "../control/EventLog";
+import { ProductionPanel } from "../control/ProductionPanel";
 import { GatewayPanel } from "../control/GatewayPanel";
 import { MovePanel, UnitChips } from "../control/MovePanel";
 import { ProposalSheet } from "../control/ProposalSheet";
@@ -19,7 +20,7 @@ import { useWorld } from "../store/world";
 import { Brand } from "../hud/Brand";
 import { PageTabs } from "../hud/PageTabs";
 
-type Tab = "move" | "gateway" | "log";
+type Tab = "move" | "gateway" | "log" | "factory";
 
 
 /** One click restores the seed world (POST /api/reset). The page then updates from the
@@ -121,6 +122,7 @@ export function ControlPage() {
         <nav className="flex gap-1 px-3 pt-1 lg:px-4 lg:pt-4">
           <TabButton active={tab === "move"} onClick={() => setTab("move")}>Move</TabButton>
           <TabButton active={tab === "gateway"} onClick={() => setTab("gateway")}>Gateway</TabButton>
+          <TabButton active={tab === "factory"} onClick={() => setTab("factory")}>Factory</TabButton>
           <TabButton active={tab === "log"} onClick={() => setTab("log")}>
             Event log{warnCount > 0 && <span className="tabular rounded-full bg-warn-bg px-1.5 text-[11px] text-warn">{warnCount}</span>}
           </TabButton>
@@ -128,6 +130,7 @@ export function ControlPage() {
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-40 pt-3 lg:px-4">
           {tab === "move" && <MovePanel unit={unit} destinations={[...perNode.values()]} checking={checking} />}
           {tab === "gateway" && <GatewayPanel />}
+          {tab === "factory" && <ProductionPanel />}
           {tab === "log" && <EventLog />}
         </div>
       </aside>

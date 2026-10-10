@@ -16,6 +16,7 @@ import { StaticHitAreas, Units } from "./Units";
 import { Office, Warehouse } from "./Warehouse";
 import { Factory } from "./Factory";
 import { DevicePucks } from "./DevicePucks";
+import { ProductionLine } from "./ProductionLine";
 
 function DrawCalls() {
   // Exposes renderer stats for the perf check (?stats): window.__twindockGl.
@@ -56,6 +57,7 @@ export function Scene() {
       </Baked>
       <Warehouse layout={layout} />
       <Factory layout={layout} />
+      <ProductionLine layout={layout} />
       <GroundLabels layout={layout} />
       <Chargers layout={layout} />
       <GateBarrier layout={layout} />

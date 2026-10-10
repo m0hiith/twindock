@@ -43,7 +43,7 @@ def load_validators() -> dict[str, jsonschema.Draft202012Validator]:
         by[f"{f.parent.name}/{f.stem}"] = s
         res.append((s["$id"], Resource.from_contents(s)))
     reg = Registry().with_resources(res)
-    return {k: jsonschema.Draft202012Validator(by[f"mqtt/site_{k}"], registry=reg) for k in ("hello", "status", "reading")}
+    return {k: jsonschema.Draft202012Validator(by[f"mqtt/site_{k}"], registry=reg) for k in ("hello", "status", "reading", "cmd")}
 
 
 def select_devices(cfg: dict[str, Any], site: str | None, zones: list[str] | None) -> list[dict[str, Any]]:
@@ -82,6 +82,30 @@ class SiteSim:
         if self.client is not None:
             self.client.publish(self.topic(m, channel), json.dumps(payload, separators=(",", ":")), qos=0, retain=retain)
         self.sent += 1
+
+    def on_command(self, topic: str, payload: bytes) -> None:
+        """twin/<site>/<device>/cmd/<action> from the backend (sim devices only)."""
+        parts = topic.split("/")
+        if len(parts) != 5 or parts[3] != "cmd":
+            return
+        m = self.models.get(parts[2])
+        if m is None or m.d["site_id"] != parts[1]:
+            return
+        try:
+            data = json.loads(payload)
+            self.v["cmd"].validate(data)
+        except (ValueError, jsonschema.ValidationError) as e:
+            print(f"[sim] ignored invalid command on {topic}: {e}")
+            return
+        t = time.monotonic() - self.t0
+        action = parts[4]
+        if action == "silence":
+            m.silent = bool(data.get("on", True))
+        elif action == "door_open" and hasattr(m, "force_open"):
+            m.force_open(t, float(data.get("seconds", 90)))  # type: ignore[attr-defined]
+        elif hasattr(m, "command"):
+            m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]
+        print(f"[sim] {m.id}: {action} ({data.get('cmd_id')})")
 
     def hellos(self) -> None:
         for m in self.models.values():
@@ -122,6 +146,8 @@ def main() -> None:
         sys.exit("no simulated devices match --site/--zones")
     s = SiteSim(cfg, devices, a.seed)
     c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"twindock-site-sim-{random.randint(0, 99999)}")
+    c.on_message = lambda _c, _u, msg: s.on_command(msg.topic, msg.payload)
+    c.on_connect = lambda cl, *_: cl.subscribe("twin/+/+/cmd/#", qos=1)
     c.connect(a.host, a.port, keepalive=30)
     c.loop_start()
     s.client = c

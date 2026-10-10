@@ -6,6 +6,8 @@ import { ButtonSection, LedSection } from "../control/GatewayPanel";
 import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
 import { DeviceInspect } from "./DeviceInspect";
+import { MachineRows } from "./MachineRows";
+import { siteAt } from "../sites";
 import { stateLabel } from "../status";
 import { ago, Bar, batteryColor, Icon, kindIcon, kindLabel, LiveBadge, nodeLabel, SimBadge, StatusPill, useTick } from "./ui";
 
@@ -136,7 +138,7 @@ function Action({ label, icon, onClick, href }: { label: string; icon: "locate" 
 export function InspectCard() {
   const u = useWorld((s) => (s.selected ? s.units[s.selected] : undefined));
   const dev = useWorld((s) => (s.selected && !s.units[s.selected] ? s.devices[s.selected] : undefined));
-  const site = useWorld((s) => s.layout?.site.id);
+  const site = useWorld((s) => (u ? siteAt(s.sites, u.x, u.z) : undefined));
   const gw = useWorld((s) => (u?.kind === "gateway" ? s.gateway : null));
   if (!u) return dev ? <DeviceInspect d={dev} /> : null;
   const sub = subtitle(u, gw);
@@ -180,6 +182,7 @@ export function InspectCard() {
         {u.kind === "pallet" && <PalletRows u={u} />}
         {u.kind === "dock" && <DockRows u={u} />}
         {u.kind === "gateway" && <GatewayRows gw={gw} />}
+        {u.kind === "machine" && <MachineRows u={u} />}
         {(u.kind === "rack" || u.kind === "charger") && <Row k="Usage">{u.task}</Row>}
       </div>
     </div>

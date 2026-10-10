@@ -19,6 +19,7 @@ from .world import Entity, Step, World
 
 RECEIVING_ZONE = "ZONE_A"
 STAGING_ZONE = "ZONE_B"
+FACTORY_OUT = "FAC_OUT"       # FAC-01 line output: finished pallets wait here for a forklift
 CHARGE_BELOW_PCT = 25.0
 TRUCK_DEPART_AT = 4          # an outbound truck leaves once it has this many pallets
 TRUCK_DEPART_IDLE_S = 8.0    # ...and nothing has been loaded for this long
@@ -110,6 +111,18 @@ def suggest_forklift(world: World, f: Entity, rng: random.Random | None = None) 
                 return [Step(sources[0], "pick"), Step(t.docked_at, "load")]
         return []
 
+    def collect_production() -> list[Step]:
+        # Finished pallets from the factory line go to the warehouse: a rack slot if one is free,
+        # else the staging zone, where outbound trucks are loaded from.
+        if FACTORY_OUT not in world.graph.nodes or not _unclaimed(world, world.pallets_at(FACTORY_OUT), f):
+            return []
+        slots = _nearest(world, f, _free_rack_slots(world, f.id), rng)
+        if slots:
+            return [Step(FACTORY_OUT, "pick"), Step(slots[0], "drop")]
+        if world.free_spots(world.graph.nodes[STAGING_ZONE], f.id) > 0:
+            return [Step(FACTORY_OUT, "pick"), Step(STAGING_ZONE, "drop")]
+        return []
+
     def put_away() -> list[Step]:
         if _unclaimed(world, world.pallets_at(RECEIVING_ZONE), f):
             slots = _nearest(world, f, _free_rack_slots(world, f.id), rng)
@@ -117,7 +130,7 @@ def suggest_forklift(world: World, f: Entity, rng: random.Random | None = None) 
                 return [Step(RECEIVING_ZONE, "pick"), Step(slots[0], "drop")]
         return []
 
-    jobs = [unload, load, put_away]  # the flow's priority order; auto mode varies it
+    jobs = [unload, load, collect_production, put_away]  # the flow's priority order; auto mode varies it
     if rng is not None:
         rng.shuffle(jobs)
     for job in jobs:
