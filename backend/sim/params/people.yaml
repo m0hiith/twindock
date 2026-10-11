@@ -7,3 +7,10 @@ people:
   work_stand_pause_s: {dist: uniform, low: 5, high: 18, unit: s, source: "assumption: a task at a work stand"}
   fall_lie_still_s: {value: 3600.0, unit: s, source: "assumption: after a fall the worker lies still until they cancel or are helped"}
   still_default_s: {value: 120.0, unit: s, source: "assumption: demo no-movement spell, longer than the 90 s man-down rule"}
+  gate_node: {value: WALK_CAB, unit: "-", source: "assumption: people come and go through the security cabin at the gate (badge rack there)"}
+  canteen_node: {value: WALK_CANTEEN, unit: "-", source: "assumption: the canteen's entrance on the walkway"}
+  arrive_before_min: {value: 10.0, unit: min, source: "typical industry value: people arrive 5-15 min before their shift for the handover"}
+  meal_break_min: {value: 25.0, unit: min, source: "assumption: breaks of 25 min or more are meal breaks (to the canteen); shorter tea breaks are taken at the work area"}
+  stay_in_breaks_roles: {value: [security_guard, canteen_staff, first_aider], unit: "-", source: "assumption: guards, canteen staff and the first aider stay at their posts in breaks"}
+  fall_rate_per_h: {value: 2.0e-6, unit: 1/h, source: "typical industry value: slip, trip and fall injuries ~0.2-0.5 per 100 full-time workers a year (~2e-6 per worked hour); demo triggers are the usual way to see one"}
+  sos_rate_per_h: {value: 1.0e-6, unit: 1/h, source: "assumption: a real SOS press is rarer than a fall"}

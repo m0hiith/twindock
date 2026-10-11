@@ -78,7 +78,8 @@ class WorkerState:
     evacuate: str | None = None  # reason, while the worker must leave (gas nearby, or an evacuation)
     lone_checkin_ms: int | None = None
     lone_level: str | None = None
-    helmet_worn: bool | None = None  # None: no helmet clip data
+    helmet_worn: bool | None = None
+    heat_effective: float | None = None  # zone heat index + this worker's activity adjustment  # None: no helmet clip data
     ppe_missing: str | None = None
     shift_start_ms: int | None = None
     last_break_ms: int | None = None
@@ -112,6 +113,8 @@ class Evacuation:
     by: str
     on_site: list[str]  # workers on shift when it started: the headcount
     ended_ms: int | None = None
+    predicted_s: float | None = None    # from walking distances to the muster points, when it started
+    accounted_ms: int | None = None     # when the last person on site reached a muster point
 
 
 def heat_index_c(t_c: float, rh: float) -> float:
@@ -248,11 +251,11 @@ class Safety:
 
     # ------------------------------------------------------------------ evacuation
 
-    def start_evacuation(self, now: int, reason: str, by: str) -> str | None:
+    def start_evacuation(self, now: int, reason: str, by: str, predicted_s: float | None = None) -> str | None:
         if self.evacuation is not None:
             return "An evacuation is already running"
         on_site = [w.id for w in self.workers.values() if w.shift_start_ms is not None]
-        self.evacuation = Evacuation(now, reason, by, on_site)
+        self.evacuation = Evacuation(now, reason, by, on_site, predicted_s=predicted_s)
         for w in self.workers.values():
             w.mustered = None
             self._buzz(w, "evacuate", now, force=True)
@@ -275,6 +278,7 @@ class Safety:
         accounted = [wid for wid in e.on_site if self.workers[wid].mustered]
         missing = [self.workers[wid] for wid in e.on_site if not self.workers[wid].mustered]
         return {"active": True, "started_ms": e.started_ms, "reason": e.reason, "by": e.by,
+                "predicted_s": None if e.predicted_s is None else round(e.predicted_s, 1), "accounted_ms": e.accounted_ms,
                 "on_site": len(e.on_site), "accounted": len(accounted),
                 "by_muster": {m["id"]: sum(1 for wid in accounted if self.workers[wid].mustered == m["id"]) for m in self.muster_points},
                 "unaccounted": [{"id": w.id, "role": w.role, "last_zone_id": w.last_zone_id, "last_seen_ms": w.data_ms} for w in missing]}
@@ -321,8 +325,20 @@ class Safety:
                 self._buzz(w, "evacuate", now)
             else:
                 w.evacuate = None
-            if w.zone_id in self.heat_zones:
-                self._buzz(w, "rest", now, every_ms=int(self.c("heat_buzz_min", 20) * 60_000))
+            hi = (heat_by_zone or {}).get(w.zone_id or "")
+            if hi is not None:
+                # The work counts too: heavier work feels hotter (metabolic heat), so its threshold comes sooner.
+                activity = (self.cfg.get("role_activity") or {}).get(w.role, "moderate")
+                eff = hi + float((self.cfg.get("heat_activity_c") or {}).get(activity, 0.0))
+                w.heat_effective = round(eff, 1)
+                if eff >= hot:
+                    every = float((self.cfg.get("rest_every_min") or {}).get(activity, self.c("heat_buzz_min", 20)))
+                    self._buzz(w, "rest", now, every_ms=int(every * 60_000))
+            else:
+                w.heat_effective = None
+        e = self.evacuation
+        if e is not None and e.accounted_ms is None and e.on_site and all(self.workers[i].mustered for i in e.on_site):
+            e.accounted_ms = now
         self._prune(now)
         return []
 

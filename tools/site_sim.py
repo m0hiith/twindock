@@ -149,7 +149,7 @@ class SiteSim:
         ts_ms = int(self.t * 1000)
         for m in self.models.values():
             out, status_due = m.step(t, dt, ts_ms)
-            if m.silent or m.power_off:
+            if m.silent or m.power_off or m.dormant:
                 continue
             for channel, payload in out:
                 self.publish(m, channel, payload)

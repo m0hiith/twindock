@@ -43,12 +43,24 @@ def test_warm_start_is_fast_and_leaves_a_running_factory() -> None:
     pw = e.power_summary()
     assert pw["grid_ok"] is True and pw["grid_kw"] is not None and pw["demand_kw"] > 0
     # safety: people are on site and tracked
-    assert sum(w.fresh for w in e.safety.workers.values()) >= 8
+    # people: exactly the shift on duty is on site (the roster), tracked by their badges
+    from sim.models.production import shift_phase
+    lt = time.localtime(a.clock.sim_ms / 1000)
+    shift, _ = shift_phase(a.sim.sim.params, lt.tm_hour + lt.tm_min / 60)
+    roster = {w["id"] for w in e.devices.cfg["workers"] if w.get("shift") == shift}
+    assert {w.id for w in e.safety.workers.values() if w.fresh} == roster
     assert sum(e.safety.wire(e.clock())["zone_counts"].values()) >= 3
     # logistics: trucks and forklifts are working
     states = {u.state for u in e.world.entities.values() if u.kind in ("truck", "forklift")}
     assert states - {"idle", "arriving", "gone"}, states
-    assert all(d["status"] == "online" for d in e.devices.wire(e.gw, e.clock(), e.ble) if d["source"] == "sim")
+    on_duty_badges = {w["badge"] for w in e.devices.cfg["workers"] if w.get("shift") == shift}
+    for d in e.devices.wire(e.gw, e.clock(), e.ble):
+        if d["source"] != "sim":
+            continue
+        if d["type"] == "badge":  # off-shift badges are switched off in the gate rack
+            assert (d["status"] == "online") == (d["id"] in on_duty_badges), d["id"]
+        else:
+            assert d["status"] == "online", d["id"]
     # the real board was never touched
     assert e.gw.hello is None and e.gw.status is None
 

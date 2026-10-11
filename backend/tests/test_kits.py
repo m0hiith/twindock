@@ -47,6 +47,7 @@ def test_simulated_kit_devices_publish_their_channels() -> None:
     cfg = load_sites()
     devices = [d for d in select_devices(cfg, None, None) if d.get("kit")]
     sim = SiteSim(cfg, devices, seed=3)
+    sim.local_hour = lambda: 10.5  # type: ignore[method-assign]  # mid-shift A
     seen: dict[str, set[str]] = {d["id"]: set() for d in devices}
     real_publish = sim.publish
 
@@ -59,7 +60,12 @@ def test_simulated_kit_devices_publish_their_channels() -> None:
     for _ in range(480):
         sim.step(0.25)
     by_id = {d["id"]: d for d in devices}
+    off_shift = {i for i, m in sim.models.items() if m.dormant}  # badges of crews B and C are in the gate rack
+    assert off_shift and all(by_id[i]["type"] == "badge" for i in off_shift)
     for dev, chans in seen.items():
+        if dev in off_shift:
+            assert not chans, f"{dev} is off shift but published {chans}"
+            continue
         assert chans, f"{dev} published nothing"
         assert chans <= set(by_id[dev]["capabilities"]), f"{dev} published undeclared {chans - set(by_id[dev]['capabilities'])}"
 

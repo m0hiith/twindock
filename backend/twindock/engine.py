@@ -268,7 +268,7 @@ class Engine:
         locked or silenced: the certified fire system does that, we only read it. Ending it is a person's decision."""
         if fire and not self._fire_evac and self.safety.evacuation is None:
             zn = self.devices.zone_by_id.get(sorted(fire)[0], {}).get("name", "the campus")
-            self.safety.start_evacuation(now, f"fire alarm: {zn}", "Fire panel bridge")
+            self.safety.start_evacuation(now, f"fire alarm: {zn}", "Fire panel bridge", self._evac_predict())
             self._fire_evac = True
             self.event("warn", f"Fire panel alarm in {zn}: evacuation started (advice only; the fire system is the certified one)", "safety")
         elif not fire:
@@ -338,6 +338,25 @@ class Engine:
         if muster["node"] not in dist:
             return []
         return [[self.ped.nodes[n][0], self.ped.nodes[n][1]] for n in self.ped.path(prev, start, muster["node"])][:80]
+
+    def _evac_predict(self) -> float | None:
+        """Predicted evacuation time: the longest walk (walkways) from where each person on site is to the nearest safe
+        muster point, at the evacuation planning speed. None when nobody's position is known."""
+        speed = float(self.safety.cfg.get("evac_walk_mps", 1.6))
+        worst: float | None = None
+        for w in self.safety.workers.values():
+            if w.shift_start_ms is None or w.x is None or w.z is None:
+                continue
+            m = self._nearest_muster(w.badge)
+            if m is None or m["node"] not in self.ped.nodes:
+                continue
+            start = self.ped.nearest(w.x, w.z)
+            dist, _ = self.ped.dijkstra(start)
+            if m["node"] not in dist:
+                continue
+            d = math.dist((w.x, w.z), self.ped.nodes[start]) + dist[m["node"]]
+            worst = d / speed if worst is None else max(worst, d / speed)
+        return worst
 
     def _zone_centroid(self, zone_id: str | None) -> tuple[float, float] | None:
         z = self.devices.zone_by_id.get(zone_id or "")
@@ -1272,7 +1291,7 @@ class Engine:
         by = (m.by or "").strip() or client_id
         reason: str | None = None
         if m.action == "start_evacuation":
-            reason = self.safety.start_evacuation(now, (m.reason or "").strip() or "evacuation drill", by)
+            reason = self.safety.start_evacuation(now, (m.reason or "").strip() or "evacuation drill", by, self._evac_predict())
             text = f"Evacuation started by {by}: {(m.reason or '').strip() or 'evacuation drill'}"
         elif m.action == "end_evacuation":
             hc = self.safety.headcount()

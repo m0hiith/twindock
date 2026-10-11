@@ -80,6 +80,12 @@ export function SafetyPanel({ className = "w-[420px]", onFocusWorker, compact = 
             <div className="flex items-center gap-2"><Pill tone="crit">Evacuation</Pill><span className="text-[13px]">{evac.reason}</span>
               <button type="button" className="ml-auto rounded-lg bg-ink px-2.5 py-1 text-[12px] font-medium text-white" onClick={() => void request({ type: "safety_command", action: "end_evacuation", by: "Twin" })}>End</button></div>
             <div className="tabular text-[20px] font-semibold">{evac.accounted} / {evac.on_site} <span className="text-[13px] font-normal text-ink-2">accounted for</span></div>
+            {(evac.predicted_s != null || evac.accounted_ms != null) && (
+              <div className="tabular text-[12px] text-ink-2">
+                {evac.predicted_s != null && `Predicted from walking distances: ${Math.ceil(evac.predicted_s / 60)} min`}
+                {evac.accounted_ms != null && ` · everyone mustered in ${Math.round((evac.accounted_ms - evac.started_ms) / 1000)} s`}
+              </div>
+            )}
             {s.routes.length > 0 && (
               <div className="text-[12px] text-ink-2">
                 Routes (advice): {s.routes.slice(0, 4).map((r) => `${zoneName(sites, r.zone_id)} → ${r.muster_id} ${Math.round(r.length_m)} m`).join(" · ")}{s.routes.length > 4 ? ` · +${s.routes.length - 4} more` : ""}

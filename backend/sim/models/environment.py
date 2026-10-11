@@ -16,7 +16,7 @@ from ..core import Model
 @dataclass
 class Room:
     zone: str
-    cold: bool
+    kind: str          # cold | conditioned | open (follows the weather and its own heat)
     temp_c: float = 0.0
     rh_pct: float = 0.0
     co2_ppm: float = 0.0
@@ -24,53 +24,94 @@ class Room:
     door_open: bool = False
 
 
+def sat_vp_kpa(t_c: float, magnus: dict[str, float]) -> float:
+    """Saturation vapour pressure (Magnus formula, kPa) with the coefficients from params."""
+    return float(magnus["e0_kpa"]) * math.exp(float(magnus["b"]) * t_c / (float(magnus["c_c"]) + t_c))
+
+
 class Rooms(Model):
     key = "rooms"
     title = "Rooms: temperature, humidity, CO₂ and particles"
     equations = (
-        "Temperature (first order): with the door closed dT/dt = (setpoint − T) / τ_cool; with it open dT/dt = (ambient − T) / τ_door.",
+        "Open halls (not air-conditioned): dT/dt = (T_outdoor + k_zone × heat released in the zone (kW) − T) / τ_hall. "
+        "Everything a zone's machines, compressors and lights draw ends up as heat in it.",
+        "Air-conditioned rooms relax to their setpoint (τ_ac); the cold room to its setpoint, or towards the hall while its door is open.",
+        "Outdoor humidity follows the day (driest when warmest). An open hall holds the outdoor moisture: "
+        "RH_room = RH_outdoor × e_s(T_outdoor) / e_s(T_room) (Magnus formula), so a hotter hall is drier; conditioned rooms sit at their RH.",
         "A small random walk (σ √dt) stands for draughts and loads the model doesn't track.",
-        "Humidity relaxes to the room's level: dRH/dt = (RH_set − RH) / τ_rh, plus a small random walk.",
         "CO₂ relaxes to the room's level with τ_co2 and drifts; particles likewise.",
         "Cold room refrigeration: duty = base + gain × (T − setpoint), between 0 and 1; electrical load = rated kW × duty.",
     )
-    reads = ("flags.door_open",)
-    writes = ("power_kw",)
+    reads = ("flags.door_open", "flags.outdoor_c", "power_kw")
+    writes = ("power_kw", "flags.outdoor_rh")
     params_prefix = ("rooms",)
 
     def __init__(self, cfg: dict[str, Any]) -> None:
         self.rooms: dict[str, Room] = {}
         for d in cfg["devices"]:
             if d["type"] in ("env_sensor", "air_quality") and d["zone_id"] not in self.rooms:
-                self.rooms[d["zone_id"]] = Room(d["zone_id"], "COLD" in d["zone_id"])
+                self.rooms[d["zone_id"]] = Room(d["zone_id"], "cold" if "COLD" in d["zone_id"] else "open")
 
     def bind(self, core: Any) -> None:
         super().bind(core)
+        p = core.p
+        cond = set(p.v("rooms.conditioned_zones"))
+        out = self._outdoor()
         for r in self.rooms.values():
-            k = "cold" if r.cold else "normal"
-            p = core.p
-            r.temp_c = p.f(f"rooms.{k}.setpoint_c") + core.rng.draw("rooms.initial_offset_c", f"{r.zone}.init")
-            r.rh_pct = p.f(f"rooms.{k}.rh_pct")
+            if r.kind != "cold" and r.zone in cond:
+                r.kind = "conditioned"
+            base = {"cold": p.f("rooms.cold.setpoint_c"), "conditioned": p.f("rooms.conditioned.setpoint_c")}.get(r.kind, out[0])
+            r.temp_c = base + core.rng.draw("rooms.initial_offset_c", f"{r.zone}.init")
+            r.rh_pct = {"cold": p.f("rooms.cold.rh_pct"), "conditioned": p.f("rooms.conditioned.rh_pct")}.get(r.kind, out[1])
             r.co2_ppm = p.f("rooms.co2.level_ppm")
             r.pm25 = p.f("rooms.pm25.level_ugm3")
+
+    def _outdoor(self) -> tuple[float, float]:
+        """(temperature, relative humidity) outdoors now."""
+        p = self.core.p
+        h = self.core.hour_of_day()
+        t = float(self.core.q.flags.get("outdoor_c", p.f("weather.mean_c")))
+        rh = p.f("rooms.outdoor_rh.mean_pct") - p.f("rooms.outdoor_rh.amplitude_pct") * math.cos(2 * math.pi * (h - p.f("weather.warmest_h")) / 24)
+        return t, rh
 
     def step(self, dt: float) -> None:
         core, p = self.core, self.core.p
         doors = core.q.flags.get("door_open_zones", set())
         sq = math.sqrt(dt)
+        t_out, rh_out = self._outdoor()
+        core.q.flags["outdoor_rh"] = rh_out
+        heat: dict[str, float] = {}
+        for name, kw in core.q.power_kw.items():
+            z = core.q.power_zone.get(name)
+            if z is not None:
+                heat[z] = heat.get(z, 0.0) + kw
+        k_by_zone = p.v("rooms.open.k_c_per_kw")
+        hall = self.rooms.get(str(p.v("rooms.cold.next_to")))
         for r in self.rooms.values():
-            k = "cold" if r.cold else "normal"
             r.door_open = r.zone in doors
-            if r.door_open:
-                r.temp_c += (p.f("rooms.ambient_c") - r.temp_c) * dt / p.f("rooms.tau_door_s")
+            if r.kind == "cold":
+                around = hall.temp_c if hall is not None else t_out
+                if r.door_open:
+                    r.temp_c += (around - r.temp_c) * dt / p.f("rooms.tau_door_s")
+                else:
+                    r.temp_c += (p.f("rooms.cold.setpoint_c") - r.temp_c) * dt / p.f("rooms.tau_cool_s")
+                rh_target = p.f("rooms.cold.rh_pct")
+            elif r.kind == "conditioned":
+                r.temp_c += (p.f("rooms.conditioned.setpoint_c") - r.temp_c) * dt / p.f("rooms.conditioned.tau_s")
+                rh_target = p.f("rooms.conditioned.rh_pct")
             else:
-                r.temp_c += (p.f(f"rooms.{k}.setpoint_c") - r.temp_c) * dt / p.f("rooms.tau_cool_s")
+                k = float(k_by_zone.get(r.zone, k_by_zone["default"]))
+                target = t_out + k * heat.get(r.zone, 0.0)
+                r.temp_c += (target - r.temp_c) * dt / p.f("rooms.open.tau_s")
+                mg = p.v("rooms.magnus")
+                rh_target = min(100.0, rh_out * sat_vp_kpa(t_out, mg) / sat_vp_kpa(r.temp_c, mg))
             r.temp_c += core.rng.gauss(f"{r.zone}.temp", p.f("rooms.temp_walk_c_per_sqrt_s")) * sq
-            r.rh_pct += (p.f(f"rooms.{k}.rh_pct") - r.rh_pct) * dt / p.f("rooms.tau_rh_s") + core.rng.gauss(f"{r.zone}.rh", p.f("rooms.rh_walk_pct_per_sqrt_s")) * sq
+            r.rh_pct += (rh_target - r.rh_pct) * dt / p.f("rooms.tau_rh_s") + core.rng.gauss(f"{r.zone}.rh", p.f("rooms.rh_walk_pct_per_sqrt_s")) * sq
+            r.rh_pct = min(100.0, max(0.0, r.rh_pct))
             r.co2_ppm += (p.f("rooms.co2.level_ppm") - r.co2_ppm) * dt / p.f("rooms.co2.tau_s") + core.rng.gauss(f"{r.zone}.co2", p.f("rooms.co2.walk_ppm_per_sqrt_s")) * sq
             r.pm25 = max(p.f("rooms.pm25.floor_ugm3"), r.pm25 + (p.f("rooms.pm25.level_ugm3") - r.pm25) * dt / p.f("rooms.pm25.tau_s")
                          + core.rng.gauss(f"{r.zone}.pm", p.f("rooms.pm25.walk_ugm3_per_sqrt_s")) * sq)
-            if r.cold:
+            if r.kind == "cold":
                 on = core.q.powered(r.zone)
                 duty = min(1.0, max(0.0, p.f("rooms.refrigeration.base_duty") + p.f("rooms.refrigeration.gain_per_c") * (r.temp_c - p.f("rooms.cold.setpoint_c"))))
                 name = f"Refrigeration {r.zone}"

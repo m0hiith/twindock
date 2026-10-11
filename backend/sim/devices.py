@@ -5,6 +5,7 @@ source "sim". A device that has lost mains power (its zone is off in a grid fail
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from .core import SimCore
@@ -87,6 +88,11 @@ class Device:
             out.append(self.reading(ts_ms, channel, value))
 
     # ------------------------------------------------------------------ device interface
+
+    @property
+    def dormant(self) -> bool:
+        """Switched off entirely (a badge in the gate rack off shift): no readings, no status."""
+        return False
 
     @property
     def power_off(self) -> bool:
@@ -187,14 +193,35 @@ class MachineMonitor(Device):
 
 
 class Badge(Device):
+    """A worker's BLE badge. Its position is the worker's true position plus a BLE positioning error that wanders
+    slowly (an Ornstein-Uhlenbeck process: σ from the spec, correlation time τ), the way RSSI/AoA positioning drifts
+    as people and vehicles move around, so the zone it reports is sometimes the neighbouring one near a boundary."""
+
+    def __init__(self, d: dict[str, Any], core: SimCore) -> None:
+        super().__init__(d, core)
+        self.ex = self.ez = 0.0
+
+    @property
+    def dormant(self) -> bool:
+        w = self.core.get("people").walkers.get(self.id)
+        return w is not None and not w.on_site
+
     def readings(self, t: float, ts_ms: int) -> Out:
         w = self.core.get("people").walkers[self.id]
+        if not w.on_site:
+            w.events.clear()
+            return []  # in the gate rack, switched off
         out: Out = [self.reading(ts_ms, ev, True) for ev in w.events]
         w.events.clear()
         s = self.sensor("position")
+        spec = self.core.p.leaf("sensors.badge.position").value
+        sigma, tau = float(spec.get("ble_sigma", 0.0)), float(spec.get("tau_s", 1.0))  # the slow BLE error; the spec's sigma is the white jitter
+        if sigma > 0 and self.dt > 0:
+            k = math.sqrt(2 * self.dt / tau) * sigma
+            self.ex += -self.ex * self.dt / tau + self.core.rng.gauss(f"{self.id}.ble_x", k)
+            self.ez += -self.ez * self.dt / tau + self.core.rng.gauss(f"{self.id}.ble_z", k)
         if s.due(t):
-            # BLE positioning error is applied per axis (sigma from the badge's position spec).
-            x, z = s.read(w.x), s.read(w.z)
+            x, z = s.read(w.x + self.ex), s.read(w.z + self.ez)
             if x is not None and z is not None:
                 out.append(self.reading(ts_ms, "position", [x, z]))
         return out

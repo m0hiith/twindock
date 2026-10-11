@@ -1106,6 +1106,14 @@ export interface SafetyUpdate {
       last_zone_id: string | null;
       last_seen_ms: number | null;
     }[];
+    /**
+     * Predicted time to muster everyone: the longest walkway distance to a safe muster point ÷ the evacuation planning speed, when the evacuation started.
+     */
+    predicted_s?: number | null;
+    /**
+     * When the last person on site reached a muster point (null until then).
+     */
+    accounted_ms?: number | null;
   } | null;
   on_site: number;
   in_hazardous: number;

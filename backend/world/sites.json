@@ -2314,6 +2314,282 @@
         "battery_pct": 74
       },
       "campus": true
+    },
+    {
+      "id": "BG-11",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 122,
+      "z": 12.2,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-11",
+      "source": "sim",
+      "attached_to": "WK-11",
+      "sim": {
+        "battery_pct": 75
+      },
+      "kit": "worker_badge",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-12",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 96,
+      "z": 29,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-12",
+      "source": "sim",
+      "attached_to": "WK-12",
+      "sim": {
+        "battery_pct": 76
+      },
+      "kit": "worker_badge",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-13",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 102,
+      "z": 12,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-13",
+      "source": "sim",
+      "attached_to": "WK-13",
+      "sim": {
+        "battery_pct": 77
+      },
+      "kit": "worker_badge",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-14",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 79,
+      "z": 38,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-14",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-14",
+      "sim": {
+        "battery_pct": 78
+      },
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-15",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 141.5,
+      "z": 29,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-15",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-15",
+      "sim": {
+        "battery_pct": 79
+      },
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-16",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 96,
+      "z": 55,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-16",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-16",
+      "sim": {
+        "battery_pct": 80
+      },
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-17",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 122,
+      "z": 12.2,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-17",
+      "source": "sim",
+      "attached_to": "WK-17",
+      "sim": {
+        "battery_pct": 81
+      },
+      "kit": "worker_badge",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-18",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 96,
+      "z": 29,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-18",
+      "source": "sim",
+      "attached_to": "WK-18",
+      "sim": {
+        "battery_pct": 82
+      },
+      "kit": "worker_badge",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-19",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 79,
+      "z": 38,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-19",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-19",
+      "sim": {
+        "battery_pct": 83
+      },
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-20",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 189.5,
+      "z": 0,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-20",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-20",
+      "sim": {
+        "battery_pct": 75,
+        "checkin_s": 420
+      },
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "BG-21",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 110,
+      "z": 55,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-21",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-21",
+      "sim": {
+        "battery_pct": 76
+      },
+      "campus": true,
+      "crew": true
     }
   ],
   "production": {
@@ -2362,7 +2638,8 @@
           "FAC_AISLE_2"
         ]
       },
-      "first_aider": true
+      "first_aider": true,
+      "shift": "A"
     },
     {
       "id": "WK-02",
@@ -2394,7 +2671,8 @@
           "FAC_W",
           "FAC_OUT"
         ]
-      }
+      },
+      "shift": "A"
     },
     {
       "id": "WK-03",
@@ -2413,7 +2691,8 @@
           "FAC_AISLE_1"
         ]
       },
-      "first_aider": true
+      "first_aider": true,
+      "shift": "A"
     },
     {
       "id": "WK-04",
@@ -2437,7 +2716,8 @@
           "FAC_AISLE_1",
           "WALK_STAFF_DOOR"
         ]
-      }
+      },
+      "shift": "A"
     },
     {
       "id": "WK-05",
@@ -2459,7 +2739,8 @@
         ]
       },
       "first_aider": false,
-      "campus": true
+      "campus": true,
+      "shift": "A"
     },
     {
       "id": "WK-06",
@@ -2493,7 +2774,8 @@
         ]
       },
       "first_aider": false,
-      "campus": true
+      "campus": true,
+      "shift": "A"
     },
     {
       "id": "WK-07",
@@ -2517,7 +2799,8 @@
         ]
       },
       "first_aider": false,
-      "campus": true
+      "campus": true,
+      "shift": "A"
     },
     {
       "id": "WK-08",
@@ -2533,7 +2816,8 @@
         ]
       },
       "first_aider": false,
-      "campus": true
+      "campus": true,
+      "shift": "A"
     },
     {
       "id": "WK-09",
@@ -2551,7 +2835,8 @@
         ]
       },
       "first_aider": false,
-      "campus": true
+      "campus": true,
+      "shift": "A"
     },
     {
       "id": "WK-10",
@@ -2569,7 +2854,283 @@
         ]
       },
       "first_aider": true,
-      "campus": true
+      "campus": true,
+      "shift": "A"
+    },
+    {
+      "id": "WK-11",
+      "name": "Arjun Rao",
+      "role": "press_operator",
+      "badge": "BG-11",
+      "routes": {
+        "default": [
+          "WALK_PRESS",
+          "FAC_AISLE_2",
+          "WALK_EAST",
+          "FAC_AISLE_2"
+        ]
+      },
+      "first_aider": false,
+      "shift": "B",
+      "crew": true
+    },
+    {
+      "id": "WK-12",
+      "name": "Fatima Noor",
+      "role": "logistics",
+      "badge": "BG-12",
+      "routes": {
+        "default": [
+          "WALK_OFFICE",
+          "WALK_STAFF_DOOR",
+          "FAC_AISLE_1",
+          "FAC_OUT",
+          "FAC_W",
+          "FAC_OUT",
+          "FAC_AISLE_1",
+          "FAC_AISLE_2",
+          "WALK_EAST",
+          "WALK_COLD_DOOR",
+          "WALK_COLD",
+          "WALK_COLD_DOOR",
+          "WALK_EAST",
+          "FAC_AISLE_2",
+          "FAC_AISLE_1",
+          "WALK_STAFF_DOOR"
+        ],
+        "outbound": [
+          "FAC_AISLE_1",
+          "FAC_OUT",
+          "FAC_W",
+          "FAC_OUT"
+        ]
+      },
+      "first_aider": false,
+      "shift": "B",
+      "crew": true
+    },
+    {
+      "id": "WK-13",
+      "name": "Kenji Watanabe",
+      "role": "qc_inspector",
+      "badge": "BG-13",
+      "routes": {
+        "default": [
+          "WALK_QC",
+          "FAC_AISLE_1",
+          "WALK_PACKER",
+          "FAC_AISLE_1",
+          "WALK_DOCK_DOOR",
+          "WALK_DOCKS",
+          "WALK_DOCK_DOOR",
+          "FAC_AISLE_1"
+        ]
+      },
+      "first_aider": true,
+      "shift": "B",
+      "crew": true
+    },
+    {
+      "id": "WK-14",
+      "name": "Grace Mensah",
+      "role": "security_guard",
+      "badge": "BG-14",
+      "routes": {
+        "default": [
+          "WALK_CAB",
+          "XN4",
+          "XS4",
+          "P1_79",
+          "P1_68",
+          "WALK_ADMIN",
+          "P1_68",
+          "P1_79",
+          "XS4",
+          "XN4"
+        ]
+      },
+      "first_aider": false,
+      "shift": "B",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "WK-15",
+      "name": "Pedro Alves",
+      "role": "maintenance",
+      "badge": "BG-15",
+      "routes": {
+        "default": [
+          "WALK_WS",
+          "P0_141",
+          "P0_150",
+          "P0_160",
+          "P0_172",
+          "P0_192",
+          "P_U3",
+          "P_U2",
+          "P_U1",
+          "WALK_COMP",
+          "P_U1",
+          "P_U0",
+          "WALK_SUB",
+          "P_U0",
+          "P_U1",
+          "P_U2",
+          "P_U3",
+          "P0_192",
+          "P0_172",
+          "P0_160",
+          "P0_150",
+          "P0_141"
+        ]
+      },
+      "first_aider": false,
+      "shift": "B",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "WK-16",
+      "name": "Nadia Haddad",
+      "role": "canteen_staff",
+      "badge": "BG-16",
+      "routes": {
+        "default": [
+          "WALK_CANTEEN",
+          "P1_96",
+          "P1_110",
+          "WALK_MED",
+          "P1_110",
+          "P1_96"
+        ]
+      },
+      "first_aider": false,
+      "shift": "B",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "WK-17",
+      "name": "Sunil Verma",
+      "role": "press_operator",
+      "badge": "BG-17",
+      "routes": {
+        "default": [
+          "WALK_PRESS",
+          "FAC_AISLE_2",
+          "WALK_EAST",
+          "FAC_AISLE_2"
+        ]
+      },
+      "first_aider": false,
+      "shift": "C",
+      "crew": true
+    },
+    {
+      "id": "WK-18",
+      "name": "Olga Petrova",
+      "role": "logistics",
+      "badge": "BG-18",
+      "routes": {
+        "default": [
+          "WALK_OFFICE",
+          "WALK_STAFF_DOOR",
+          "FAC_AISLE_1",
+          "FAC_OUT",
+          "FAC_W",
+          "FAC_OUT",
+          "FAC_AISLE_1",
+          "FAC_AISLE_2",
+          "WALK_EAST",
+          "WALK_COLD_DOOR",
+          "WALK_COLD",
+          "WALK_COLD_DOOR",
+          "WALK_EAST",
+          "FAC_AISLE_2",
+          "FAC_AISLE_1",
+          "WALK_STAFF_DOOR"
+        ],
+        "outbound": [
+          "FAC_AISLE_1",
+          "FAC_OUT",
+          "FAC_W",
+          "FAC_OUT"
+        ]
+      },
+      "first_aider": false,
+      "shift": "C",
+      "crew": true
+    },
+    {
+      "id": "WK-19",
+      "name": "Daniel Kim",
+      "role": "security_guard",
+      "badge": "BG-19",
+      "routes": {
+        "default": [
+          "WALK_CAB",
+          "XN4",
+          "XS4",
+          "P1_79",
+          "P1_68",
+          "WALK_ADMIN",
+          "P1_68",
+          "P1_79",
+          "XS4",
+          "XN4"
+        ]
+      },
+      "first_aider": false,
+      "shift": "C",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "WK-20",
+      "name": "Ibrahim Diallo",
+      "role": "utilities_operator",
+      "badge": "BG-20",
+      "routes": {
+        "default": [
+          "WALK_SUB",
+          "P_U0",
+          "P_U1",
+          "WALK_COMP",
+          "P_U1",
+          "P_U2",
+          "P_U3",
+          "WALK_TANK",
+          "P_U3",
+          "P_U2",
+          "P_U1",
+          "P_U0"
+        ]
+      },
+      "first_aider": false,
+      "shift": "C",
+      "campus": true,
+      "crew": true
+    },
+    {
+      "id": "WK-21",
+      "name": "Chen Wei",
+      "role": "first_aider",
+      "badge": "BG-21",
+      "routes": {
+        "default": [
+          "WALK_MED",
+          "P1_110",
+          "P1_96",
+          "WALK_CANTEEN",
+          "P1_96",
+          "P1_110"
+        ]
+      },
+      "first_aider": true,
+      "shift": "C",
+      "campus": true,
+      "crew": true
     }
   ],
   "safety": {
@@ -2594,7 +3155,31 @@
     "break_zone_kinds": [
       "office",
       "canteen"
-    ]
+    ],
+    "role_activity": {
+      "press_operator": "heavy",
+      "logistics": "heavy",
+      "maintenance": "moderate",
+      "utilities_operator": "moderate",
+      "etp_operator": "moderate",
+      "canteen_staff": "moderate",
+      "qc_inspector": "light",
+      "security_guard": "light",
+      "visitor": "light",
+      "first_aider": "light"
+    },
+    "heat_activity_c": {
+      "heavy": 3.0,
+      "moderate": 1.5,
+      "light": 0.0
+    },
+    "rest_every_min": {
+      "heavy": 15,
+      "moderate": 20,
+      "light": 30
+    },
+    "evac_walk_mps": 1.6,
+    "_doc_r4": "Heat stress: a worker's effective heat index is the zone's heat index plus their work's metabolic adjustment (heavier work feels hotter, like the lower WBGT limits for heavy work in ACGIH/ISO 7243); rest reminders come more often for heavier work. evac_walk_mps is the evacuation planning speed used to predict how long a muster takes."
   },
   "privacy": {
     "_doc": "K3 privacy by design: worker positions only on screens during an active safety condition or an evacuation (location 'alerts_only'); incident history kept retention_days; no tracking off site or off shift.",
@@ -2707,8 +3292,14 @@
   "cmms": {
     "_doc": "Maintenance and automatic actions (backend/twindock/control.py): who is sent, standard job times, limits. A plant's CMMS and BMS settings, not simulation physics.",
     "technicians": {
-      "mechanical": "WK-06",
-      "utilities": "WK-07"
+      "mechanical": [
+        "WK-06",
+        "WK-15"
+      ],
+      "utilities": [
+        "WK-07",
+        "WK-20"
+      ]
     },
     "bearing_change_min": 25,
     "bearing_failure_alarm": "Bearing failure",

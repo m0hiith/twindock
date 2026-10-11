@@ -309,6 +309,7 @@ def test_simulated_badge_fall_cancel_and_goto() -> None:
 
     cfg = load_sites()
     sim = SiteSim(cfg, [d for d in select_devices(cfg, None, None) if d["id"] == "BG-01"], seed=1)
+    sim.local_hour = lambda: 10.5  # type: ignore[method-assign]  # mid-shift A: WK-01 is at work
     seen: list[str] = []
     real = sim.publish
     sim.publish = lambda m, ch, p, retain=False: (seen.append(ch), real(m, ch, p, retain))[-1]  # type: ignore[method-assign]

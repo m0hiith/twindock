@@ -160,8 +160,11 @@ class ControlLoop:
         return None if r is None else r.value
 
     def tech(self, role: str) -> Any:
-        wid = (self.cfg.get("technicians") or {}).get(role)
-        return self.e.safety.workers.get(wid or "")
+        """The technician for this trade who is on site now (the roster has one per shift where the trade is staffed)."""
+        ids = (self.cfg.get("technicians") or {}).get(role) or []
+        ids = [ids] if isinstance(ids, str) else ids
+        workers = [self.e.safety.workers[i] for i in ids if i in self.e.safety.workers]
+        return next((w for w in workers if self.tech_ready(w)), workers[0] if workers else None)
 
     def tech_ready(self, w: Any) -> bool:
         return w is not None and self.fresh(w.badge) is not None and w.x is not None and self.e.sim_reachable

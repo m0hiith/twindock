@@ -142,6 +142,7 @@ def test_real_badge_comes_only_from_the_boards_ble(h: Harness) -> None:
 def test_simulated_badges_walk_their_routes() -> None:
     cfg = json.loads((Path(__file__).resolve().parents[1] / "world" / "sites.json").read_text())
     s = SiteSim(cfg, select_devices(cfg, "FAC-01", None), seed=4)
+    s.local_hour = lambda: 10.5  # type: ignore[method-assign]  # mid-shift A: crew A (WK-02) is on site
     sent: list[tuple[str, dict]] = []
     s.publish = lambda m, ch, p, retain=False: sent.append((s.topic(m, ch), p))  # type: ignore[method-assign]
     for _ in range(240):  # 60 s

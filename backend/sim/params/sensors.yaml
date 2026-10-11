@@ -23,7 +23,7 @@ sensors:
     units: {value: {period_s: 5, part: "cycle input"}, unit: "-", source: "assumption: counter reported on change and every 5 s"}
     rejects: {value: {period_s: 5, part: "reject input"}, unit: "-", source: "assumption: counter reported on change and every 5 s"}
   badge:
-    position: {value: {period_s: 1, sigma: 0.0, resolution: 0.01, range: [-60, 300], part: "BLE positioning (EFR32BG27 advertising)"}, unit: m, source: "assumption: R0 reports the true position; R4 adds BLE zone error"}
+    position: {value: {period_s: 1, sigma: 0.05, ble_sigma: 1.2, tau_s: 15, resolution: 0.01, range: [-60, 300], part: "BLE positioning (EFR32BG27 advertising, RSSI/AoA locators)"}, unit: m, source: "typical industry value: indoor BLE positioning is accurate to ~1-3 m and its error drifts slowly (correlated over seconds)"}
   truck_telematics:
     speed_kmh: {value: {period_s: 2, sigma: 0.2, resolution: 0.1, range: [0, 200], dropout_p: 0.002, part: "u-blox MAX-M10S"}, unit: km/h, source: "datasheet: u-blox MAX-M10S (velocity accuracy 0.05 m/s ≈ 0.2 km/h)"}
     cargo_temp_c: {value: {period_s: 2, sigma: 0.05, resolution: 0.01, range: [-55, 125], dropout_p: 0.002, part: "DS18B20"}, unit: °C, source: "datasheet: Maxim DS18B20 (±0.5 °C, −55…125 °C)"}

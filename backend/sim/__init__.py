@@ -28,10 +28,9 @@ def build_core(cfg: dict[str, Any], layout: dict[str, Any], params: Params, seed
     consume (machines, people, vehicles, rooms, other loads), then the supplies that react to consumption (air, water,
     power), then the effluent that reacts to everything else."""
     core = SimCore(params, seed, hour_of_day)
-    nodes = {n["id"]: n for n in layout["nodes"]}
     line = (layout.get("production_line") or {}).get("machines", [])
     for m in (Weather(), Shifts(), Doors(cfg), Occupancy(cfg), FirePanels(cfg), Gas(cfg), Leaks(cfg), AssetTags(cfg), Helmets(cfg),
-              People(cfg, nodes), Production(cfg, line), Telematics(cfg), DockBays(cfg), CampusLoads(cfg),
+              People(cfg, layout), Production(cfg, line), Telematics(cfg), DockBays(cfg), CampusLoads(cfg),
               Rooms(cfg), CompressedAir(cfg), Water(cfg), Electrical(cfg), WaterQuality(cfg)):
         core.add(m)
     return core

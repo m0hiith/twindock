@@ -347,6 +347,23 @@ WORKERS = [  # id, name, role, badge, route stands/nodes (consecutive ids are wa
 ]
 
 
+# R4: the plant runs three shifts. Crew A is WK-01..WK-10 (day, including the visitor); crews B and C are smaller and
+# walk the same rounds as their crew-A counterpart in the same role.
+SHIFT_A = ["WK-01", "WK-02", "WK-03", "WK-04", "WK-05", "WK-06", "WK-07", "WK-08", "WK-09", "WK-10"]
+CREWS = [  # id, name, role, badge, shift, same rounds as, first_aider, sim
+    ("WK-11", "Arjun Rao", "press_operator", "BG-11", "B", "WK-01", False, {}),
+    ("WK-12", "Fatima Noor", "logistics", "BG-12", "B", "WK-02", False, {}),
+    ("WK-13", "Kenji Watanabe", "qc_inspector", "BG-13", "B", "WK-03", True, {}),
+    ("WK-14", "Grace Mensah", "security_guard", "BG-14", "B", "WK-05", False, {}),
+    ("WK-15", "Pedro Alves", "maintenance", "BG-15", "B", "WK-06", False, {}),
+    ("WK-16", "Nadia Haddad", "canteen_staff", "BG-16", "B", "WK-09", False, {}),
+    ("WK-17", "Sunil Verma", "press_operator", "BG-17", "C", "WK-01", False, {}),
+    ("WK-18", "Olga Petrova", "logistics", "BG-18", "C", "WK-02", False, {}),
+    ("WK-19", "Daniel Kim", "security_guard", "BG-19", "C", "WK-05", False, {}),
+    ("WK-20", "Ibrahim Diallo", "utilities_operator", "BG-20", "C", "WK-07", False, {"checkin_s": 420}),
+    ("WK-21", "Chen Wei", "first_aider", "BG-21", "C", "WK-10", True, {}),
+]
+
 # ---------------------------------------------------------------------------------------------------------------
 
 def seg_intersect(p1, p2, p3, p4) -> tuple[float, float] | None:
@@ -485,7 +502,7 @@ def build_sites(s: dict, l: dict) -> None:
         s["devices"].append({"id": id_, "site_id": zone_site[zone], "zone_id": zone, "type": typ, "protocol": proto, "x": x, "z": z,
                              "capabilities": caps, "label": label, "kit": kit, "source": "sim", **extra, "campus": True})
     # workers + their badges
-    s["workers"] = [w for w in s["workers"] if not w.get("campus")]
+    s["workers"] = [w for w in s["workers"] if not w.get("campus") and not w.get("crew")]
     nodes = {n["id"]: n for n in l["nodes"]}
     for wid, name, role, badge, route, aider, sim in WORKERS:
         s["workers"].append({"id": wid, "name": name, "role": role, "badge": badge, "routes": {"default": route}, "first_aider": aider, "campus": True})
@@ -497,6 +514,19 @@ def build_sites(s: dict, l: dict) -> None:
                "capabilities": ["position", "fall", "sos", "cancel", "checkin"], "label": f"Badge of {wid}", "kit": "worker_badge", "source": "sim",
                "attached_to": wid, "sim": {"battery_pct": 70 + (sum(map(ord, badge)) % 25), **sim}, "campus": True}
         s["devices"].append(dev)
+    by_id = {w["id"]: w for w in s["workers"]}
+    for w in s["workers"]:
+        if w["id"] in SHIFT_A:
+            w["shift"] = "A"
+    s["devices"] = [d for d in s["devices"] if not d.get("crew")]
+    for wid, name, role, badge, shift, same_as, aider, sim in CREWS:
+        src = by_id[same_as]
+        # same rounds as the counterpart, and the same standing (campus walkway rounds, or the original aisle-side ones)
+        s["workers"].append({"id": wid, "name": name, "role": role, "badge": badge, "routes": json.loads(json.dumps(src["routes"])),
+                             "first_aider": aider, "shift": shift, **({"campus": True} if src.get("campus") else {}), "crew": True})
+        tpl = next(d for d in s["devices"] if d["id"] == src["badge"])
+        s["devices"].append({**json.loads(json.dumps(tpl)), "id": badge, "label": f"Badge of {wid}", "attached_to": wid,
+                             "sim": {"battery_pct": 70 + (sum(map(ord, badge)) % 25), **sim}, "campus": True, "crew": True})
 
 
 def _inside(x: float, z: float, poly: list[list[float]]) -> bool:
@@ -519,8 +549,18 @@ def main() -> None:
     # production config for line 2
     s["production"]["ideal_cycle_s"].update({"M-03": 6.0, "M-04": 8.0})
     # R2: the plant's material and vibration settings (the simulator's params must agree: tests/test_sim_core.py).
+    # R4: heat stress depends on the work as well as the air (metabolic heat); evacuation planning speed.
+    s["safety"].update({
+        "role_activity": {"press_operator": "heavy", "logistics": "heavy", "maintenance": "moderate", "utilities_operator": "moderate",
+                          "etp_operator": "moderate", "canteen_staff": "moderate", "qc_inspector": "light", "security_guard": "light",
+                          "visitor": "light", "first_aider": "light"},
+        "heat_activity_c": {"heavy": 3.0, "moderate": 1.5, "light": 0.0},
+        "rest_every_min": {"heavy": 15, "moderate": 20, "light": 30},
+        "evac_walk_mps": 1.6,
+        "_doc_r4": "Heat stress: a worker's effective heat index is the zone's heat index plus their work's metabolic adjustment (heavier work feels hotter, like the lower WBGT limits for heavy work in ACGIH/ISO 7243); rest reminders come more often for heavier work. evac_walk_mps is the evacuation planning speed used to predict how long a muster takes.",
+    })
     s["cmms"] = {"_doc": "Maintenance and automatic actions (backend/twindock/control.py): who is sent, standard job times, limits. A plant's CMMS and BMS settings, not simulation physics.",
-                 "technicians": {"mechanical": "WK-06", "utilities": "WK-07"},
+                 "technicians": {"mechanical": ["WK-06", "WK-15"], "utilities": ["WK-07", "WK-20"]},
                  "bearing_change_min": 25, "bearing_failure_alarm": "Bearing failure", "leak_fix_min": 20, "compressor_service_min": 40,
                  "compressor_service_interval_h": 2000, "last_service_run_hours": {"CP-01": 60.0, "CP-02": 0.0},
                  "leak_limit_nm3_min": 0.35, "leak_min_samples": 120, "arrive_m": 4.0, "work_offset_m": 2.5, "dismiss_quiet_min": 30,

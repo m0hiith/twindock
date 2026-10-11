@@ -481,6 +481,20 @@
                   }
                 }
               }
+            },
+            "predicted_s": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Predicted time to muster everyone: the longest walkway distance to a safe muster point ÷ the evacuation planning speed, when the evacuation started."
+            },
+            "accounted_ms": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "description": "When the last person on site reached a muster point (null until then)."
             }
           }
         },

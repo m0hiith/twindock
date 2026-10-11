@@ -1,13 +1,27 @@
 # Rooms, doors, gas, effluent, tags, helmets (backend/sim/models/environment.py).
 rooms:
-  _doc: First-order room air models, one per zone with an environment or air-quality sensor.
-  ambient_c: {value: 18.0, unit: °C, source: "assumption: conditioned hall air outside the cold room"}
-  tau_door_s: {value: 240.0, unit: s, source: "typical industry value: an open cold-room door pulls the room towards the hall within minutes"}
-  tau_cool_s: {value: 180.0, unit: s, source: "typical industry value: a cold room's refrigeration recovers in a few minutes"}
+  _doc: One air model per zone with an environment or air-quality sensor. Open halls follow the weather and their own heat; offices, labs and the canteen are air-conditioned.
+  conditioned_zones: {value: [WH01_ADMIN, FAC01_QC, FAC01_CANTEEN, FAC01_MEDICAL, FAC01_OFFICE, WH01_OFFICE], unit: "-", source: "assumption: offices, the QC lab, the canteen and the medical room are air-conditioned; production halls and stores are not (usual in Indian plants)"}
+  tau_door_s: {value: 900.0, unit: s, source: "typical industry value: through an open door with a strip curtain the cold room warms towards the hall over ~15 min"}
+  tau_cool_s: {value: 150.0, unit: s, source: "typical industry value: a cold room's refrigeration recovers in a few minutes"}
   temp_walk_c_per_sqrt_s: {value: 0.01, unit: °C/√s, source: "assumption: draughts and loads the model doesn't track"}
-  tau_rh_s: {value: 100.0, unit: s, source: "assumption: humidity settles in minutes"}
-  rh_walk_pct_per_sqrt_s: {value: 0.2, unit: "%RH/√s", source: "assumption: moisture from people and doors the model does not track"}
+  tau_rh_s: {value: 300.0, unit: s, source: "assumption: humidity settles over minutes"}
+  rh_walk_pct_per_sqrt_s: {value: 0.1, unit: "%RH/√s", source: "assumption: moisture from people and doors the model does not track"}
   initial_offset_c: {dist: uniform, low: -0.3, high: 0.3, unit: °C, source: "assumption: rooms are not all exactly at setpoint"}
+  magnus: {value: {e0_kpa: 0.6112, b: 17.62, c_c: 243.12}, unit: "kPa, 1, °C", source: "standard: WMO Guide to Instruments (WMO-No. 8), Magnus formula for saturation vapour pressure over water"}
+  outdoor_rh:
+    mean_pct: {value: 60.0, unit: "%RH", source: "typical industry value: daily mean relative humidity of a warm Indian plains month"}
+    amplitude_pct: {value: 18.0, unit: "%RH", source: "typical industry value: humidity is lowest in the afternoon heat, highest before dawn"}
+  open:
+    tau_s: {value: 1800.0, unit: s, source: "typical industry value: a ventilated steel-framed hall follows the outdoors with a lag of tens of minutes"}
+    k_c_per_kw:
+      value: {default: 0.05, FAC01_PRODUCTION: 0.07, FAC01_COMPRESSOR: 0.35, FAC01_SUBSTATION: 0.2, FAC01_WORKSHOP: 0.15}
+      unit: °C/kW
+      source: "assumption: steady temperature rise over outdoors per kW released, from each room's size and ventilation (small, closed rooms rise more)"
+  conditioned:
+    setpoint_c: {value: 24.0, unit: °C, source: "standard: ASHRAE 55 comfort range, cooling setpoint ~24 °C"}
+    rh_pct: {value: 50.0, unit: "%RH", source: "typical industry value: air-conditioned offices 40-60 %RH"}
+    tau_s: {value: 600.0, unit: s, source: "assumption: split units hold the setpoint within minutes"}
   refrigeration:
     rated_kw: {value: 7.5, unit: kW, source: "typical industry value: condensing unit for a ~60 m² chilled room"}
     base_duty: {value: 0.45, unit: "1", source: "typical industry value: refrigeration duty cycle 40-60 % at steady state"}
@@ -15,9 +29,7 @@ rooms:
   cold:
     setpoint_c: {value: 3.0, unit: °C, source: "typical industry value: chilled storage 0-5 °C"}
     rh_pct: {value: 82.0, unit: "%RH", source: "typical industry value: chilled store humidity 80-90 %"}
-  normal:
-    setpoint_c: {value: 19.0, unit: °C, source: "assumption: R0 port (R4 ties room temperature to the outdoor climate and activity)"}
-    rh_pct: {value: 45.0, unit: "%RH", source: "typical industry value: conditioned room 40-60 %RH"}
+    next_to: {value: FAC01_PRODUCTION, unit: "-", source: "assumption: the cold room's door opens onto the production hall"}
   co2:
     level_ppm: {value: 700.0, unit: ppm, source: "typical industry value: an occupied, ventilated room 600-800 ppm"}
     tau_s: {value: 100.0, unit: s, source: "assumption: ventilation dilutes CO₂ changes over minutes"}
