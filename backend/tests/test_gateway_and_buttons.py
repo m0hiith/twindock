@@ -11,7 +11,8 @@ def test_btn1_selects_next_forklift_for_everyone(h: Harness) -> None:
     h.press("BTN1", 4000)
     h.press("BTN1", 5000)
     h.press("BTN1", 6000)
-    assert [s["selected_unit_id"] for s in h.of_type("selection_changed")] == ["FL-01", "FL-02", "FL-03", "FL-04", "FL-01"]
+    h.press("BTN1", 7000)
+    assert [s["selected_unit_id"] for s in h.of_type("selection_changed")] == ["FL-01", "FL-02", "FL-03", "FL-04", "FL-05", "FL-01"]
 
 
 def test_btn0_runs_next_task_of_selected_forklift(h: Harness) -> None:

@@ -154,10 +154,10 @@ VEH_NODES = [
     dict(id="RR_2", type="junction", x=158, z=62, kinds=["truck"], label="Raw dock 1 approach"),
     dict(id="RR_3", type="junction", x=158, z=70, kinds=["truck"], label="Raw dock 2 approach"),
     dict(id="RR_4", type="junction", x=158, z=82, kinds=["truck"], label="Turning area"),
-    dict(id="RAW_BAY_1", type="bay", x=153, z=62, kinds=["truck"], label="Raw dock 1 bay"),
-    dict(id="RAW_BAY_2", type="bay", x=153, z=70, kinds=["truck"], label="Raw dock 2 bay"),
-    dict(id="RAW_DOCK_1", type="junction", x=147, z=62, kinds=["forklift"], label="Raw store dock 1"),
-    dict(id="RAW_DOCK_2", type="junction", x=147, z=70, kinds=["forklift"], label="Raw store dock 2"),
+    dict(id="RAW_BAY_1", type="bay", x=156, z=62, kinds=["truck"], label="Raw dock 1 bay"),
+    dict(id="RAW_BAY_2", type="bay", x=156, z=70, kinds=["truck"], label="Raw dock 2 bay"),
+    dict(id="RAW_DOCK_1", type="dock", x=147, z=62, kinds=["forklift"], label="Raw store dock 1"),
+    dict(id="RAW_DOCK_2", type="dock", x=147, z=70, kinds=["forklift"], label="Raw store dock 2"),
     dict(id="RAW_AISLE_E", type="junction", x=140, z=66, kinds=["forklift"], label="Raw store east aisle"),
     dict(id="RAW_AISLE_W", type="junction", x=130, z=66, kinds=["forklift"], label="Raw store west aisle"),
     dict(id="RAW_N", type="junction", x=130, z=57.5, kinds=["forklift"], label="Raw store north door"),
@@ -165,11 +165,26 @@ VEH_NODES = [
     dict(id="RAW_X2", type="junction", x=130, z=36, kinds=["forklift"], label="Raw material route"),
     dict(id="FAC_YARD", type="junction", x=113, z=32, kinds=["forklift"], label="Factory south yard"),
     dict(id="FAC_DOOR_S", type="junction", x=113, z=24, kinds=["forklift"], label="Factory south door"),
+    # raw material flow (auto mode): trucks unload at the raw docks, FL-05 moves pallets to the line's inbound spot
+    dict(id="RAW_STOCK", type="zone", x=136, z=69, kinds=["forklift"], label="Raw stock",
+         spots=[[133.5, 68.0], [136.0, 68.0], [138.5, 68.0], [133.5, 70.5], [136.0, 70.5], [138.5, 70.5]]),
+    dict(id="FAC_IN", type="zone", x=112, z=21.5, kinds=["forklift"], label="Factory inbound",
+         spots=[[110.0, 21.0], [112.0, 21.0], [114.0, 21.0], [110.0, 22.8]]),
+    dict(id="RAW_CHARGER", type="charger", x=127, z=64, kinds=["forklift"], label="Charger R1"),
 ]
+RAW_DOCKS = [dict(id="DK-04", node="RAW_DOCK_1", bay_node="RAW_BAY_1", door="R1", label="Raw dock 1", area="raw"),
+             dict(id="DK-05", node="RAW_DOCK_2", bay_node="RAW_BAY_2", door="R2", label="Raw dock 2", area="raw")]
+RAW_CHARGER = dict(id="CH-03", node="RAW_CHARGER", label="Charger R1")
+RAW_TRUCK = dict(id="TR-03", node="RD_110", heading_rad=3.1416, state="arriving", capacity=4, inbound=True,
+                 meta={"plate": "RLH 5512", "carrier": "Ironbridge Supply", "route": "Inbound, raw material for FAC-01", "area": "raw"})
+RAW_FORKLIFT = dict(id="FL-05", node="RAW_AISLE_W", heading_rad=0, battery_pct=88, meta={"operator": "Ines Duarte", "model": "Electric counterbalance, 1.6 t", "area": "raw"}, plan=[])
+RAW_PALLETS = [dict(id=f"RM-{i + 1:02d}", at="TR-03", meta={"sku": f"RM-{3100 + i}", "contents": c}) for i, c in
+               enumerate(["Steel coil, 2 t", "Resin pellets, 40 bags", "Packaging film, 12 rolls", "Fasteners, 20 boxes"])]
 VEH_LANES = [
     ("GATE_IN", "WEIGH", ["truck"]), ("WEIGH", "ROAD_E", ["truck"]), ("WEIGH", "ROAD_IN", ["truck"]),
     ("ROAD_IN", "RD_110", ["truck"]), ("RD_110", "RD_158", ["truck"]), ("RD_158", "RD_186", ["truck"]), ("RD_186", "RD_215", ["truck"]),
     ("RD_158", "RR_1", ["truck"]), ("RR_1", "RR_2", ["truck"]), ("RR_2", "RR_3", ["truck"]), ("RR_3", "RR_4", ["truck"]),
+    ("FAC_DOOR_S", "FAC_IN", ["forklift"]), ("RAW_AISLE_E", "RAW_STOCK", ["forklift"]), ("RAW_AISLE_W", "RAW_CHARGER", ["forklift"]),
     ("RAW_DOCK_1", "RAW_AISLE_E", ["forklift"]), ("RAW_DOCK_2", "RAW_AISLE_E", ["forklift"]), ("RAW_AISLE_E", "RAW_AISLE_W", ["forklift"]),
     ("RAW_AISLE_W", "RAW_N", ["forklift"]), ("RAW_N", "RAW_X1", ["forklift"]), ("RAW_X1", "RAW_X2", ["forklift"]), ("RAW_X2", "FAC_YARD", ["forklift"]),
     ("FAC_YARD", "FAC_DOOR_S", ["forklift"]), ("FAC_DOOR_S", "FAC_AISLE_1", ["forklift"]),
@@ -351,6 +366,13 @@ def build_layout(l: dict) -> None:
         l["lanes"].append(lane)
     for (a, b), rev in REVERSE.items():
         l["lanes"].append({"a": a, "b": b, "kinds": ["truck"], "reverse_into": rev, "campus": True})
+    # raw material flow: docks, charger, seed truck, forklift and pallets (auto mode runs it; planner.py)
+    l["docks"] = [d for d in l["docks"] if d.get("area") != "raw"] + [dict(d) for d in RAW_DOCKS]
+    l["chargers"] = [c for c in l["chargers"] if c["id"] != "CH-03"] + [dict(RAW_CHARGER)]
+    sd = l["seed"]
+    sd["trucks"] = [t for t in sd["trucks"] if t["id"] != "TR-03"] + [json.loads(json.dumps(RAW_TRUCK))]
+    sd["forklifts"] = [f for f in sd["forklifts"] if f["id"] != "FL-05"] + [json.loads(json.dumps(RAW_FORKLIFT))]
+    sd["pallets"] = [p for p in sd["pallets"] if not p["id"].startswith("RM-")] + json.loads(json.dumps(RAW_PALLETS))
     for pid, (x, z, typ, label) in PED_NODES.items():
         l["nodes"].append({"id": pid, "type": typ, "x": x, "z": z, "kinds": [], "label": label, "campus": True})
     for chain in PED_CHAINS:

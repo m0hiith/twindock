@@ -1291,7 +1291,7 @@
     {
       "id": "RAW_BAY_1",
       "type": "bay",
-      "x": 153,
+      "x": 156,
       "z": 62,
       "kinds": [
         "truck"
@@ -1302,7 +1302,7 @@
     {
       "id": "RAW_BAY_2",
       "type": "bay",
-      "x": 153,
+      "x": 156,
       "z": 70,
       "kinds": [
         "truck"
@@ -1312,7 +1312,7 @@
     },
     {
       "id": "RAW_DOCK_1",
-      "type": "junction",
+      "type": "dock",
       "x": 147,
       "z": 62,
       "kinds": [
@@ -1323,7 +1323,7 @@
     },
     {
       "id": "RAW_DOCK_2",
-      "type": "junction",
+      "type": "dock",
       "x": 147,
       "z": 70,
       "kinds": [
@@ -1407,6 +1407,83 @@
         "forklift"
       ],
       "label": "Factory south door",
+      "campus": true
+    },
+    {
+      "id": "RAW_STOCK",
+      "type": "zone",
+      "x": 136,
+      "z": 69,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw stock",
+      "spots": [
+        [
+          133.5,
+          68.0
+        ],
+        [
+          136.0,
+          68.0
+        ],
+        [
+          138.5,
+          68.0
+        ],
+        [
+          133.5,
+          70.5
+        ],
+        [
+          136.0,
+          70.5
+        ],
+        [
+          138.5,
+          70.5
+        ]
+      ],
+      "campus": true
+    },
+    {
+      "id": "FAC_IN",
+      "type": "zone",
+      "x": 112,
+      "z": 21.5,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Factory inbound",
+      "spots": [
+        [
+          110.0,
+          21.0
+        ],
+        [
+          112.0,
+          21.0
+        ],
+        [
+          114.0,
+          21.0
+        ],
+        [
+          110.0,
+          22.8
+        ]
+      ],
+      "campus": true
+    },
+    {
+      "id": "RAW_CHARGER",
+      "type": "charger",
+      "x": 127,
+      "z": 64,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Charger R1",
       "campus": true
     },
     {
@@ -2373,6 +2450,30 @@
       "campus": true
     },
     {
+      "a": "FAC_DOOR_S",
+      "b": "FAC_IN",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_AISLE_E",
+      "b": "RAW_STOCK",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_AISLE_W",
+      "b": "RAW_CHARGER",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
       "a": "RAW_DOCK_1",
       "b": "RAW_AISLE_E",
       "kinds": [
@@ -2933,6 +3034,22 @@
       "bay_node": "BAY_3",
       "door": "D3",
       "label": "Bay 3"
+    },
+    {
+      "id": "DK-04",
+      "node": "RAW_DOCK_1",
+      "bay_node": "RAW_BAY_1",
+      "door": "R1",
+      "label": "Raw dock 1",
+      "area": "raw"
+    },
+    {
+      "id": "DK-05",
+      "node": "RAW_DOCK_2",
+      "bay_node": "RAW_BAY_2",
+      "door": "R2",
+      "label": "Raw dock 2",
+      "area": "raw"
     }
   ],
   "chargers": [
@@ -2945,6 +3062,11 @@
       "id": "CH-02",
       "node": "CHARGER_C2",
       "label": "Charger C2"
+    },
+    {
+      "id": "CH-03",
+      "node": "RAW_CHARGER",
+      "label": "Charger R1"
     }
   ],
   "gate_node": "GATE_IN",
@@ -3029,6 +3151,18 @@
             "action": "load"
           }
         ]
+      },
+      {
+        "id": "FL-05",
+        "node": "RAW_AISLE_W",
+        "heading_rad": 0,
+        "battery_pct": 88,
+        "meta": {
+          "operator": "Ines Duarte",
+          "model": "Electric counterbalance, 1.6 t",
+          "area": "raw"
+        },
+        "plan": []
       }
     ],
     "trucks": [
@@ -3056,6 +3190,20 @@
           "plate": "RLH 7390",
           "carrier": "Harbor Haulage",
           "route": "Inbound, empty for pickup"
+        }
+      },
+      {
+        "id": "TR-03",
+        "node": "RD_110",
+        "heading_rad": 3.1416,
+        "state": "arriving",
+        "capacity": 4,
+        "inbound": true,
+        "meta": {
+          "plate": "RLH 5512",
+          "carrier": "Ironbridge Supply",
+          "route": "Inbound, raw material for FAC-01",
+          "area": "raw"
         }
       }
     ],
@@ -3154,6 +3302,38 @@
         "meta": {
           "sku": "SKU-44210",
           "contents": "Pet food, 32 bags"
+        }
+      },
+      {
+        "id": "RM-01",
+        "at": "TR-03",
+        "meta": {
+          "sku": "RM-3100",
+          "contents": "Steel coil, 2 t"
+        }
+      },
+      {
+        "id": "RM-02",
+        "at": "TR-03",
+        "meta": {
+          "sku": "RM-3101",
+          "contents": "Resin pellets, 40 bags"
+        }
+      },
+      {
+        "id": "RM-03",
+        "at": "TR-03",
+        "meta": {
+          "sku": "RM-3102",
+          "contents": "Packaging film, 12 rolls"
+        }
+      },
+      {
+        "id": "RM-04",
+        "at": "TR-03",
+        "meta": {
+          "sku": "RM-3103",
+          "contents": "Fasteners, 20 boxes"
         }
       }
     ],

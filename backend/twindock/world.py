@@ -42,6 +42,7 @@ BATTERY_FLOOR_PCT = 15.0
 FORK_OFFSET_M = 1.1         # carried pallet sits this far ahead of the forklift centre
 
 BAY1_DOCK_NODE = "DOCK_1"   # LED0 rule: on while a truck is docked at Bay 1
+RAW_RETURN = "RD_110"       # where raw material trucks wait and come back in (the service road east of the factory)
 ROAD_IN = "ROAD_IN"         # where off-site trucks wait and come back in (westbound side of the road)
 FINISHED_PREFIX = "FG-"     # finished-goods pallets made by the FAC-01 line; delivered when their truck departs
 
@@ -134,6 +135,7 @@ class World:
         # Which nodes and lanes vehicles can't share (traffic.py); built once from the geometry.
         self.conflicts = traffic.build_conflicts(graph, [(ln.a, ln.b, list(ln.kinds)) for ln in layout.lanes])
         self.events: list[tuple[str, str, str | None]] = []  # (level, text, unit_id), drained by the engine
+        self.fac_in_seen: dict[str, float] = {}  # raw pallet id -> when it reached the factory inbound spot (planner.py)
         self.removed: list[str] = []  # unit ids that left the world (delivered pallets), drained by the engine
         self.entities: dict[str, Entity] = {}
         self.time = 0.0
@@ -145,6 +147,7 @@ class World:
     def reset(self) -> None:
         L, g = self.layout, self.graph
         self.time = 0.0
+        self.fac_in_seen.clear()
         self.events.clear()
         ents: dict[str, Entity] = {}
         for f in L.seed.forklifts:
@@ -496,7 +499,7 @@ class World:
                 u.state = "gone"
                 # Off site. It comes back on the inbound side of the road (ROAD_IN), so a returning or
                 # waiting truck never stands on the exit lane that departing trucks use.
-                back = self.graph.nodes.get(ROAD_IN)
+                back = self.graph.nodes.get(RAW_RETURN if u.meta.get("area") == "raw" else ROAD_IN)
                 if back is not None:
                     u.x, u.z, u.heading, u.node, u.prev_node = back.x, back.z, math.pi, back.id, back.id
                 assert u.cargo is not None
@@ -625,6 +628,31 @@ class World:
     def add_entity(self, e: Entity) -> None:
         """Site-twin units (machines, workers) that are not part of the warehouse seed."""
         self.entities[e.id] = e
+
+    def load_raw_cargo(self, truck_id: str, n: int) -> list[str]:
+        """A raw material delivery: n new RM-xx pallets on the truck (the supplier's load; nothing else makes them)."""
+        truck = self.entities[truck_id]
+        assert truck.cargo is not None
+        contents = ["Steel coil, 2 t", "Resin pellets, 40 bags", "Packaging film, 12 rolls", "Fasteners, 20 boxes"]
+        made: list[str] = []
+        for i in range(1, 100):
+            if len(made) >= n:
+                break
+            pid = f"RM-{i:02d}"
+            if pid in self.entities:
+                continue
+            e = Entity(pid, "pallet", "stored", 0, 0, label="Raw material",
+                       meta={"sku": f"RM-{3100 + i}", "contents": contents[(i - 1) % len(contents)]})
+            e.holder = truck.id
+            truck.cargo.append(pid)
+            self.entities[pid] = e
+            made.append(pid)
+        return made
+
+    def consume_pallet(self, pid: str) -> None:
+        """The line used a raw material pallet up: it leaves the world."""
+        self.entities.pop(pid, None)
+        self.removed.append(pid)
 
     def spawn_pallet(self, node_id: str, meta: dict[str, str | float | bool], source: Source = "sim") -> str | None:
         """New finished-goods pallet at a zone node. Returns its id, or None if the node is full or

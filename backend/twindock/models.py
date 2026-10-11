@@ -395,6 +395,7 @@ class DockDef(BaseModel):
     bay_node: str
     door: str
     label: str
+    area: str = "warehouse"  # "raw" for the raw material store's docks: raw trucks and the raw forklift use them (planner.py)
 
 
 class ChargerDef(BaseModel):

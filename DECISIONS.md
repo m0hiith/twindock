@@ -172,3 +172,7 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - Measured before and after in `docs/perf_report.md`: draw calls 1729 to 564 in the overview, frame cost 14.8 to 10.5 ms, JS heap 210 to 132 MB.
 - Chrome pauses React effects and timers in background tabs: the stats and bench hooks only appear once the tab has been in front (a screenshot is enough). The hooks now also write to `document.body.dataset` so they can be read from outside the page.
 - Bug found while checking the overview: a badge that was silent for a while and then reported from the same spot counted as "standing still since before", raising no-movement alerts for everyone after a simulator restart. A gap of more than 10 s now restarts the still timer (tested).
+
+## Auto mode runs the factory side too
+- Added a raw-material flow: TR-03 (area raw) docks at DK-04/05 (raw store), FL-05 unloads to RAW_STOCK and feeds FAC_IN; the line uses up a pallet every 25 s while a machine is running; TR-03 leaves when empty and returns from RD_110 with a new load. Raw bays sit 9 m from their docks (as in the warehouse) so a forklift at the dock never overlaps the truck.
+- Everything is simulated (`source: "auto"`); no board topics or GW-01 behaviour touched. BTN1 now cycles FL-01..FL-05.

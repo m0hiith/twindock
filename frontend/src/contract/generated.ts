@@ -362,6 +362,12 @@ export interface SiteCmd {
   x?: number;
   z?: number;
   route?: string;
+  /**
+   * goto only: walkway waypoints [x, z] to follow on the way to (x, z).
+   *
+   * @maxItems 80
+   */
+  path?: [number, number][];
 }
 /**
  * Retained. Announces a commissioned device, like the board's hello. The backend checks it against backend/world/sites.json.
