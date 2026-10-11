@@ -25,6 +25,8 @@ SUBJECTS = ("machine", "worker", "device", "gateway", "line")
 SEVERITIES = ("info", "warning", "critical")
 OPS = ("eq", "ne", "gt", "gte", "lt", "lte", "in", "outside", "present")
 KEEP_RESOLVED = 30  # recently resolved alerts kept for the panels
+KEEP_LOG = 2000  # every alert of the last day, for the incident timeline and the daily report
+LOG_MAX_AGE_MS = 24 * 3_600_000
 
 
 @dataclass(frozen=True)
@@ -153,6 +155,7 @@ class Rules:
     rules: list[Rule]
     open: dict[tuple[str, str], Alert] = field(default_factory=dict)
     resolved: list[Alert] = field(default_factory=list)
+    log: list[Alert] = field(default_factory=list)  # raised alerts, oldest first (same objects: acks and resolution show up here)
     _since: dict[tuple[str, str], int] = field(default_factory=dict)  # condition true since (ms)
     _n: int = 0
 
@@ -177,6 +180,8 @@ class Rules:
                                   "raised", now, {k: f[k] for k in ("unit_id", "device_id", "site_id", "x", "z") if f.get(k) is not None})
                         self.open[key] = a
                         raised.append(a)
+                        self.log.append(a)
+                        del self.log[:-KEEP_LOG]
                 else:
                     self._since.pop(key, None)
                     if key in self.open:
@@ -205,6 +210,18 @@ class Rules:
         if any(a.id == alert_id for a in self.resolved):
             return "Already resolved"
         return f"No alert {alert_id}"
+
+    def incidents(self, now: int) -> list[dict[str, Any]]:
+        """Every alert raised in the last 24 h with who acknowledged it and how fast, newest first."""
+        out = []
+        for a in reversed(self.log):
+            if now - a.raised_ms > LOG_MAX_AGE_MS:
+                break
+            w = a.wire()
+            w["response_s"] = round((a.acknowledged_ms - a.raised_ms) / 1000, 1) if a.acknowledged_ms else None
+            w["resolution_s"] = round((a.resolved_ms - a.raised_ms) / 1000, 1) if a.resolved_ms else None
+            out.append(w)
+        return out
 
     def wire(self) -> dict[str, Any]:
         sev = {s: i for i, s in enumerate(reversed(SEVERITIES))}

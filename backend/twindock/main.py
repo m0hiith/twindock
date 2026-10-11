@@ -101,6 +101,13 @@ def wiring() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@app.get("/api/monitor")
+def monitor() -> dict[str, Any]:
+    """Monitoring centre: energy (kW now, today vs yesterday), the last 24 h of alerts with acknowledgement and
+    resolution times, the last evacuation and today's safety counters. Energy comes from the simulated meters."""
+    return state.engine.monitor_summary()
+
+
 @app.get("/api/safety/me/{worker_id}")
 def safety_me(worker_id: str) -> dict[str, Any]:
     """A worker's own data: shift hours, breaks and their own incidents (K3 privacy: workers can see their data).

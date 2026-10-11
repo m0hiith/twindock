@@ -7,7 +7,7 @@ import { ago, Icon, Pill, SimBadge, useTick } from "./ui";
 
 export const PRIVACY_NOTE = "Privacy: screens show zone counts. A worker's position appears only during their own alert or an evacuation. No tracking off site or off shift. Roles only, never names. Incident history is kept for the retention period; workers can see their own data.";
 
-export function SafetyPanel() {
+export function SafetyPanel({ className = "w-[420px]", onFocusWorker, compact = false }: { className?: string; onFocusWorker?: (id: string) => void; compact?: boolean }) {
   const s = useWorld((x) => x.safety);
   const sites = useWorld((x) => x.sites);
   useTick(1000);
@@ -17,7 +17,7 @@ export function SafetyPanel() {
   const evac = s.evacuation;
   const t = s.today;
   return (
-    <div className="card pointer-events-auto flex w-[420px] flex-col gap-3 p-4" aria-label="Worker safety">
+    <div className={`card pointer-events-auto flex flex-col gap-3 p-4 ${className}`} aria-label="Worker safety">
       <div className="flex items-center gap-2">
         <span className="grid h-7 w-7 place-items-center rounded-lg bg-idle-bg"><Icon name="shield" size={16} /></span>
         <span className="text-[15px] font-semibold">Worker safety</span>
@@ -64,7 +64,7 @@ export function SafetyPanel() {
             return (
               <div key={w.id} className="flex items-center gap-2 text-[13px]">
                 <Pill tone={tone}>{label}</Pill>
-                <span className="min-w-0 flex-1 truncate">{text}</span>
+                <button type="button" className="min-w-0 flex-1 truncate text-left" title="Show on the map" onClick={() => onFocusWorker?.(w.id)}>{text}</button>
                 {(w.sos_ms || w.man_down) && (
                   <button type="button" className="rounded-lg border border-[var(--card-border)] px-2 py-0.5 text-[12px] hover:bg-idle-bg"
                     onClick={() => void request({ type: "safety_command", action: "clear_incident", worker_id: w.id, by: "Twin" })}>Close</button>
@@ -87,9 +87,9 @@ export function SafetyPanel() {
             onClick={() => void request({ type: "safety_command", action: "start_evacuation", reason: "evacuation drill", by: "Twin" })}>Start evacuation drill</button>
         )}
       </div>
-      <div className="text-[11px] leading-snug text-ink-2">
+      {!compact && <div className="text-[11px] leading-snug text-ink-2">
         Warning within {s.config.warn_m} m of a moving forklift, critical within {s.config.crit_m} m. {PRIVACY_NOTE}
-      </div>
+      </div>}
     </div>
   );
 }

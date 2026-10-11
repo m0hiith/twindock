@@ -15,25 +15,25 @@ const TONE = { critical: "crit", warning: "warn", info: "info" } as const;
 
 /** Who is acknowledging, as everyone will see it (there is no sign-in on this demo). */
 export function screenName(): string {
-  const page = location.pathname.startsWith("/control") ? "Control Room" : location.pathname.startsWith("/rules") ? "Rules page" : "Twin";
+  const page = location.pathname.startsWith("/monitor") ? "Monitoring centre" : location.pathname.startsWith("/control") ? "Control Room" : location.pathname.startsWith("/rules") ? "Rules page" : "Twin";
   return innerWidth < 640 ? `${page} (phone)` : page;
 }
 
 /** Switch to the alert's site, select its unit or device and fly the camera there. */
-export function flyTo(a: Alert): void {
+export function flyTo(a: Alert, stay = false): void {
   const t = a.target;
   if (t.x === undefined || t.z === undefined) return;
   const v = useView.getState();
   const site = t.site_id ?? siteAt(useWorld.getState().sites, t.x, t.z);
-  if (site && site !== v.site) v.setSite(site);
+  if (site && site !== v.site && !stay) v.setSite(site);
   const id = t.unit_id ?? t.device_id;
   if (id) send({ type: "select_unit", unit_id: id });
   if (t.device_id && !t.unit_id) v.setShowDevices(true);
   v.focusOn(t.x, t.z);
-  if (!location.pathname.startsWith("/twin")) navigate("/twin");
+  if (!stay && !location.pathname.startsWith("/twin")) navigate("/twin");
 }
 
-export function AlertRow({ a, compact = false }: { a: Alert; compact?: boolean }) {
+export function AlertRow({ a, compact = false, stay = false }: { a: Alert; compact?: boolean; stay?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const ack = async () => {
@@ -46,7 +46,7 @@ export function AlertRow({ a, compact = false }: { a: Alert; compact?: boolean }
   };
   return (
     <div className="flex items-start gap-2.5 py-2">
-      <button type="button" onClick={() => flyTo(a)} className="min-w-0 flex-1 text-left" title="Show in the twin">
+      <button type="button" onClick={() => flyTo(a, stay)} className="min-w-0 flex-1 text-left" title="Show in the twin">
         <div className="flex items-center gap-2">
           <Pill tone={a.state === "resolved" ? "idle" : TONE[a.severity]}>{a.state === "resolved" ? "Resolved" : a.severity === "critical" ? "Critical" : a.severity === "warning" ? "Warning" : "Info"}</Pill>
           <span className="truncate text-[12px] text-ink-2">{a.title} · {ago(a.raised_ms)}</span>

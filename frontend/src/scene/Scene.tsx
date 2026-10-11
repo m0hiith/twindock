@@ -18,6 +18,7 @@ import { Factory } from "./Factory";
 import { DevicePucks } from "./DevicePucks";
 import { ProductionLine } from "./ProductionLine";
 import { Workers } from "./Workers";
+import { AlertPulses } from "./AlertPulses";
 
 function DrawCalls() {
   // Perf check hooks (?stats only): renderer stats, plus advance() to step whole frames (every
@@ -51,7 +52,7 @@ function DrawCalls() {
 
 const showStats = new URLSearchParams(location.search).has("stats");
 
-export function Scene() {
+export function Scene({ alertPulses = false }: { alertPulses?: boolean }) {
   const layout = useWorld((s) => s.layout);
   const selected = useWorld((s) => s.selected);
   if (!layout) return null;
@@ -87,6 +88,7 @@ export function Scene() {
       <Workers />
       <Pallets />
       <SelectionOverlay />
+      {alertPulses && <AlertPulses />}
       {showStats && <><Stats /><DrawCalls /></>}
     </Canvas>
   );

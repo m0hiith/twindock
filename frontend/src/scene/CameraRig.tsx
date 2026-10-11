@@ -1,7 +1,7 @@
 // Orthographic isometric camera: ~35° elevation, 45° yaw; rotation only in 90° steps (map
 // controls), zoom 0.6x–2x of fit-to-site, pan by dragging. All motion is eased.
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { Layout } from "../layout";
 import { useView, useWorld } from "../store/world";
@@ -10,6 +10,13 @@ import { cameraState, ELEVATION } from "./camera";
 import { dragState } from "./dragState";
 
 const DIST = 200;
+
+/** Middle of every site's bounds, for the overview camera. */
+function campusCentre(sites: { bounds: { x: [number, number]; z: [number, number] } }[]): [number, number] | undefined {
+  if (!sites.length) return undefined;
+  const x = sites.flatMap((s) => s.bounds.x), z = sites.flatMap((s) => s.bounds.z);
+  return [(Math.min(...x) + Math.max(...x)) / 2, (Math.min(...z) + Math.max(...z)) / 2];
+}
 const HOME = new THREE.Vector3(32, 0, 27); // WH-01: between the warehouse and the yard
 const DRAG_PX = 4; // movement before a press counts as a drag rather than a click
 
@@ -20,7 +27,9 @@ export function CameraRig({ layout }: { layout: Layout }) {
   const homeNonce = useView((s) => s.homeNonce);
   const focus = useView((s) => s.focus);
   const siteId = useView((s) => s.site);
-  const siteHome = useWorld((s) => s.sites.find((x) => x.id === siteId)?.home);
+  const overview = siteId === "ALL"; // the monitoring centre looks at every site at once
+  const sites = useWorld((s) => s.sites);
+  const siteHome = useMemo(() => (overview ? campusCentre(sites) : sites.find((x) => x.id === siteId)?.home), [overview, sites, siteId]);
   const home = siteHome ? new THREE.Vector3(siteHome[0], 0, siteHome[1]) : HOME;
 
   const target = useRef(home.clone());
@@ -92,7 +101,7 @@ export function CameraRig({ layout }: { layout: Layout }) {
 
     zoomShown.current += (THREE.MathUtils.clamp(zoom, ZOOM_MIN, ZOOM_MAX) - zoomShown.current) * k;
     // 1x = the warehouse and yard fill the view (~78 m across the diagonal).
-    const fit = Math.min(size.width / 78, size.height / 52);
+    const fit = overview ? Math.min(size.width / 150, size.height / 78) : Math.min(size.width / 78, size.height / 52);
     const ppm = fit * zoomShown.current;
     if (Math.abs(cam.zoom - ppm) > 1e-4) {
       cam.zoom = ppm;

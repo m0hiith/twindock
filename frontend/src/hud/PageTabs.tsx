@@ -2,6 +2,7 @@
 // (history.pushState) so the WebSocket and world state stay up when switching pages.
 export const PAGES = [
   { path: "/twin", label: "Twin" },
+  { path: "/monitor", label: "Monitor" },
   { path: "/control", label: "Control" },
   { path: "/fleet", label: "Fleet" },
   { path: "/rules", label: "Rules" },

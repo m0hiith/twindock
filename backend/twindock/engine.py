@@ -86,6 +86,8 @@ class Engine:
         self._safety_last: dict[str, Any] | None = None
         self.rules = Rules(load_rules())
         self._rules_acc = 0.0
+        self._energy: dict[str, dict[str, Any]] = {}
+        self._energy_acc = 0.0
         self._gw_was_online = False
         graph = Graph(layout)
         self.world = World(layout, graph)
@@ -239,6 +241,50 @@ class Engine:
             return None
         return self._zone_centroid(w.zone_id) or False
 
+    # ------------------------------------------------------------------ monitoring centre (K4)
+
+    def _tick_energy(self) -> None:
+        """Per power meter: the kWh register at the start of today, and yesterday's total once a day has passed.
+        In memory only, so after a restart "yesterday" is unknown until the next midnight: never invented."""
+        now = self.clock()
+        day = time.strftime("%Y-%m-%d", time.localtime(now / 1000))
+        for did, st in self.devices.sim.items():
+            if self.devices.defs[did]["type"] != "power_meter":
+                continue
+            r = st.readings.get("energy_kwh")
+            if r is None or st.last_seen_ms is None or now - st.last_seen_ms > 15_000:
+                continue
+            e = self._energy.get(did)
+            if e is None:
+                self._energy[did] = {"day": day, "start": float(r.value), "yesterday": None, "since_ms": now}
+            elif e["day"] != day:
+                e.update(yesterday=float(r.value) - e["start"], day=day, start=float(r.value))
+
+    def monitor_summary(self) -> dict[str, Any]:
+        now = self.clock()
+        kw = today = None
+        yesterday = None
+        since = None
+        for did, e in self._energy.items():
+            st = self.devices.sim[did]
+            r, p = st.readings.get("energy_kwh"), st.readings.get("power_kw")
+            if p is not None and st.last_seen_ms is not None and now - st.last_seen_ms <= 15_000:
+                kw = (kw or 0.0) + float(p.value)
+            if r is not None:
+                today = (today or 0.0) + float(r.value) - e["start"]
+            if e["yesterday"] is not None:
+                yesterday = (yesterday or 0.0) + e["yesterday"]
+            since = e["since_ms"] if since is None else min(since, e["since_ms"])
+        return {"energy": {"kw_now": None if kw is None else round(kw, 2), "today_kwh": None if today is None else round(today, 2),
+                           "yesterday_kwh": None if yesterday is None else round(yesterday, 1), "counting_since_ms": since,
+                           "source": "sim", "meters": sorted(self._energy)},
+                "incidents": self.rules.incidents(now),
+                "evacuation_last": None if self.safety.last_evacuation is None else {
+                    "started_ms": self.safety.last_evacuation.started_ms, "ended_ms": self.safety.last_evacuation.ended_ms,
+                    "reason": self.safety.last_evacuation.reason, "by": self.safety.last_evacuation.by,
+                    "on_site": len(self.safety.last_evacuation.on_site)},
+                "safety_today": self.safety.wire(now)["today"]}
+
     # ------------------------------------------------------------------ rules and alerts (S6)
 
     def _facts(self) -> dict[str, list[dict[str, Any]]]:
@@ -299,6 +345,10 @@ class Engine:
         return {"machine": machines, "worker": workers, "device": devices, "gateway": gateway, "line": line}
 
     def _tick_rules(self, dt: float) -> None:
+        self._energy_acc += dt
+        if self._energy_acc >= 5.0:
+            self._energy_acc = 0.0
+            self._tick_energy()
         self._rules_acc += dt
         if self._rules_acc < RULES_EVAL_S:
             return
