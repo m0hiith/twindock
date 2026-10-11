@@ -5,6 +5,7 @@ import { destinationCandidates, destinationKeys } from "../control/candidates";
 import { EventLog } from "../control/EventLog";
 import { ProductionPanel } from "../control/ProductionPanel";
 import { AlertsList } from "../hud/AlertsPanel";
+import { DemoPanel } from "../control/DemoPanel";
 import { GatewayPanel } from "../control/GatewayPanel";
 import { MovePanel, UnitChips } from "../control/MovePanel";
 import { ProposalSheet } from "../control/ProposalSheet";
@@ -21,7 +22,7 @@ import { useWorld } from "../store/world";
 import { Brand } from "../hud/Brand";
 import { PageTabs } from "../hud/PageTabs";
 
-type Tab = "move" | "gateway" | "log" | "factory" | "alerts";
+type Tab = "move" | "gateway" | "log" | "factory" | "alerts" | "demo";
 
 
 /** One click restores the seed world (POST /api/reset). The page then updates from the
@@ -121,10 +122,11 @@ export function ControlPage() {
       </div>
 
       <aside className="flex min-h-0 flex-1 flex-col lg:w-[420px] lg:flex-none lg:border-l lg:border-[var(--card-border)] lg:bg-white/60">
-        <nav className="flex gap-1 px-3 pt-1 lg:px-4 lg:pt-4">
+        <nav className="flex gap-1 overflow-x-auto px-3 pt-1 lg:px-4 lg:pt-4">
           <TabButton active={tab === "move"} onClick={() => setTab("move")}>Move</TabButton>
           <TabButton active={tab === "gateway"} onClick={() => setTab("gateway")}>Gateway</TabButton>
           <TabButton active={tab === "factory"} onClick={() => setTab("factory")}>Factory</TabButton>
+          <TabButton active={tab === "demo"} onClick={() => setTab("demo")}>Demo</TabButton>
           <TabButton active={tab === "alerts"} onClick={() => setTab("alerts")}>
             Alerts{openAlerts > 0 && <span className="tabular rounded-full bg-crit-bg px-1.5 text-[11px] text-crit">{openAlerts}</span>}
           </TabButton>
@@ -137,6 +139,7 @@ export function ControlPage() {
           {tab === "gateway" && <GatewayPanel />}
           {tab === "factory" && <ProductionPanel />}
           {tab === "alerts" && <AlertsList />}
+          {tab === "demo" && <DemoPanel />}
           {tab === "log" && <EventLog />}
         </div>
       </aside>

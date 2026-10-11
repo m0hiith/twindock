@@ -25,7 +25,8 @@
         "led_command",
         "set_auto_mode",
         "machine_command",
-        "ack_alert"
+        "ack_alert",
+        "scenario_command"
       ]
     },
     "ok": {

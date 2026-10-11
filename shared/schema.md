@@ -69,6 +69,7 @@ constant); `fw_version` is `sim-x.y`.
 | `twin/<site>/<device>/hello` | `mqtt/site_hello.json` | Retained. Type, protocol and capabilities must match the device's entry in `backend/world/sites.json`. |
 | `twin/<site>/<device>/status` | `mqtt/site_status.json` | Every 10 s: battery, signal, fault. |
 | `twin/<site>/<device>/<channel>` | `mqtt/site_reading.json` | One reading on a channel listed in the hello's `capabilities`. A badge's `position` value is `[x, z]`. |
+| `twin/<site>/<device>/cmd/<action>` | `mqtt/site_cmd.json` | Backend → simulator only (never GW-01): `degrade`, `restore`, `maintenance` (machine monitors), `door_open`, `door_close`, `route` (badges), `silence`. |
 
 The backend drops (with a warn event, once per device and reason) messages for devices that are
 not commissioned, that name a real device (GW-01), whose hello disagrees with commissioning, or
@@ -91,6 +92,9 @@ Every message is a JSON object with a `type` field.
 | `event` | `ws/event.json` | Event-log notices: BTN0/BTN1 actions, auto mode, LED confirmation timeouts, dropped device messages, BLE tag acquired/lost. |
 | `ble_tracks` | `ws/ble_tracks.json` | After each `twin/gateway/ble` message and when a tag is lost. Per tag: last and smoothed RSSI, raw and committed zone, pending zone. Feeds the /device calibration helper. |
 | `device_update` | `ws/device_update.json` | At most 2 Hz: devices whose status, readings, battery or signal changed. `world_snapshot` carries all `sites` (with zones) and `devices`. |
+| `production_update` | `ws/production_update.json` | On connect and ≤ 1 Hz: FAC-01 machines (state, cycle, current, vibration, learned baseline, z, abnormal, OEE parts) and the line (units, pallets, zone OEE). |
+| `safety_update` | `ws/safety_update.json` | On connect and ≤ 2 Hz: workers (role, badge, zone, nearest moving forklift, restricted zone; **no names**), workers per zone, today's counters. |
+| `alerts_update` | `ws/alerts_update.json` | On connect and on every raise/acknowledge/resolve: open alerts (critical first) + recently resolved, and every rule from `backend/rules/*.yaml`. |
 
 ### Client → server
 
@@ -100,6 +104,9 @@ Every message is a JSON object with a `type` field.
 | `select_unit` | `ws/select_unit.json` | Unit exists (or null to clear). |
 | `led_command` | `ws/led_command.json` | LED is in `hello.leds`; LED0 is rule-driven (Bay 1) and rejected. Forwarded to `twin/gateway/cmd/led`. |
 | `set_auto_mode` | `ws/set_auto_mode.json` | — |
+| `machine_command` | `ws/machine_command.json` | Machine exists. Forwarded to the simulator (`degrade`, `restore`, `maintenance`); never to the board. |
+| `ack_alert` | `ws/ack_alert.json` | Alert is open and not yet acknowledged. `by` is the screen's name (no sign-in). |
+| `scenario_command` | `ws/scenario_command.json` | Demo runner beats (`degrade`, `near_miss`, `visitor`, `cold_door`, `stale`, `reset`); simulator and engine only. |
 
 ### BLE tags as live forklifts
 

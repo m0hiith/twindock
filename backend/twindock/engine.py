@@ -22,12 +22,12 @@ from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
 from .devices import DeviceRegistry, load_sites, parse_site_topic
 from .production import Production
 from .rules import Rules, load_rules
-from .safety import Safety
+from .safety import Safety, Today
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
-from .models import (AckAlert, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
+from .models import (AckAlert, ScenarioCommand, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
                      SelectUnit, SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
 from .world import Entity, World
@@ -714,6 +714,8 @@ class Engine:
             self._select(client_id, msg)
         elif isinstance(msg, LedCommand):
             self._led_command(client_id, msg)
+        elif isinstance(msg, ScenarioCommand):
+            self._scenario(client_id, msg)
         elif isinstance(msg, AckAlert):
             self._ack_alert(client_id, msg)
         elif isinstance(msg, MachineCommand):
@@ -740,6 +742,54 @@ class Engine:
         text = {"degrade": "slowly rising vibration injected (simulation)", "restore": "vibration restored (simulation)",
                 "maintenance": "maintenance started (simulation)"}[m.action]
         self.event("info", f"{pm.id} {pm.label.lower()}: {text}", client_id, pm.id)
+
+    # ------------------------------------------------------------------ demo scenario runner (S10)
+
+    def _scenario(self, client_id: str, m: ScenarioCommand) -> None:
+        """One demo beat on cue. Beats only drive the simulator and the movement engine."""
+        def fail(reason: str) -> None:
+            self._ack(client_id, m.cmd_id, "scenario_command", False, reason)
+        if m.beat != "reset" and not self.mqtt_connected:
+            return fail("Not connected to the MQTT broker (the simulator listens there)")
+        text = ""
+        if m.beat == "degrade":
+            self._site_command("MM-01", "degrade")
+            text = "Demo: slowly rising vibration injected on M-01 (simulation)"
+        elif m.beat == "near_miss":
+            # WK-02 walks the outbound lane while a forklift drives in to collect: a near miss.
+            candidates = [f for f in self.world.of_kind("forklift")
+                          if f.source != "device" and not f.moving and not f.busy and not f.carrying]
+            if not candidates:
+                return fail("No free forklift (all busy, carrying or tracked by the board)")
+            f = min(candidates, key=lambda e: abs(e.x - 95) + abs(e.z - 15))
+            pallets = self.world.pallets_at(self.production.outbound_node)
+            r = self.world.command(f.id, self.production.outbound_node, "pick" if pallets else "goto",
+                                   pallets[0].id if pallets else None, source="manual")
+            if not r.ok:
+                return fail(r.reason or f"{f.id} can't drive to the factory outbound")
+            self._site_command("BG-02", "route", {"route": "outbound"})
+            text = f"Demo: {f.id} drives to the factory outbound while WK-02 walks the outbound lane"
+        elif m.beat == "visitor":
+            self._site_command("BG-04", "route", {"route": "press_visit"})
+            text = "Demo: the visitor (WK-04) heads for the press area (simulation)"
+        elif m.beat == "cold_door":
+            self._site_command("DR-01", "door_open", {"seconds": 150})
+            text = "Demo: cold room door held open for 150 s (simulation)"
+        elif m.beat == "stale":
+            self._site_command("AQ-01", "silence", {"on": True})
+            text = "Demo: AQ-01 stops reporting (it goes stale after 15 s, offline after 60 s)"
+        elif m.beat == "reset":
+            self.reset()
+            self.safety.today = Today()
+            if self.mqtt_connected:
+                for dev, action, extra in (("MM-01", "restore", None), ("MM-02", "restore", None),
+                                           ("BG-02", "route", {"route": "default"}),
+                                           ("BG-04", "route", {"route": "default"}),
+                                           ("DR-01", "door_close", None), ("AQ-01", "silence", {"on": False})):
+                    self._site_command(dev, action, extra)
+            text = "Demo reset: seed world, simulator back to normal"
+        self._ack(client_id, m.cmd_id, "scenario_command", True)
+        self.event("info", text, client_id)
 
     def _move(self, client_id: str, m: MoveUnit) -> None:
         r = self.world.command(m.unit_id, m.target_node, m.action, m.pallet_id, source="manual", dry_run=m.dry_run)

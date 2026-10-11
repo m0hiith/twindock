@@ -126,6 +126,11 @@ class DoorSensor(Model):
             return [("open", self.reading(ts_ms, self.open))]
         return []
 
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action == "door_close":
+            self.open, self.forced_open_until, self.next_change = False, -1.0, t + 60.0
+            self._due.pop("hb", None)
+
     def force_open(self, t: float, seconds: float) -> None:
         self.open = True
         self.forced_open_until = t + seconds

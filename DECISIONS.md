@@ -61,3 +61,14 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - The alert message is rendered when the alert is raised (e.g. "6.6 °C"); the panels show the live value elsewhere.
 - Acknowledged by: there is no sign-in, so the screen names itself ("Control Room", "Twin", "(phone)" under 640 px wide), and that name is shown to everyone.
 - Rules are evaluated at 2 Hz; open alerts are sorted critical first, then newest; the last 30 resolved are kept for the panels.
+
+## Stage 6: S10 items 2–4, DEMO.md, README
+- Demo runner: one `scenario_command` per beat, run by the backend so every screen sees the same thing. Beats only send simulator commands and engine moves. The real-board beats are a manual checklist in the Demo tab, because nothing should trigger or fake them.
+- The near-miss beat drives the nearest free forklift (not BLE-tracked, not carrying) to the factory outbound and sends WK-02 walking that lane. It refuses with a reason if no forklift is free.
+- Reset demo = world reset + the simulator back to normal (restore machines, default routes, door closed, AQ-01 reporting) + today's safety counters cleared. Alert history is kept.
+- The Demo tab has no "show on twin" button: camera and site are per-screen, so the phone can't move the projector.
+- Value audit: a reviewed allowlist test (`frontend/src/audit.test.ts`) plus a backend test, instead of a one-off manual check, so the guarantee keeps holding after this run.
+- Performance: the run is unattended and the Chrome window is hidden, so requestAnimationFrame is throttled and real-time fps can't be observed. Frame cost was measured instead, by stepping whole frames (every `useFrame` callback + render) with `advance()` and forcing a GPU sync with `readPixels` (a `?stats`-only hook). Under 16.7 ms per frame means 60 fps is achievable. The user should still confirm real fps by eye (RUN_REPORT.md).
+- To pay for the factory, static conveyor and QC parts are merged (`Baked`) and device pucks don't cast shadows. The conveyor belt keeps its material, so its texture still scrolls.
+- `shared/schema.md` and the CLAUDE.md contract summary now list every message added in S2–S10 (they had fallen behind `/shared/schemas` during stages 3–5).
+

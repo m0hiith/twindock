@@ -185,6 +185,7 @@ export interface TwinDockContract {
   move_unit?: MoveUnit;
   production_update?: ProductionUpdate;
   safety_update?: SafetyUpdate;
+  scenario_command?: ScenarioCommand;
   select_unit?: SelectUnit;
   selection_changed?: SelectionChanged;
   set_auto_mode?: SetAutoMode;
@@ -305,7 +306,7 @@ export interface GatewayStatus {
   replay?: boolean;
 }
 /**
- * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); door_open (door sensors); silence (any sim device stops publishing, to demonstrate staleness).
+ * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); door_open, door_close (door sensors); route (badges); silence (any sim device stops publishing, to demonstrate staleness).
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "site_cmd".
@@ -493,7 +494,14 @@ export interface BleTracks {
 export interface CommandAck {
   type: "command_ack";
   cmd_id: CmdId;
-  command: "move_unit" | "select_unit" | "led_command" | "set_auto_mode" | "machine_command" | "ack_alert";
+  command:
+    | "move_unit"
+    | "select_unit"
+    | "led_command"
+    | "set_auto_mode"
+    | "machine_command"
+    | "ack_alert"
+    | "scenario_command";
   ok: boolean;
   /**
    * Short human reason when ok is false.
@@ -821,6 +829,17 @@ export interface SafetyUpdate {
     warn_m: number;
     crit_m: number;
   };
+}
+/**
+ * Demo runner on /control (SITE_PROMPTS.md S10): trigger one simulated beat on cue, or reset the demo. Beats only drive the simulator (twin/<site>/<device>/cmd/*) and the movement engine; never the real board.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "scenario_command".
+ */
+export interface ScenarioCommand {
+  type: "scenario_command";
+  cmd_id: CmdId;
+  beat: "degrade" | "near_miss" | "visitor" | "cold_door" | "stale" | "reset";
 }
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema

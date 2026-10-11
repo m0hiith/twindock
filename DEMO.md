@@ -1,4 +1,4 @@
-# TwinDock live demo (3 minutes)
+# TwinDock live demo
 
 For the presenter. The projector shows `/twin` from the laptop; you drive from your phone on
 `/control` and from the board's two buttons. Every beat below is real: the board's LED and buttons,
@@ -9,7 +9,7 @@ never fake a board value.
 
 | | Item | State on 2026-10-08 |
 |---|---|---|
-| ☐ | **Firmware flashed** (PROMPTS.md step 2): hello, status every 5 s with `reconnects`/`buffered`, buttons, LED commands with confirmations, offline buffer + replay | **Not started.** `firmware/` is empty. Beats 1–4 need it. |
+| ☐ | **Firmware flashed** (PROMPTS.md step 2): hello, status every 5 s with `reconnects`/`buffered`, buttons, LED commands with confirmations, offline buffer + replay | **Steps A–D written and building, untested on hardware** (2026-10-10, `firmware/TESTING.md`). Steps E (BLE) and F (offline buffer + replay, reconnects) are not written: beat 4's "Flushed on last reconnect" needs F. Update the NWP firmware first (HARDWARE.md). |
 | ☐ | **Board twin** (step 7): the 3D board in the gateway card | **Blocked** on `frontend/public/board/top.jpg` and the hotspot table in HARDWARE.md. Until then beat 3 uses the gateway inspect card's LED switch. |
 | ☐ | Laptop has a **fixed IP** on the demo router (DHCP reservation), and the firmware points at it | The router reboot in beat 4 must not move the broker. |
 | ☐ | **Router boot time** measured: power off → board back online | Beat 4 leaves about 45 s for it. Slower? See beat 4's alternative. |
@@ -66,6 +66,51 @@ the real board adds its own Wi-Fi and LED latency, so re-time them in your first
 - **Router takes longer than ~45 s to boot**: talk through the offline state. If you measured it in advance and it's slow, use the router's Wi-Fi on/off button (if it has one) instead of the power plug: same effect on the board, much faster.
 - **Projector browser dies**: reopen `localhost:5173/twin`; it rebuilds from the server's snapshot.
 
+## Site demo (5 minutes): the board, then the factory
+
+Run after the 3-minute board demo above, or as its continuation. Everything in part 2 is
+**simulated** (grey SIM badges) and is triggered from the phone: `/control` → **Demo** tab. The
+projector stays on `/twin`.
+
+**Extra setup** (T-10 min): a fourth terminal runs the simulator, which publishes every simulated
+device of the site through the same broker:
+
+```sh
+.venv/bin/python tools/site_sim.py
+```
+
+On the projector, pick **FAC-01 Assembly** in the site selector (top bar), then check: 11/11
+devices online on FAC-01, both machines Running, four workers walking. Production needs about
+90 s of running to learn each machine's vibration baseline, so start the simulator at least
+2 minutes before beat 2a. Phone → Demo → **Reset demo** right before you start.
+
+| Time | You do | Audience sees | Say |
+|---|---|---|---|
+| 0:00 | **Part 1, real board.** Projector on WH-01. Press BTN1, then BTN0. | FL-01 selected and moving; the violet LIVE gateway. | "One thing on this map is real: the SiWx917. Everything else that's violet comes from it." |
+| 0:30 | Dock a truck at Bay 1 from the phone (Move tab). | The real LED turns green after the board confirms. | "The twin only shows green once the board says so." |
+| 0:50 | Unplug the router (see beat 4 above). | GW-01 offline after 15 s, critical alert *Gateway offline*; resolves on its own when the board is back. | "And when it's gone, we say so." |
+| 1:30 | **Part 2.** Projector: site selector → **FAC-01**. | The factory: conveyor running, press and packer, workers in hi-vis, KPIs: units today, availability, OEE (hover for the formula). All SIM. | "Same tool, a factory next door. These devices are simulated, and the twin labels every one of them SIM." |
+| 1:45 | Phone → Demo → **a. Degrade M-01**. | Within ~1 min the press shows a pulsing amber ring and an alert: *abnormal vibration compared with baseline*. Open M-01: the vibration line leaves the green baseline band. | "Each machine learned its own normal. This is a comparison with that, not a prediction." |
+| 2:45 | Phone → **Alerts** tab → **Acknowledge**. | The projector's alert shows *Acknowledged by Control Room (phone)*. | "Shared by every screen: who acknowledged and when." |
+| 3:00 | Phone → Demo → **b. Worker near a moving forklift**. | A forklift drives to the factory outbound while WK-02 walks that lane: amber, then red rings on both; a proximity alert; the safety panel counts it and the closest approach. | "Pedestrian near a moving forklift. A parked forklift never triggers this." |
+| 3:40 | Phone → Demo → **d. Cold room door left open**. | After 60 s the door alert; the cold room warms past 5 °C and a temperature alert follows. | "Door left open, and the temperature already reacts." |
+| 4:30 | Switch the projector to **/fleet**. | GW-01 (LIVE) first, simulated devices after; *Needs attention* lists the low-battery sensor. Optional: Demo → **e** makes AQ-01 go stale. | "Fleet view: real first, honest status for everything." |
+| 5:00 | Phone → Demo → **Reset demo**. | Seed world, simulator back to normal. | "Thanks." |
+
+Optional beat **c. Visitor walks into the press area**: WK-04 (visitor) enters the restricted press
+area, giving a critical alert that resolves when they leave.
+
+**Not built yet** (SITE_PROMPTS.md): cold room door/temperature *physics in 3D* (S4; the alerts work),
+energy (S5), commissioning (S7), the planner `/plan` (S8), firmware campaigns (S9). Don't promise them in
+the demo; present them as the roadmap slide.
+
+### Site fallbacks
+
+- **Devices show stale/offline**: the simulator isn't running. Start `tools/site_sim.py`; they recover within 10 s.
+- **Degrade shows nothing after 2 min**: the baseline wasn't learned yet (machine card says *Learning baseline*). Wait, or reset the demo earlier next time.
+- **No forklift moves for beat b**: all forklifts are busy (the Demo tab says so). Turn auto mode off, wait for them to stop, retry.
+- **Beat buttons say "Not connected to the MQTT broker"**: the backend lost the broker; check terminal 1.
+
 ## Rehearsal with the fake board (no hardware)
 
 Shows a red FAKE BOARD banner on every page. Never in front of an audience.
@@ -101,4 +146,6 @@ movement engine; manual, auto or device units). "Device" = a real MQTT message f
 | BLE threshold suggestions on `/device` | Computed in the browser from your captures (stored in this browser only). |
 | Violet BLE range ring around the gateway | Radius is a layout constant (`gateway.ble_range_m`), not measured; it brightens only while the board is online. |
 | RGB LED colour mix, LED/button descriptions | Derived from confirmed LED0/LED1 states; mapping and wording from HARDWARE.md. |
-| Site selector, operator avatar | Static UI (one site, no sign-in). |
+| Site selector | Local to each screen; WH-01 and FAC-01 come from `backend/world/sites.json`. |
+| Operator avatar | Static UI (no sign-in). |
+| Everything on FAC-01, /fleet, /rules | See `docs/value_audit.md` (every value on every page, with its source). |

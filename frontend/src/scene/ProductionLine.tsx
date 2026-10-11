@@ -9,6 +9,7 @@ import type { Layout, ProductionLine as Line } from "../layout";
 import { useView, useWorld } from "../store/world";
 import { color, model } from "../theme";
 import { pickHandlers } from "./Units";
+import { Baked } from "./Baked";
 import { Box, Cyl, Decal, Label, mat, OutlineContext } from "./parts";
 
 const LIGHT: Record<string, string> = { running: color.ok, idle: color.warn, maintenance: color.warn, fault: color.crit };
@@ -150,12 +151,15 @@ function Conveyor({ line }: { line: Line }) {
   });
   return (
     <group>
-      <Box size={[len, 0.12, width]} at={[cx, 0.7, z]} material={mat} />
-      <Box size={[len, 0.1, 0.12]} at={[cx, 0.72, z - width / 2]} color={model.metal} />
-      <Box size={[len, 0.1, 0.12]} at={[cx, 0.72, z + width / 2]} color={model.metal} />
-      {Array.from({ length: Math.floor(len / 3) + 1 }, (_, i) => (
-        <Box key={i} size={[0.12, 0.7, width]} at={[Math.min(from[0], to[0]) + i * 3, 0, z]} color={model.metal} />
-      ))}
+      {/* Static frame merged into a few meshes; the belt keeps its material, so its texture still scrolls. */}
+      <Baked>
+        <Box size={[len, 0.12, width]} at={[cx, 0.7, z]} material={mat} />
+        <Box size={[len, 0.1, 0.12]} at={[cx, 0.72, z - width / 2]} color={model.metal} />
+        <Box size={[len, 0.1, 0.12]} at={[cx, 0.72, z + width / 2]} color={model.metal} />
+        {Array.from({ length: Math.floor(len / 3) + 1 }, (_, i) => (
+          <Box key={i} size={[0.12, 0.7, width]} at={[Math.min(from[0], to[0]) + i * 3, 0, z]} color={model.metal} />
+        ))}
+      </Baked>
       <instancedMesh ref={boxes} args={[boxGeo, boxMat, BOXES]} castShadow />
     </group>
   );
@@ -174,10 +178,12 @@ export function ProductionLine({ layout }: { layout: Layout }) {
       <Conveyor line={line} />
       {press && <Press m={press} />}
       {packer && <Packer m={packer} />}
-      <group position={[line.qc.x, 0, line.qc.z + 2.2]}>
-        <Box size={[2.4, 0.9, 1.1]} at={[0, 0, 0]} color={model.metal} />
-        <Box size={[0.9, 0.6, 0.08]} at={[0, 0.95, -0.3]} color={color.ink} />
-      </group>
+      <Baked>
+        <group position={[line.qc.x, 0, line.qc.z + 2.2]}>
+          <Box size={[2.4, 0.9, 1.1]} at={[0, 0, 0]} color={model.metal} />
+          <Box size={[0.9, 0.6, 0.08]} at={[0, 0.95, -0.3]} color={color.ink} />
+        </group>
+      </Baked>
       {line.machines.map((m) => (
         <Label key={m.id} text={`${m.id} ${m.label}`} at={[m.x, 0.04, m.z + m.d / 2 + 1.3]} width={4.6} flat color={color.ink2} weight={700} />
       ))}

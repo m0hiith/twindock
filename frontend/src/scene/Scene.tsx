@@ -20,14 +20,32 @@ import { ProductionLine } from "./ProductionLine";
 import { Workers } from "./Workers";
 
 function DrawCalls() {
-  // Exposes renderer stats for the perf check (?stats): window.__twindockGl.
+  // Perf check hooks (?stats only): renderer stats, plus advance() to step whole frames (every
+  // useFrame callback + render) by hand, so frame cost can be measured even when the window is
+  // hidden and requestAnimationFrame is throttled. See RUN_REPORT.md.
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
+  const advance = useThree((s) => s.advance);
   useEffect(() => {
-    const w = window as unknown as { __twindockGl: unknown; __twindockScene: unknown };
+    const w = window as unknown as { __twindockGl: unknown; __twindockScene: unknown; __twindockBench: unknown };
     w.__twindockGl = gl.info;
     w.__twindockScene = scene;
-  }, [gl, scene]);
+    w.__twindockBench = (frames: number): { avgMs: number; p95Ms: number; maxMs: number } => {
+      const ctx = gl.getContext();
+      const px = new Uint8Array(4);
+      const times: number[] = [];
+      for (let i = 0; i < frames; i++) {
+        const t0 = performance.now();
+        advance(t0);
+        ctx.readPixels(0, 0, 1, 1, ctx.RGBA, ctx.UNSIGNED_BYTE, px); // waits for the GPU to finish the frame
+        times.push(performance.now() - t0);
+      }
+      times.sort((a, b) => a - b);
+      const avg = times.reduce((a, b) => a + b, 0) / frames;
+      return { avgMs: Math.round(avg * 100) / 100, p95Ms: Math.round(times[Math.floor(frames * 0.95)]! * 100) / 100,
+        maxMs: Math.round(times.at(-1)! * 100) / 100 };
+    };
+  }, [gl, scene, advance]);
   return null;
 }
 

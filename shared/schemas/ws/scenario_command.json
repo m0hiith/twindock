@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/scenario_command.json",
+  "title": "scenario_command (client -> server)",
+  "description": "Demo runner on /control (SITE_PROMPTS.md S10): trigger one simulated beat on cue, or reset the demo. Beats only drive the simulator (twin/<site>/<device>/cmd/*) and the movement engine; never the real board.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "cmd_id",
+    "beat"
+  ],
+  "properties": {
+    "type": {
+      "const": "scenario_command"
+    },
+    "cmd_id": {
+      "$ref": "defs.json#/$defs/cmd_id"
+    },
+    "beat": {
+      "enum": [
+        "degrade",
+        "near_miss",
+        "visitor",
+        "cold_door",
+        "stale",
+        "reset"
+      ]
+    }
+  }
+}

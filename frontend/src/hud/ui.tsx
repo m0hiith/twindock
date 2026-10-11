@@ -142,7 +142,7 @@ export function selectAndCenter(id: string): void {
 export function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={active}
-      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${active ? "bg-info-bg text-info" : "text-ink-2 hover:bg-idle-bg hover:text-ink"}`}>
+      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${active ? "bg-info-bg text-info" : "text-ink-2 hover:bg-idle-bg hover:text-ink"}`}>
       {children}
     </button>
   );

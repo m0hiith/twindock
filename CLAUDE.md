@@ -81,7 +81,13 @@ BTN0/BTN1 actions, auto mode, LED timeouts, dropped device messages, BLE tags), 
 `ble_tracks` (after each BLE scan: per tag last/smoothed RSSI, raw/committed/pending zone, plus
 the zone config; for the /device calibration helper).
 Client → server: `move_unit` (`unit_id`, `target_node`, `action`, `dry_run`, optional `pallet_id`
-for `pick`), `select_unit`, `led_command`, `set_auto_mode`.
+for `pick`), `select_unit` (a unit or a device id), `led_command`, `set_auto_mode`.
+
+Site twin additions (see `shared/schema.md`): server → client `device_update`,
+`production_update`, `safety_update`, `alerts_update` (and `sites` + `devices` in `world_snapshot`);
+client → server `machine_command`, `ack_alert`, `scenario_command`. MQTT: simulated devices on
+`twin/<site>/<device>/<channel>` (`mqtt/site_hello|status|reading.json`, `source` always `"sim"`),
+simulator commands on `twin/<site>/<device>/cmd/<action>` (`mqtt/site_cmd.json`).
 
 Units carry, besides position, state and `source`: `plan` (forklifts: queued `{node, action}`
 steps; BTN0 runs the first), `holder` (pallets: the forklift or truck holding it), `cargo`

@@ -40,7 +40,7 @@ function Puck({ d, selected }: { d: Device; selected: boolean }) {
     <group ref={g} position={[d.x, 0, d.z]} {...pickHandlers(d.id)}>
       <mesh geometry={ringGeo} position={[0, 0.06, 0]} material={ringMat(tone)} />
       {selected && <mesh geometry={selGeo} position={[0, 0.07, 0]} material={ringMat(color.accent)} />}
-      <Cyl size={[0.5, 0.22, 0.5]} at={[0, 0.06, 0]} color="#FFFFFF" />
+      <Cyl size={[0.5, 0.22, 0.5]} at={[0, 0.06, 0]} color="#FFFFFF" shadow={false} />
       <Cyl size={[0.2, 0.04, 0.2]} at={[0, 0.28, 0]} shadow={false} material={mat(d.status === "online" ? tone : color.idle)} />
     </group>
   );

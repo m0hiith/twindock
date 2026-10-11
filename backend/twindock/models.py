@@ -110,6 +110,12 @@ class SetAutoMode(Strict):
     enabled: bool
 
 
+class ScenarioCommand(Strict):
+    type: Literal["scenario_command"]
+    cmd_id: str
+    beat: Literal["degrade", "near_miss", "visitor", "cold_door", "stale", "reset"]
+
+
 class AckAlert(Strict):
     type: Literal["ack_alert"]
     cmd_id: str
@@ -124,7 +130,8 @@ class MachineCommand(Strict):
     action: Literal["degrade", "restore", "maintenance"]
 
 
-ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand, AckAlert],
+ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand, AckAlert,
+                                ScenarioCommand],
                           Field(discriminator="type")]
 
 
@@ -305,7 +312,8 @@ class SelectionChanged(Strict):
 class CommandAck(Strict):
     type: Literal["command_ack"] = "command_ack"
     cmd_id: str
-    command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert"]
+    command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert",
+                     "scenario_command"]
     ok: bool
     reason: str | None = None
     path: list[str] | None = None
