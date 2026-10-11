@@ -10,12 +10,8 @@ broker/log/
 .env
 # Vendor SDK (405 MB), kept locally, not committed
 wiseconnect-*/
-# Copy of /shared/schemas made by the Vercel build (vercel.json)
-backend/shared/
 .vercel
 .env*
-# Copy of hardware/kits made by the Vercel build (vercel.json)
-backend/hardware/
 # Codex agent state, not part of the project
 .codex/
 # Local demo recordings, not committed
@@ -23,5 +19,3 @@ videos/
 # Firmware build output and local Wi-Fi/broker secrets
 firmware/*/build/
 firmware/*/td_secrets.h
-# Copy of tools/site_sim.py + sim_models.py made by the Vercel build (embedded simulator)
-backend/simtools/

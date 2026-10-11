@@ -1,6 +1,6 @@
 """The site simulator (tools/site_sim.py) running inside the backend, for deploys without a broker.
 
-Locally the simulator is its own process talking to Mosquitto. A hosted deploy (Vercel) has no broker, so every
+Locally the simulator is its own process talking to Mosquitto. A hosted deploy (the container) has no broker, so every
 SIM device would stay "never seen". In embedded mode the same SiteSim runs in the backend's event loop: its
 messages go straight to `Engine.on_mqtt` on the same twin/<site>/<device>/<channel> topics (so they pass the
 same schema checks and land in the device registry, never in the board's state), and the engine's site commands
@@ -21,9 +21,7 @@ from .engine import Engine
 
 log = logging.getLogger("twindock.sim")
 
-_HERE = Path(__file__).resolve()
-# tools/ in the repo; backend/simtools/ in a Vercel deploy (copied by the build, see vercel.json).
-_SIM_DIRS = (_HERE.parents[2] / "tools", _HERE.parents[1] / "simtools")
+_SIM_DIRS = (Path(__file__).resolve().parents[2] / "tools",)  # the repo's tools/, also copied into the container
 
 STEP_S = 0.25  # same period as the standalone simulator
 

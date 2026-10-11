@@ -1,0 +1,17 @@
+# Only what the Dockerfile copies matters; keep the build context small.
+.git
+.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+wiseconnect-*
+firmware
+broker
+videos
+.codex
+.vercel
+.env
+.env.*
+backend/tests
+backend/data

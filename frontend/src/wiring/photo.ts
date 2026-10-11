@@ -5,7 +5,7 @@ export type PhotoState = "checking" | "photo" | "none";
 export const BOARD_PHOTO = "/board/top.jpg";
 
 /** "photo" as soon as the file exists, "none" until then (the view draws the UG581 outline).
- *  Probed with an Image because the dev server and Vercel answer a missing file with index.html (200). */
+ *  Probed with an Image because the dev server and the container answer a missing file with index.html (200). */
 export function useBoardPhoto(): PhotoState {
   const [state, setState] = useState<PhotoState>("checking");
   useEffect(() => {

@@ -31,12 +31,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sim_models import Model, Physics, make  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-# In the repo this file is tools/site_sim.py; a Vercel deploy only bundles backend/, so its build copies it to
-# backend/simtools/ next to backend/world and backend/shared (see vercel.json).
-BACKEND = ROOT / "backend" if (ROOT / "backend" / "world").is_dir() else ROOT
+BACKEND = ROOT / "backend"
 SITES = BACKEND / "world" / "sites.json"
 LAYOUT = BACKEND / "world" / "layout.json"
-SCHEMAS = ROOT / "shared" / "schemas" if (ROOT / "shared" / "schemas").is_dir() else BACKEND / "shared" / "schemas"
+SCHEMAS = ROOT / "shared" / "schemas"
 
 
 def load_validators() -> dict[str, jsonschema.Draft202012Validator]:

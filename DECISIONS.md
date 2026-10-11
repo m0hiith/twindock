@@ -180,3 +180,13 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 ## Simulator inside the backend when there is no broker
 - The Vercel deploy has no Mosquitto, so every SIM device showed "never seen" and demo beats failed with "Not connected to the MQTT broker". `TWINDOCK_SIM=auto` (default) runs `tools/site_sim.py` in the backend's event loop when the broker isn't reachable at startup: messages go to `Engine.on_mqtt` on the same site topics (schema-checked, device registry only) and site commands go straight back. LED commands to the board still need the broker. GW-01 and RB-01 stay offline until the real hardware speaks.
 - Kits: the user asked not to show "reference". Non-built kits now say "Simulated kit" / SIM badge (still grey, never violet), and the part panel lists the SIM readings of devices built from the kit.
+
+## Realism and deploy run (REALISM_DEPLOY_PROMPTS.md)
+
+### D0/D1: one production container
+- Vercel is gone (`vercel.json`, `.vercelignore` and the backend/simtools copy paths). Serverless functions freeze the 20 Hz tick and the embedded simulator between requests, start fresh worlds on cold starts, run several copies and can't hold the `/ws` hub (docs/deploy_diagnosis.md, reproduced by `scripts/repro_serverless.py`). The factory logic was fine; the hosting model wasn't.
+- One `Dockerfile`: a Node stage builds the frontend, and a slim Python stage serves `frontend/dist`, `/api` and `/ws` from one FastAPI process on `$PORT` (default 7860, the Hugging Face Spaces port) with **exactly one worker**, because two workers would be two separate worlds. The container keeps the repo layout under `/app`, so no path in the code changes.
+- Broker: `MQTT_URL` (`mqtt://` or `mqtts://user:pass@host:8883`) wins. Without it the container sets `TWINDOCK_MQTT=0` and runs the simulator embedded. With a remote `MQTT_URL` the simulator also stays embedded (nobody runs `tools/site_sim.py` next to a hosted backend); `TWINDOCK_SIM=external` overrides that. Passwords are never logged (`BrokerConfig.__str__`).
+- `/api/health` reports uptime, achieved tick rate (5 s window), sim clock, SIM devices online/total and the broker. A tick rate below 15 Hz is logged as a warning.
+- The frontend already took its WebSocket URL from `window.location` and got a fresh `world_snapshot` on every connect; reconnects now add jitter and back off to 10 s, so many screens don't hammer a host that is waking up.
+- Docker on the dev Mac is Colima + the Homebrew docker CLI (Docker Desktop had been removed). `scripts/verify_live.py` watches a running instance over `/ws` for N minutes (auto mode, compressor cycling, generator on a grid failure, line output, vibration, tick rate).

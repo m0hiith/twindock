@@ -14,13 +14,8 @@ from typing import Any
 
 from .contract import first_error, validator
 
-# Repo layout: <repo>/hardware/kits. A Vercel deploy only bundles backend/, so its build step
-# copies the folder to backend/hardware/kits (see vercel.json); that copy is git-ignored.
-_HERE = Path(__file__).resolve()
-KITS_DIR = next(
-    (p for p in (_HERE.parents[2] / "hardware" / "kits", _HERE.parents[1] / "hardware" / "kits") if p.is_dir()),
-    _HERE.parents[2] / "hardware" / "kits",
-)
+# Repo layout (and the container's /app): <repo>/hardware/kits.
+KITS_DIR = Path(__file__).resolve().parents[2] / "hardware" / "kits"
 FL01_KIT = "fl01_sensor_pack"
 
 

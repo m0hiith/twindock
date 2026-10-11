@@ -1,4 +1,4 @@
-"""Embedded simulator (no broker, e.g. the Vercel deploy): SIM devices report, the board is never touched."""
+"""Embedded simulator (no broker, e.g. the hosted container): SIM devices report, the board is never touched."""
 
 from __future__ import annotations
 

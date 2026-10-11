@@ -181,7 +181,7 @@ It publishes on `twin/<site>/<device>/<channel>` with `source: "sim"` and `fw_ve
 validated against `shared/schemas/mqtt/site_*.json`. It never touches `twin/gateway/*`. Stop it with
 Ctrl-C: the devices then go stale (15 s) and offline (60 s) in the twin, which is the honest outcome.
 
-If the backend can't reach a broker when it starts (the Vercel deploy), it runs the same simulator in-process
+If the backend can't reach a broker when it starts (the hosted container), it runs the same simulator in-process
 (`TWINDOCK_SIM=auto`, the default; force with `embedded` or `external`). The SIM devices then report without
 Mosquitto, and the Demo tab works. The real board (GW-01) and its badge (RB-01) still show "Waiting for device".
 

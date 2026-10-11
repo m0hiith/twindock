@@ -1,4 +1,7 @@
 // WebSocket link to the backend. Reconnects with backoff; every message is schema-checked.
+// The URL comes from the page's own origin (wss on https), so the same build works behind any host.
+// Every (re)connection gets a fresh world_snapshot from the server (Engine.on_connect), which replaces
+// the whole local world: after a hosted backend wakes up or restarts, nothing stale survives.
 import type { ClientMessage, CommandAck } from "../contract";
 import { checkClientMessage, parseServerMessage } from "../contract/validate";
 import { useWorld } from "./world";
@@ -36,8 +39,9 @@ export function connect(): void {
     setConn("reconnecting");
     for (const resolve of waiting.values()) resolve(localFailure("Connection lost before the server replied"));
     waiting.clear();
-    setTimeout(connect, backoffMs);
-    backoffMs = Math.min(backoffMs * 2, 5000);
+    // Jitter so many screens don't reconnect in lockstep when a sleeping host wakes up.
+    setTimeout(connect, backoffMs * (0.75 + Math.random() * 0.5));
+    backoffMs = Math.min(backoffMs * 2, 10000);
   };
 }
 

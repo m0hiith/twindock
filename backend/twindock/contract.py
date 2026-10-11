@@ -15,13 +15,8 @@ from typing import Any
 import jsonschema
 from referencing import Registry, Resource
 
-# Repo layout: <repo>/shared/schemas. A Vercel deploy only bundles backend/, so its build step
-# copies the schemas to backend/shared/schemas (see vercel.json); that copy is git-ignored.
-_HERE = Path(__file__).resolve()
-SHARED = next(
-    (p for p in (_HERE.parents[2] / "shared" / "schemas", _HERE.parents[1] / "shared" / "schemas") if p.is_dir()),
-    _HERE.parents[2] / "shared" / "schemas",
-)
+# Repo layout (and the container's /app): <repo>/shared/schemas.
+SHARED = Path(__file__).resolve().parents[2] / "shared" / "schemas"
 
 MQTT_SCHEMAS = {
     "hello": "gateway_hello",
