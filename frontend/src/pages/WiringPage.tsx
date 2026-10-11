@@ -82,7 +82,7 @@ export function WiringPage() {
       const stamp = new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
       const k = wiring.kit;
       const canvas = await renderView(svg.current, `${k.name} wiring · ${label}`,
-        `${k.status === "built" ? "Built and verified" : "Reference design · simulated"} · ${wiring.board} · from hardware/kits/${k.id}.json · exported ${stamp}`, view === "breadboard");
+        `${k.status === "built" ? "Built and verified" : "Simulated kit"} · ${wiring.board} · from hardware/kits/${k.id}.json · exported ${stamp}`, view === "breadboard");
       const name = `twindock-wiring-${k.id}-${view}`;
       if (kind === "png") await exportPng(canvas, `${name}.png`);
       else exportPdf(canvas, `${name}.pdf`);
@@ -203,7 +203,7 @@ function Intro({ wiring }: { wiring: Wiring | null }) {
       )}
       <p className="mt-auto text-[12px] text-ink-2">
         {wiring?.kit.status === "reference"
-          ? `Generated from hardware/kits/${wiring.kit.id}.json. Reference design: real parts, simulated data. Values marked unverified must be checked before building.`
+          ? `Generated from hardware/kits/${wiring.kit.id}.json. Real parts, simulated data. Values marked unverified must be checked before building.`
           : "Generated from the kit file in hardware/kits. Readings appear only from real messages sent by the board; until then a part shows “Waiting for firmware”."}
       </p>
     </div>

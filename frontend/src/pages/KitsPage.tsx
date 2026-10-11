@@ -22,8 +22,8 @@ export function KitsPage() {
         <div>
           <h1 className="text-[20px] font-semibold">Device kits</h1>
           <p className="mt-1 text-[13px] text-ink-2">
-            One kit design per kind of asset. {built} {built === 1 ? "kit is" : "kits are"} built on real hardware; every other kit is a
-            reference design: real parts and a correct wiring plan, with simulated data.
+            One kit design per kind of asset. {built} {built === 1 ? "kit is" : "kits are"} built on real hardware; every other kit uses
+            real parts and a correct wiring plan, with simulated data (SIM).
           </p>
         </div>
         {error && <div role="alert" className="rounded-xl bg-crit-bg px-4 py-2 text-[13px] text-crit">{error}</div>}

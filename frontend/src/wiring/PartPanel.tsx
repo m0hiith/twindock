@@ -1,7 +1,9 @@
 // Side panel for the selected part: plain-language caption first (non-engineers read this page),
 // then what it measures, bus and address, status, and the reading area.
 import type { ReactNode } from "react";
-import { ago, Icon, LiveBadge, useTick } from "../hud/ui";
+import { channelLabel, formatReading as formatDeviceReading, readingEntries } from "../fleet/format";
+import { ago, Icon, LiveBadge, SimBadge, useTick } from "../hud/ui";
+import { useWorld } from "../store/world";
 import { kindLabel, statusHelp, type Part, type WiringIndex } from "./model";
 import { formatReading, sensorLabel, WAITING, type PartReadings } from "./readings";
 import { StatusBadge } from "./ui";
@@ -29,8 +31,7 @@ export function PartPanel({ ix, part, readings, online, onClose }: {
         <StatusBadge status={part.status} help />
 
         {ix.w.kit.status === "reference"
-          ? <div className="rounded-xl bg-idle-bg p-3 text-[13px] text-ink-2">Reference design: this part has not been built. Devices that use this kit
-              report <b className="text-ink">simulated</b> values (SIM), shown on the Fleet and Twin pages.</div>
+          ? <SimReadings kitId={ix.w.kit.id} />
           : <ReadingArea part={part} readings={readings} online={online} />}
 
         <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-[13px]">
@@ -121,5 +122,38 @@ function Row({ k, children }: { k: string; children: ReactNode }) {
       <dt className="text-ink-2">{k}</dt>
       <dd className="min-w-0">{children}</dd>
     </>
+  );
+}
+
+/** A simulated kit: the latest readings of the SIM devices built from it (never violet, always with their age). */
+function SimReadings({ kitId }: { kitId: string }) {
+  useTick(1000);
+  const devices = useWorld((s) => s.devices);
+  const built = Object.values(devices).filter((d) => d.kit === kitId);
+  return (
+    <div className="rounded-xl border border-[var(--card-border)] p-3">
+      <div className="mb-2 flex items-center gap-2 text-[13px] font-semibold">Readings <SimBadge /></div>
+      {built.length === 0 && <div className="text-[13px] text-ink-2">No device uses this kit yet.</div>}
+      <div className="flex flex-col gap-3">
+        {built.map((d) => {
+          const rs = readingEntries(d);
+          return (
+            <div key={d.id}>
+              <div className="text-[12px] text-ink-2">{d.id} · {d.label}</div>
+              {rs.length === 0 && <div className="text-[13px] text-ink-2">No reading yet</div>}
+              {rs.map(([ch, r]) => (
+                <div key={ch} className="flex items-baseline justify-between gap-3">
+                  <span className="text-[13px] text-ink-2">{channelLabel(ch)}</span>
+                  <span className="tabular text-right">
+                    <span className="text-[15px] font-semibold">{formatDeviceReading(ch, r)}</span>
+                    <span className="ml-2 text-[12px] text-ink-2">{ago(r.received_ms)}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

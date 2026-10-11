@@ -23,3 +23,5 @@ videos/
 # Firmware build output and local Wi-Fi/broker secrets
 firmware/*/build/
 firmware/*/td_secrets.h
+# Copy of tools/site_sim.py + sim_models.py made by the Vercel build (embedded simulator)
+backend/simtools/

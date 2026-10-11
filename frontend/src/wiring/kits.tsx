@@ -22,7 +22,7 @@ export function KitPicker({ kits, current }: { kits: KitSummary[]; current: stri
         {kits.length === 0 && <option value={current}>{current}</option>}
         {groupKits(kits).map(([type, list]) => (
           <optgroup key={type} label={ASSET_LABEL[type]}>
-            {list.map((k) => <option key={k.id} value={k.id}>{k.name}{k.status === "reference" ? " (reference)" : ""}</option>)}
+            {list.map((k) => <option key={k.id} value={k.id}>{k.name}{k.status === "reference" ? " (simulated)" : ""}</option>)}
           </optgroup>
         ))}
       </select>
@@ -34,20 +34,20 @@ export function StatusBadge({ status }: { status: KitInfo["status"] }) {
   // Not violet: that colour is reserved for real device data, and a kit's status is not a reading.
   return status === "built"
     ? <span className="rounded-full bg-ok-bg px-1.5 py-px text-[11px] font-semibold tracking-wide text-ok">BUILT</span>
-    : <span className="rounded-full bg-idle-bg px-1.5 py-px text-[11px] font-semibold tracking-wide text-ink-2">REFERENCE</span>;
+    : <span className="rounded-full bg-idle-bg px-1.5 py-px text-[11px] font-semibold tracking-wide text-ink-2">SIM</span>;
 }
 
-/** Built kits are real hardware; reference designs are real parts with simulated data. Never blurred. */
+/** Built kits are real hardware; the others are real parts with simulated data. Never blurred. */
 export function KitBanner({ kit, devices }: { kit: KitInfo; devices: string[] }) {
   const built = kit.status === "built";
   return (
     <div role="status" data-testid="kit-banner"
       className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-4 py-2 text-[13px] ${built ? "bg-ok-bg text-ok" : "bg-idle-bg text-ink"}`}>
-      <b className="text-[14px]">{built ? "Built and verified" : "Reference design · simulated"}</b>
+      <b className="text-[14px]">{built ? "Built and verified" : "Simulated kit"}</b>
       <span className={built ? "text-ink" : "text-ink-2"}>
         {built
           ? "Real hardware on the bench. Its readings come from the board itself."
-          : "Real, buyable parts with a correct wiring plan. Nothing here has been built: any numbers shown are simulated."}
+          : "Real, buyable parts with a correct wiring plan. The readings shown come from the simulator (SIM)."}
       </span>
       {devices.length > 0 && <span className="ml-auto text-ink-2">Used by {devices.join(", ")}</span>}
     </div>

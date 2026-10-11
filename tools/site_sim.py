@@ -22,19 +22,21 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import jsonschema
-import paho.mqtt.client as mqtt
 from referencing import Registry, Resource
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sim_models import Model, Physics, make  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-SITES = ROOT / "backend" / "world" / "sites.json"
-LAYOUT = ROOT / "backend" / "world" / "layout.json"
-SCHEMAS = ROOT / "shared" / "schemas"
+# In the repo this file is tools/site_sim.py; a Vercel deploy only bundles backend/, so its build copies it to
+# backend/simtools/ next to backend/world and backend/shared (see vercel.json).
+BACKEND = ROOT / "backend" if (ROOT / "backend" / "world").is_dir() else ROOT
+SITES = BACKEND / "world" / "sites.json"
+LAYOUT = BACKEND / "world" / "layout.json"
+SCHEMAS = ROOT / "shared" / "schemas" if (ROOT / "shared" / "schemas").is_dir() else BACKEND / "shared" / "schemas"
 
 
 def load_validators() -> dict[str, jsonschema.Draft202012Validator]:
@@ -75,8 +77,10 @@ class SiteSim:
         self.local_hour = lambda: time.localtime().tm_hour + time.localtime().tm_min / 60.0
         self.v = load_validators()
         self.t = 0.0  # simulated seconds since start (advanced by step(dt), so tests run fast)
-        self.client: mqtt.Client | None = None
+        self.client: Any = None  # paho client when publishing to a broker
+        self.sink: Callable[[str, bytes, bool], None] | None = None  # in-process delivery (backend's embedded mode)
         self.sent = 0
+        self.verbose = True
 
     def with_routes(self, d: dict[str, Any]) -> dict[str, Any]:
         """Badges walk their worker's routes: node ids from sites.json -> layout coordinates."""
@@ -97,8 +101,11 @@ class SiteSim:
     def publish(self, m: Model, channel: str, payload: dict[str, Any], retain: bool = False) -> None:
         kind = channel if channel in ("hello", "status") else "reading"
         self.v[kind].validate(payload)
+        data = json.dumps(payload, separators=(",", ":"))
+        if self.sink is not None:
+            self.sink(self.topic(m, channel), data.encode(), retain)
         if self.client is not None:
-            self.client.publish(self.topic(m, channel), json.dumps(payload, separators=(",", ":")), qos=0, retain=retain)
+            self.client.publish(self.topic(m, channel), data, qos=0, retain=retain)
         self.sent += 1
 
     def on_command(self, topic: str, payload: bytes) -> None:
@@ -113,7 +120,8 @@ class SiteSim:
             data = json.loads(payload)
             self.v["cmd"].validate(data)
         except (ValueError, jsonschema.ValidationError) as e:
-            print(f"[sim] ignored invalid command on {topic}: {e}")
+            if self.verbose:
+                print(f"[sim] ignored invalid command on {topic}: {e}")
             return
         t = self.t
         action = parts[4]
@@ -127,7 +135,8 @@ class SiteSim:
                 m.command(action, t, int(t * 1000), data)  # type: ignore[attr-defined]
             else:
                 m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]
-        print(f"[sim] {m.id}: {action} ({data.get('cmd_id')})")
+        if self.verbose:
+            print(f"[sim] {m.id}: {action} ({data.get('cmd_id')})")
 
     def hellos(self) -> None:
         for m in self.models.values():
@@ -166,6 +175,7 @@ def main() -> None:
     ap.add_argument("--zones", help="comma-separated zone ids or kinds (production, cold_room, ...)")
     ap.add_argument("--seed", type=int)
     a = ap.parse_args()
+    import paho.mqtt.client as mqtt  # only the standalone simulator needs a broker client
     cfg = json.loads(SITES.read_text())
     devices = select_devices(cfg, a.site, a.zones.split(",") if a.zones else None)
     if not devices:

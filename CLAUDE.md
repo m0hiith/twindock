@@ -202,6 +202,8 @@ east of it, same metre grid and waypoint graph). Sites, zones and commissioned d
 - Device status: online (last message ≤ 15 s, same as the board), stale (≤ 60 s), offline (older or
   never), fault (the device reports one).
 - Never change `firmware/`, the board's topics or GW-01's behaviour for site-twin work.
+- With no broker (hosted deploy), the backend runs `tools/site_sim.py` in-process (`backend/twindock/embedded_sim.py`,
+  `TWINDOCK_SIM=auto|embedded|external`): same topics and schemas, into the device registry only, never the board.
 
 ## Coding conventions
 
@@ -217,7 +219,7 @@ east of it, same metre grid and waypoint graph). Sites, zones and commissioned d
 `hardware/kits/<kit_id>.json` (schema `shared/schemas/hardware/wiring.json`) describes one asset's
 sensor pack. Only `fl01_sensor_pack` (SiWx917 BRD2605A) is **built**; every other kit is a
 **reference design** (real, buyable parts, correct wiring, simulated data with `source: "sim"`).
-Wiring pages show "Built and verified" or "Reference design · simulated". Pages: `/kits`, `/wiring/:kit_id`.
+Wiring pages show "Built and verified" or "Simulated kit" (the UI never says "reference"; simulated kits show their SIM devices' readings). Pages: `/kits`, `/wiring/:kit_id`.
 Silicon Labs radios first (SiWx917 for mains/vehicle Wi-Fi, EFR32BG for coin-cell BLE, EFR32MG24 for
 Thread/Matter/Zigbee); anything unconfirmed is `unverified`. Plan: `docs/kits_plan.md`.
 

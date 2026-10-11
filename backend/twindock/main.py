@@ -18,6 +18,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+from .embedded_sim import STEP_S, EmbeddedSim, broker_reachable
 from .engine import Engine, MqttOut, WsOut
 from .graph import DEFAULT_LAYOUT, load_layout
 from .hub import Hub
@@ -31,6 +32,9 @@ MQTT_ENABLED = os.environ.get("TWINDOCK_MQTT", "1") != "0"
 MQTT_HOST = os.environ.get("TWINDOCK_MQTT_HOST", "127.0.0.1")
 MQTT_PORT = int(os.environ.get("TWINDOCK_MQTT_PORT", "1883"))
 MQTT_CLIENT_ID = os.environ.get("TWINDOCK_MQTT_CLIENT_ID", "twindock-backend")
+# Site simulator: "external" (tools/site_sim.py through the broker), "embedded" (inside this process) or "auto":
+# embedded when there is no broker to reach at startup (a hosted deploy), external otherwise.
+SIM_MODE = os.environ.get("TWINDOCK_SIM", "auto")
 
 
 class App:
@@ -39,12 +43,15 @@ class App:
         self.engine = Engine(load_layout())
         self.hub = Hub()
         self.mqtt = MqttBridge(self.engine, self.flush, MQTT_HOST, MQTT_PORT, MQTT_CLIENT_ID)
+        self.sim: EmbeddedSim | None = None
 
     def flush(self) -> None:
         for o in self.engine.drain():
             if isinstance(o, WsOut):
                 self.hub.send(o.to, o.msg)
             elif isinstance(o, MqttOut):
+                if self.sim is not None and self.sim.command(o.topic, o.payload):
+                    continue  # a command for a simulated device, handled in-process
                 self.mqtt.publish(o.topic, o.payload)
 
     async def tick_loop(self) -> None:
@@ -58,8 +65,28 @@ class App:
             last = now
             self.flush()
 
+    async def sim_loop(self) -> None:
+        assert self.sim is not None
+        self.sim.start()
+        self.flush()
+        last = time.monotonic()
+        while True:
+            await asyncio.sleep(STEP_S)
+            now = time.monotonic()
+            self.sim.step(min(now - last, 1.0))
+            last = now
+            self.flush()
+
 
 state = App()
+
+
+def _want_embedded_sim() -> bool:
+    if SIM_MODE == "embedded":
+        return True
+    if SIM_MODE == "external":
+        return False
+    return not MQTT_ENABLED or not broker_reachable(MQTT_HOST, MQTT_PORT)
 
 
 @contextlib.asynccontextmanager
@@ -70,6 +97,13 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         tasks.append(asyncio.create_task(state.mqtt.run()))
     else:
         log.warning("MQTT disabled (TWINDOCK_MQTT=0): the board twin will show Waiting for device")
+    if _want_embedded_sim():
+        try:
+            state.sim = EmbeddedSim(state.engine)
+            tasks.append(asyncio.create_task(state.sim_loop()))
+        except Exception:  # noqa: BLE001 - a missing simulator only leaves the SIM devices offline
+            log.exception("embedded site simulator unavailable; SIM devices will show offline")
+            state.sim = None
     yield
     for t in tasks:
         t.cancel()
@@ -83,7 +117,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 def health() -> dict[str, Any]:
     e = state.engine
     return {"ok": True, "mqtt_connected": e.mqtt_connected, "gateway_online": e.gw.online,
-            "gateway_fake": e.gw.fake, "clients": len(state.hub.clients), "auto_mode": e.auto_mode}
+            "gateway_fake": e.gw.fake, "sim": "embedded" if state.sim else "external", "clients": len(state.hub.clients), "auto_mode": e.auto_mode}
 
 
 @app.get("/api/layout")

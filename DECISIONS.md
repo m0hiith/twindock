@@ -176,3 +176,7 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 ## Auto mode runs the factory side too
 - Added a raw-material flow: TR-03 (area raw) docks at DK-04/05 (raw store), FL-05 unloads to RAW_STOCK and feeds FAC_IN; the line uses up a pallet every 25 s while a machine is running; TR-03 leaves when empty and returns from RD_110 with a new load. Raw bays sit 9 m from their docks (as in the warehouse) so a forklift at the dock never overlaps the truck.
 - Everything is simulated (`source: "auto"`); no board topics or GW-01 behaviour touched. BTN1 now cycles FL-01..FL-05.
+
+## Simulator inside the backend when there is no broker
+- The Vercel deploy has no Mosquitto, so every SIM device showed "never seen" and demo beats failed with "Not connected to the MQTT broker". `TWINDOCK_SIM=auto` (default) runs `tools/site_sim.py` in the backend's event loop when the broker isn't reachable at startup: messages go to `Engine.on_mqtt` on the same site topics (schema-checked, device registry only) and site commands go straight back. LED commands to the board still need the broker. GW-01 and RB-01 stay offline until the real hardware speaks.
+- Kits: the user asked not to show "reference". Non-built kits now say "Simulated kit" / SIM badge (still grey, never violet), and the part panel lists the SIM readings of devices built from the kit.

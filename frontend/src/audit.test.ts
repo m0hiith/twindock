@@ -70,12 +70,12 @@ test("simulated data can never get the live tone", () => {
   for (const state of ["walking", "working", "no_data"]) assert.notEqual(toneOf({ kind: "worker", state }), "live");
 });
 
-test("every wiring page shows its status banner, and a reference design is never violet", () => {
+test("every wiring page shows its status banner, and a simulated kit is never violet", () => {
   const page = readFileSync(join(ROOT, "pages/WiringPage.tsx"), "utf8");
   const kits = readFileSync(join(ROOT, "wiring/kits.tsx"), "utf8");
   assert.match(page, /<KitBanner kit=\{wiring\.kit\}/);
   assert.match(kits, /Built and verified/);
-  assert.match(kits, /Reference design · simulated/);
+  assert.match(kits, /Simulated kit/);
   assert.equal((kits.match(LIVE) ?? []).length, 0, "kit status must not use the violet LIVE styling");
 });
 

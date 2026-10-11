@@ -105,6 +105,7 @@ class Engine:
         self.selected: str | None = None
         self.auto_mode = False
         self.mqtt_connected = False
+        self.sim_attached = False  # the site simulator runs inside the backend (no broker; see embedded_sim.py)
         self.out: list[WsOut | MqttOut] = []
         self._seq = 0
         self._last_wire: dict[str, dict[str, Any]] = {}
@@ -247,7 +248,7 @@ class Engine:
         would get the same action over its own radio, which doesn't exist yet."""
         for badge, action, extra in self.safety.take_badge_actions():
             d = self.devices.defs.get(badge)
-            if d is None or d["source"] != "sim" or not self.mqtt_connected:
+            if d is None or d["source"] != "sim" or not self.sim_reachable:
                 continue
             if action == "buzz" and extra.get("route") == "evacuate":
                 m = self._nearest_muster(badge)
@@ -676,6 +677,11 @@ class Engine:
         self.event("info", "World reset to the seed layout")
         self._sync_rule_leds()
 
+    @property
+    def sim_reachable(self) -> bool:
+        """Site commands reach the simulator: through the broker, or directly when it runs embedded."""
+        return self.mqtt_connected or self.sim_attached
+
     def set_mqtt_connected(self, connected: bool) -> None:
         if connected == self.mqtt_connected:
             return
@@ -1032,7 +1038,7 @@ class Engine:
         if pm is None:
             self._ack(client_id, m.cmd_id, "machine_command", False, f"{m.machine_id} is not a machine")
             return
-        if not self.mqtt_connected:
+        if not self.sim_reachable:
             self._ack(client_id, m.cmd_id, "machine_command", False, "Not connected to the MQTT broker")
             return
         self._site_command(pm.device_id, m.action)
@@ -1063,7 +1069,7 @@ class Engine:
                 # Demo: drive the worker's SIMULATED badge. Never possible for a real badge.
                 if self.devices.defs[w.badge]["source"] != "sim":
                     return self._ack(client_id, m.cmd_id, "safety_command", False, f"{w.badge} is not a simulated badge")
-                if not self.mqtt_connected:
+                if not self.sim_reachable:
                     return self._ack(client_id, m.cmd_id, "safety_command", False, "Not connected to the MQTT broker")
                 act = m.action.removeprefix("sim_")
                 self._site_command(w.badge, act, {"seconds": 120} if act == "still" else None)
@@ -1080,7 +1086,7 @@ class Engine:
         """One demo beat on cue. Beats only drive the simulator and the movement engine."""
         def fail(reason: str) -> None:
             self._ack(client_id, m.cmd_id, "scenario_command", False, reason)
-        if m.beat != "reset" and not self.mqtt_connected:
+        if m.beat != "reset" and not self.sim_reachable:
             return fail("Not connected to the MQTT broker (the simulator listens there)")
         text = ""
         if m.beat == "degrade":
@@ -1129,7 +1135,7 @@ class Engine:
             self.safety.end_evacuation(now)
             for wk in self.safety.workers.values():
                 self.safety.clear_incident(wk.id, now)
-            if self.mqtt_connected:
+            if self.sim_reachable:
                 for dev, action, extra in (("MM-01", "restore", None), ("MM-02", "restore", None),
                                            ("BG-02", "route", {"route": "default"}),
                                            ("BG-04", "route", {"route": "default"}),
