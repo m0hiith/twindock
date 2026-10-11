@@ -11,7 +11,15 @@ import type { Checked } from "./state";
 
 // Visible extent (metres): warehouse, apron, yard lane, gate and the road stretch where arriving
 // trucks wait (ROAD_E, x = 74), without the far road ends.
-const X0 = -6, X1 = 80, Z0 = -3, Z1 = 54;
+// The map used to stop at x = 80, so a move into the factory (x > 84) ran off its edge. It now has three views.
+const AREAS = {
+  warehouse: { label: "Warehouse", x0: -6, x1: 80, z0: -3, z1: 54 },
+  factory: { label: "Factory", x0: 84, x1: 172, z0: -8, z1: 80 },
+  campus: { label: "Campus", x0: -14, x1: 216, z0: -12, z1: 104 },
+} as const;
+type Area = keyof typeof AREAS;
+/** The view a point belongs to: the factory side starts east of the warehouse site (x 84). */
+const areaAt = (x: number): Area => (x >= 83 ? "factory" : "warehouse");
 
 const PortraitCtx = createContext(false);
 
@@ -169,6 +177,13 @@ export function SiteMap({ checks, chosen, path, onNodeTap, onBackground }: {
   const selected = movers.find((u) => u.id === selectedId);
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(false);
+  const [area, setArea] = useState<Area>("warehouse");
+  const { x0: X0, x1: X1, z0: Z0, z1: Z1 } = AREAS[area];
+  // Follow the operator: show the side of the campus the selected unit is on, and the side its planned move ends on.
+  const endNode = path?.length && layout ? layout.nodes.find((n) => n.id === path[path.length - 1]) : undefined;
+  const unitArea = selected ? areaAt(selected.x) : null;
+  useEffect(() => { if (unitArea) setArea(unitArea); }, [selectedId, unitArea]); // on selecting a unit, and when it drives from one side to the other
+  useEffect(() => { if (endNode) setArea(areaAt(endNode.x)); }, [endNode?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const el = box.current;
@@ -183,6 +198,12 @@ export function SiteMap({ checks, chosen, path, onNodeTap, onBackground }: {
   const nodes = layout.nodes.filter((n) => TARGET_TYPES.has(n.type) && (!selected || n.kinds.includes(selected.kind as "forklift" | "truck")));
   return (
     <div ref={box} className="relative h-full w-full">
+      <div className="absolute left-2 top-2 z-10 flex gap-1 rounded-xl bg-white/90 p-1 shadow-sm" role="group" aria-label="Map area">
+        {(Object.keys(AREAS) as Area[]).map((a) => (
+          <button key={a} type="button" aria-pressed={area === a} onClick={(e) => { e.stopPropagation(); setArea(a); }}
+            className={`h-7 rounded-lg px-2.5 text-[12px] font-medium ${area === a ? "bg-[var(--accent)] text-white" : "text-ink-2 hover:bg-idle-bg"}`}>{AREAS[a].label}</button>
+        ))}
+      </div>
       <svg viewBox={portrait ? `0 0 ${H} ${W}` : `${X0} ${Z0} ${W} ${H}`} className="h-full w-full touch-manipulation select-none"
         preserveAspectRatio="xMidYMid meet" onClick={onBackground} role="img" aria-label="Site map">
         <PortraitCtx.Provider value={portrait}>
