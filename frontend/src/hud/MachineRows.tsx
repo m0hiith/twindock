@@ -3,6 +3,7 @@
 import type { Unit } from "../contract";
 import { useHistory } from "../fleet/DevicePanel";
 import { BandChart } from "../fleet/ui";
+import { stateLabel } from "../status";
 import { useWorld } from "../store/world";
 import { ago, SimBadge, useTick } from "./ui";
 
@@ -29,6 +30,7 @@ export function MachineRows({ u }: { u: Unit }) {
     ? [b.mean - cfg.z_threshold * b.std, b.mean + cfg.z_threshold * b.std] : null;
   return (
     <>
+      <Row k="State">{stateLabel(m.state)}</Row>
       <Row k="Source"><span className="inline-flex items-center gap-1.5">Machine monitor {m.device_id} <SimBadge /></span></Row>
       <Row k="Data age">{m.data_ms ? ago(m.data_ms) : "never"}</Row>
       <Row k="Cycle time"><span className="tabular">{num(m.cycle_time_s, "s")} <span className="text-ink-2">(ideal {m.ideal_cycle_s} s)</span></span></Row>
@@ -55,7 +57,19 @@ export function MachineRows({ u }: { u: Unit }) {
       </div>
       <Row k="Units today"><span className="tabular">{m.units_today}{m.rejects_today ? ` · ${m.rejects_today} rejected` : ""}</span></Row>
       <Row k="Last fault">{m.last_fault ? `${m.last_fault.text} · ${ago(m.last_fault.at_ms)}` : "None today"}</Row>
+      <Row k="Severity zone">{m.iso_zone ? `ISO 10816 zone ${m.iso_zone}` : "—"}</Row>
       <Row k="OEE"><span className="tabular">{pct(m.oee)} <span className="text-ink-2">(A {pct(m.availability)} · P {pct(m.performance)} · Q {pct(m.quality)})</span></span></Row>
+      <Row k="Biggest loss">{biggestLoss(m.losses)}</Row>
     </>
   );
+}
+
+const LOSS_LABEL: Record<string, string> = {
+  breakdown_s: "Breakdowns", setup_s: "Set-up", starved_s: "Starved", blocked_s: "Blocked", speed_s: "Slow cycles", quality_s: "Scrap",
+};
+
+/** The largest OEE loss so far, from the machine's event log (planned stops are not losses). */
+function biggestLoss(losses: Record<string, number>): string {
+  const [k, v] = Object.entries(losses).filter(([k]) => k in LOSS_LABEL).sort((a, b) => b[1] - a[1])[0] ?? ["", 0];
+  return v > 0 ? `${LOSS_LABEL[k]} · ${Math.round(v / 60)} min` : "None yet";
 }

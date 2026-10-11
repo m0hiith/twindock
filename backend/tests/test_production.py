@@ -27,6 +27,7 @@ def machine_sim(seed: int) -> tuple[SiteSim, list[tuple[float, str, dict]]]:
     """The simulator with only MM-01 publishing; returns it and the list its readings go to."""
     s = SiteSim(SITES, [MM01], seed=seed)
     s.verbose = False
+    s.local_hour = lambda: 10.5  # type: ignore[method-assign]  # mid-shift A, between breaks
     out: list[tuple[float, str, dict]] = []
     s.publish = lambda m, ch, p, retain=False: out.append((s.t, ch, p))  # type: ignore[method-assign]
     return s, out
@@ -41,14 +42,14 @@ def run_sim(s: SiteSim, seconds: float) -> None:
 
 def test_machine_states_and_production() -> None:
     s, out = machine_sim(3)
-    run_sim(s, 1800)
+    run_sim(s, 3600)
     states = {p["value"] for _, ch, p in out if ch == "state"}
-    assert states <= {"running", "idle", "fault", "maintenance"}
-    assert {"running", "idle", "fault"} <= states  # over 30 min all three happen
+    assert states <= {"running", "starved", "blocked", "setup", "planned_stop", "fault", "maintenance"}
+    assert {"running", "blocked", "fault"} <= states  # over an hour: the slower packer blocks the press, minor stops happen
     units = [p["value"] for _, ch, p in out if ch == "units"]
-    assert units == sorted(units) and units[-1] > 100  # cumulative, ~6 s cycles
+    assert units == sorted(units) and units[-1] > 200  # cumulative parts made
     # alarms only accompany faults, and come from the machine's params
-    alarms = set(s.params.v("production.machines.M-01.alarms"))
+    alarms = set(s.params.v("production.machines.M-01.alarms")) | {s.params.v("production.failures.bearing_alarm"), s.params.v("production.air.trip_alarm")}
     assert all(p["value"] in alarms for _, ch, p in out if ch == "alarm")
 
 
@@ -66,19 +67,22 @@ def test_no_production_outside_running() -> None:
 def test_degrade_raises_vibration_and_restore_clears() -> None:
     s, out = machine_sim(2)
     m = s.core.get("production").machines["MM-01"]
-    m.state_until = 10_000  # keep it running
+    m.next_minor_s = 1e9  # no jams in this test
+    s.core.get("production").lines[1].buffer = -10_000  # the packer never blocks the press here
     run_sim(s, 30)
     base = [p["value"] for _, ch, p in out if ch == "vibration_rms"]
     out.clear()
     s.command("MM-01", "degrade")
-    run_sim(s, 90)
+    run_sim(s, 130)  # the seeded defect raises wear (and vibration ∝ wear²) within about two minutes
     worn = [p["value"] for _, ch, p in out if ch == "vibration_rms"]
     assert sum(worn[-10:]) / 10 > sum(base) / len(base) + 1.0
     out.clear()
     s.command("MM-01", "restore")
     run_sim(s, 20)
     back = [p["value"] for _, ch, p in out if ch == "vibration_rms"]
-    assert abs(sum(back) / len(back) - sum(base) / len(base)) < 0.3
+    # restore fits a new bearing: back to the healthy level (quieter than the slightly worn start)
+    healthy = s.params.f("production.machines.M-01.healthy_vibration_mm_s")
+    assert abs(sum(back) / len(back) - healthy) < 0.3 and sum(back) / len(back) < sum(base) / len(base) + 0.1
 
 
 # ------------------------------------------------------------------ baseline / z-score

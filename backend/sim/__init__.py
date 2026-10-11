@@ -14,7 +14,7 @@ from typing import Any, Callable
 from .core import SimCore
 from .models.environment import AssetTags, Doors, FirePanels, Gas, Helmets, Leaks, Occupancy, Rooms, WaterQuality
 from .models.people import People
-from .models.production import Production
+from .models.production import Production, Shifts
 from .models.utilities import CampusLoads, CompressedAir, Electrical, Water, Weather
 from .models.vehicles import DockBays, Telematics
 from .params import Params
@@ -30,7 +30,7 @@ def build_core(cfg: dict[str, Any], layout: dict[str, Any], params: Params, seed
     core = SimCore(params, seed, hour_of_day)
     nodes = {n["id"]: n for n in layout["nodes"]}
     line = (layout.get("production_line") or {}).get("machines", [])
-    for m in (Weather(), Doors(cfg), Occupancy(cfg), FirePanels(cfg), Gas(cfg), Leaks(cfg), AssetTags(cfg), Helmets(cfg),
+    for m in (Weather(), Shifts(), Doors(cfg), Occupancy(cfg), FirePanels(cfg), Gas(cfg), Leaks(cfg), AssetTags(cfg), Helmets(cfg),
               People(cfg, nodes), Production(cfg, line), Telematics(cfg), DockBays(cfg), CampusLoads(cfg),
               Rooms(cfg), CompressedAir(cfg), Water(cfg), Electrical(cfg), WaterQuality(cfg)):
         core.add(m)

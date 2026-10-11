@@ -22,7 +22,7 @@ class Bridge:
     """The engine and a SiteSim for some devices, both advanced by `step`: the sim's publishes go to the engine's MQTT
     input and the engine's site commands go back to the sim."""
 
-    def __init__(self, h: Harness, ids: list[str], hour: float = 12.0, sun: float = 0.8) -> None:
+    def __init__(self, h: Harness, ids: list[str], hour: float = 11.0, sun: float = 0.8) -> None:
         self.h = h
         h.engine.set_mqtt_connected(True)
         h.engine._sun = lambda _now: sun  # type: ignore[method-assign]

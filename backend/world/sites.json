@@ -2331,7 +2331,22 @@
       "M-04": 8.0
     },
     "outbound_node": "FAC_OUT",
-    "finished_by": "M-02"
+    "finished_by": "M-02",
+    "raw_material": {
+      "_doc": "Raw blanks for the presses: one raw pallet holds blanks_per_pallet; line_side_kit_blanks were already at the presses when the twin started. Blanks used = parts the presses made.",
+      "presses": [
+        "M-01",
+        "M-03"
+      ],
+      "blanks_per_pallet": 240,
+      "line_side_kit_blanks": 480
+    },
+    "vibration_zones_mm_s": {
+      "_doc": "ISO 10816-1 class I (machines up to 15 kW): upper limits of zones A, B and C in mm/s RMS; above C is zone D.",
+      "A": 0.71,
+      "B": 1.8,
+      "C": 4.5
+    }
   },
   "workers": [
     {

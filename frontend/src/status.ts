@@ -10,7 +10,7 @@ const TONES: Record<string, Record<string, Tone>> = {
   rack: { available: "ok", full: "warn" },
   pallet: { stored: "idle", staged: "info", carried: "info", loaded: "ok" },
   gateway: { online: "live", offline: "crit", waiting: "idle" },
-  machine: { running: "ok", idle: "idle", fault: "crit", maintenance: "warn", no_data: "idle" },
+  machine: { running: "ok", idle: "idle", starved: "warn", blocked: "warn", setup: "info", planned_stop: "idle", fault: "crit", maintenance: "warn", no_data: "idle" },
   worker: { walking: "info", working: "ok", idle: "idle" },
 };
 

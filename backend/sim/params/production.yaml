@@ -1,63 +1,88 @@
-# Production line (backend/sim/models/production.py).
+# Production lines (backend/sim/models/production.py).
 production:
-  _doc: FAC-01 machines (presses and packers) and conveyors.
-  ambient_c: {value: 24.0, unit: °C, source: "assumption: ventilated shop floor"}
+  _doc: FAC-01 lines. Line 1 M-01 press → buffer → M-02 packer; line 2 M-03 → M-04. Both presses draw blanks from one infeed.
+  ambient_c: {value: 30.0, unit: °C, source: "assumption: shop floor in a warm climate (outdoor mean 29 °C)"}
   supply_v: {value: 400.0, unit: V, source: "standard: IEC 60038 low-voltage three-phase 400 V"}
   power_factor: {value: 0.85, unit: "1", source: "typical industry value: induction motor near rated load (0.8-0.9)"}
-  idle_current_a: {value: 1.2, unit: A, source: "typical industry value: hydraulic pump / controls idling, ~10 % of rated"}
-  stopped_vibration_mm_s: {value: 0.15, unit: mm/s, source: "typical industry value: background floor vibration on a stopped machine"}
-  wear_current_a_per_mm_s: {value: 0.8, unit: A/(mm/s), source: "assumption: friction of a worn bearing loads the motor a little"}
-  wear_slowdown_per_mm_s: {value: 0.05, unit: 1/(mm/s), source: "assumption: a worn machine loses ~5 % speed per mm/s of extra vibration"}
-  cycle_variation: {value: 0.12, unit: "1", source: "typical industry value: micro-stops make real cycles 0-12 % slower than ideal"}
-  demo_degrade_rate_mm_s_per_s: {value: 0.015, unit: (mm/s)/s, source: "assumption: demo wear visible within a minute (0.9 mm/s per minute)"}
-  maintenance_s: {value: 30.0, unit: s, source: "assumption: short demo maintenance stop"}
+  idle_current_share: {value: 0.35, unit: "1", source: "typical industry value: a hydraulic press's pump idling draws 30-40 % of its working current"}
+  idle_vibration_share: {value: 0.5, unit: "1", source: "assumption: an idling motor shakes about half as much as one under load"}
+  stopped_vibration_mm_s: {value: 0.15, unit: mm/s, source: "typical industry value: floor vibration on a stopped machine"}
+  maintenance_s: {value: 30.0, unit: s, source: "assumption: short demo maintenance stop (work orders set their own time, R5)"}
+  cycle_variation: {dist: lognormal, median: 1.04, sigma_log: 0.04, unit: "1", source: "typical industry value: micro-stops and handling make real cycles ~4 % slower than ideal, with a few percent spread"}
+  shifts:
+    _doc: A 24/7 plant on three 8-hour shifts; breaks staggered with the canteen's meal times (water.canteen.meals_h).
+    calendar:
+      value:
+        - {name: A, start_h: 6, end_h: 14, breaks: [[9.5, 9.75], [12.0, 12.5]]}
+        - {name: B, start_h: 14, end_h: 22, breaks: [[17.0, 17.25], [19.5, 20.0]]}
+        - {name: C, start_h: 22, end_h: 6, breaks: [[1.0, 1.25], [3.0, 3.5]]}
+      unit: h
+      source: "typical industry value: three-shift operation with a 15 min tea break and a 30 min meal break per shift"
+    startup_min: {value: 10.0, unit: min, source: "typical industry value: start-of-shift checks and first-off approval take 10-15 min"}
+    handover_min: {value: 10.0, unit: min, source: "typical industry value: end-of-shift cleaning and hand-over notes"}
+  material:
+    blanks_per_raw_pallet: {value: 240, unit: blanks, source: "assumption: one raw pallet of steel blanks (~2 t at ~8 kg each)"}
+    initial_kit_blanks: {value: 480, unit: blanks, source: "assumption: two pallets' worth kitted at the presses when the simulation starts"}
+    buffer_capacity: {value: 12, unit: parts, source: "typical industry value: a short accumulation conveyor between press and packer holds 10-20 parts"}
+  failures:
+    minor_ttf_s: {dist: weibull, shape: 1.2, scale: 2700, unit: s, source: "typical industry value: minor stops (jams, misfeeds) every 30-60 min of running; β slightly above 1 (mostly random)"}
+    minor_ttr_s: {dist: lognormal, median: 150, sigma_log: 0.5, unit: s, source: "typical industry value: an operator clears a jam in 1-5 min (lognormal MTTR)"}
+    bearing_ttr_s: {dist: lognormal, median: 1800, sigma_log: 0.4, unit: s, source: "typical industry value: replacing a failed motor bearing takes 20-60 min"}
+    bearing_alarm: {value: "Bearing failure", unit: "-", source: "assumption: the alarm text when a bearing gives out"}
+    wear_shortens_by: {value: 0.7, unit: "1", source: "assumption: a worn bearing (misalignment, heat) makes jams up to ~3× more frequent"}
+    min_scale_share: {value: 0.2, unit: "1", source: "assumption: floor on that shortening so the Weibull scale stays positive"}
+  wear:
+    _doc: Bearing wear w, 0 new … ~1 worn out. dw/dt = rate × (1 + acceleration × w) while cycling (+ a demo defect rate).
+    initial: {dist: uniform, low: 0.05, high: 0.3, unit: "1", source: "assumption: bearings were fitted at different times"}
+    limit: {dist: normal, mean: 1.0, sigma: 0.08, unit: "1", source: "assumption: each bearing gives out at its own wear level"}
+    new: {value: 0.02, unit: "1", source: "assumption: a new bearing's running-in"}
+    max: {value: 1.2, unit: "1", source: "assumption: wear stops growing past any plausible limit"}
+    rate_per_s: {value: 5.2e-8, unit: 1/s, source: "typical industry value: a motor bearing in two-shift duty lasts ~2000 operating hours from 0.1 to 1 at this rate and acceleration (L10-class life, shortened for a busy press)"}
+    acceleration: {value: 3.0, unit: "1", source: "typical industry value: wear accelerates as damage grows (spalling spreads): slowly, then faster"}
+    demo_defect_rate_per_s: {value: 0.003, unit: 1/s, source: "assumption: the demo's injected defect takes a bearing to failure in about 5 minutes"}
+    slowdown: {value: 0.1, unit: "1", source: "assumption: a worn machine cycles up to ~10 % slower"}
+    extra_current_a: {value: 1.0, unit: A, source: "assumption: friction of a worn bearing loads the motor a little"}
+    vibration_mm_s_at_limit: {value: 4.0, unit: mm/s, source: "standard: ISO 10816-1 class I zone D starts at 4.5 mm/s; a bearing at its limit adds ~4 mm/s to a healthy ~1 mm/s"}
   thermal:
-    k_current_c_per_a: {value: 2.6, unit: °C/A, source: "assumption: steady surface rise of a motor housing per amp"}
-    k_wear_c_per_mm_s: {value: 3.0, unit: °C/(mm/s), source: "assumption: friction heat of a worn bearing"}
-    tau_s: {value: 50.0, unit: s, source: "assumption: thermal time constant of the bearing housing surface"}
+    rise_at_rated_c: {value: 30.0, unit: °C, source: "typical industry value: motor frame surface ~25-35 K above ambient at rated current (losses ∝ I²)"}
+    k_wear_c: {value: 15.0, unit: °C, source: "assumption: friction heat of a bearing at its wear limit"}
+    tau_s: {value: 900.0, unit: s, source: "typical industry value: thermal time constant of a 5-10 kW motor frame, 10-30 min"}
   air:
     slow_below_bar: {value: 6.0, unit: bar, source: "typical industry value: pneumatic tools are rated at 6 bar"}
     factor_per_bar: {value: 0.45, unit: 1/bar, source: "assumption: cylinders stroke slower as supply pressure falls"}
     max_factor: {value: 2.2, unit: "1", source: "assumption: the slowest a machine runs before the trip stops it"}
     trip_alarm: {value: "Low air pressure", unit: "-", source: "assumption: the machine's alarm text when the air trip stops it"}
   conveyor:
-    jam_s: {value: 25.0, unit: s, source: "assumption: an operator clears a jam in about half a minute"}
+    jam_s: {value: 25.0, unit: s, source: "assumption: an operator clears a conveyor jam in about half a minute"}
     run_current_a: {value: 7.5, unit: A, source: "typical industry value: 3-4 kW conveyor drive at 400 V"}
     jam_current_a: {value: 13.5, unit: A, source: "typical industry value: a stalled belt drive draws well above running current until its overload trips"}
     belt_speed_m_s: {value: 0.55, unit: m/s, source: "typical industry value: carton conveyor 0.3-0.8 m/s"}
-  state:
-    first_dwell_s: {dist: uniform, low: 40, high: 90, unit: s, source: "assumption: machines start their first spell at different moments"}
-    running_dwell_s: {dist: uniform, low: 40, high: 120, unit: s, source: "assumption: R0 port of the original random dwell (R2 replaces it with failures and starving)"}
-    fault_dwell_s: {dist: uniform, low: 15, high: 40, unit: s, source: "assumption: R0 port"}
-    idle_dwell_s: {dist: uniform, low: 8, high: 25, unit: s, source: "assumption: R0 port"}
-    p_fault: {value: 0.08, unit: "1", source: "assumption: R0 port"}
-    p_idle: {value: 0.14, unit: "1", source: "assumption: R0 port"}
   machines:
     M-01:
       ideal_cycle_s: {value: 6.0, unit: s, source: "assumption: small mechanical press, 10 strokes a minute"}
       rated_current_a: {value: 14.0, unit: A, source: "typical industry value: 7.5 kW hydraulic press motor at 400 V"}
-      healthy_vibration_mm_s: {value: 2.8, unit: mm/s, source: "standard: ISO 10816-3 zone A/B boundary region for a medium machine on a rigid foundation"}
-      scrap_rate: {value: 0.0, unit: "1", source: "assumption: the press's scrap shows at the packer's check"}
+      healthy_vibration_mm_s: {value: 1.1, unit: mm/s, source: "standard: ISO 10816-1 class I (small machines up to 15 kW) zone B is 0.71-1.8 mm/s"}
+      scrap_rate: {value: 0.0, unit: "1", source: "assumption: the press's defects are found at the packer's check"}
       air_nm3_min: {value: 0.5, unit: Nm³/min, source: "typical industry value: pneumatic clamps and ejector on a small press"}
-      alarms: {value: ["Die jam", "Hydraulic pressure low"], unit: "-", source: "assumption: the press's two commonest stop reasons"}
+      alarms: {value: ["Die jam", "Misfeed"], unit: "-", source: "assumption: the press's commonest minor stops"}
     M-02:
       ideal_cycle_s: {value: 8.0, unit: s, source: "assumption: shrink packer, 7.5 packs a minute"}
       rated_current_a: {value: 6.5, unit: A, source: "typical industry value: 3 kW packer drives at 400 V"}
-      healthy_vibration_mm_s: {value: 1.8, unit: mm/s, source: "standard: ISO 10816-3 zone A for a small machine"}
-      scrap_rate: {value: 0.03, unit: "1", source: "typical industry value: packing rejects 1-5 %"}
+      healthy_vibration_mm_s: {value: 0.8, unit: mm/s, source: "standard: ISO 10816-1 class I zone B (0.71-1.8 mm/s)"}
+      scrap_rate: {value: 0.03, unit: "1", source: "typical industry value: packing rejects 1-5 % (includes press defects caught here)"}
       air_nm3_min: {value: 0.3, unit: Nm³/min, source: "typical industry value: film cutter and pushers"}
-      alarms: {value: ["Film break", "Carton feed empty"], unit: "-", source: "assumption: the packer's two commonest stop reasons"}
+      alarms: {value: ["Film break", "Carton feed empty"], unit: "-", source: "assumption: the packer's commonest minor stops"}
     M-03:
       ideal_cycle_s: {value: 6.0, unit: s, source: "assumption: same press as M-01 on line 2"}
       rated_current_a: {value: 13.0, unit: A, source: "typical industry value: 7.5 kW hydraulic press motor at 400 V"}
-      healthy_vibration_mm_s: {value: 2.6, unit: mm/s, source: "standard: ISO 10816-3 zone A/B for a medium machine"}
-      scrap_rate: {value: 0.0, unit: "1", source: "assumption: the press's scrap shows at the packer's check"}
+      healthy_vibration_mm_s: {value: 1.0, unit: mm/s, source: "standard: ISO 10816-1 class I zone B (0.71-1.8 mm/s)"}
+      scrap_rate: {value: 0.0, unit: "1", source: "assumption: the press's defects are found at the packer's check"}
       air_nm3_min: {value: 0.5, unit: Nm³/min, source: "typical industry value: pneumatic clamps and ejector on a small press"}
-      alarms: {value: ["Die jam", "Hydraulic pressure low"], unit: "-", source: "assumption: the press's two commonest stop reasons"}
+      alarms: {value: ["Die jam", "Misfeed"], unit: "-", source: "assumption: the press's commonest minor stops"}
     M-04:
       ideal_cycle_s: {value: 8.0, unit: s, source: "assumption: same packer as M-02 on line 2"}
       rated_current_a: {value: 7.0, unit: A, source: "typical industry value: 3 kW packer drives at 400 V"}
-      healthy_vibration_mm_s: {value: 1.9, unit: mm/s, source: "standard: ISO 10816-3 zone A for a small machine"}
+      healthy_vibration_mm_s: {value: 0.85, unit: mm/s, source: "standard: ISO 10816-1 class I zone B (0.71-1.8 mm/s)"}
       scrap_rate: {value: 0.02, unit: "1", source: "typical industry value: packing rejects 1-5 %"}
       air_nm3_min: {value: 0.3, unit: Nm³/min, source: "typical industry value: film cutter and pushers"}
-      alarms: {value: ["Film jam"], unit: "-", source: "assumption: the packer's commonest stop reason"}
+      alarms: {value: ["Film jam"], unit: "-", source: "assumption: the packer's commonest minor stop"}

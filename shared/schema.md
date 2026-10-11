@@ -156,6 +156,12 @@ rated FAD while loaded) and `discharge_c`; CP-02 is the standby compressor. `pow
 accelerating, running, cooldown), `rpm`, `coolant_c`, `fuel_lph`, `load_kw`, `transfer` (mains, open, generator),
 `mains_ok`. New simulator commands for the air system: `fix_leaks`, `service` (used by work orders, R5).
 
+R2 (production): machine monitors report `state` as running, starved, blocked, setup, planned_stop, fault
+(breakdown or minor stop; `alarm` says which) or maintenance. `production_update` machines carry `losses` (OEE losses
+in seconds, folded from the machine's event log) and `iso_zone` (ISO 10816-1 class I zone of recent running
+vibration); the line carries `blanks_used` (parts the presses made). Simulator commands `feed` (a raw pallet at the
+press infeed, `units` blanks) and `repair` (a work order fits a new bearing, `seconds`).
+
 ### Worker safety (FACTORY_PROMPTS.md K3)
 
 `safety_update` now also carries per worker: `prealert` (fall / no_motion, with the cancel deadline), `man_down`,

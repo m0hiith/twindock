@@ -122,3 +122,10 @@ def test_backend_and_simulator_agree_on_ideal_cycle_times() -> None:
     p = Params.load()
     for mid, ideal in CFG["production"]["ideal_cycle_s"].items():
         assert p.f(f"production.machines.{mid}.ideal_cycle_s") == ideal, mid
+
+
+def test_backend_and_simulator_agree_on_raw_material() -> None:
+    p = Params.load()
+    raw = CFG["production"]["raw_material"]
+    assert p.f("production.material.blanks_per_raw_pallet") == raw["blanks_per_pallet"]
+    assert p.f("production.material.initial_kit_blanks") == raw["line_side_kit_blanks"]

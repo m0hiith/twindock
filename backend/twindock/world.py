@@ -135,7 +135,6 @@ class World:
         # Which nodes and lanes vehicles can't share (traffic.py); built once from the geometry.
         self.conflicts = traffic.build_conflicts(graph, [(ln.a, ln.b, list(ln.kinds)) for ln in layout.lanes])
         self.events: list[tuple[str, str, str | None]] = []  # (level, text, unit_id), drained by the engine
-        self.fac_in_seen: dict[str, float] = {}  # raw pallet id -> when it reached the factory inbound spot (planner.py)
         self.removed: list[str] = []  # unit ids that left the world (delivered pallets), drained by the engine
         self.entities: dict[str, Entity] = {}
         self.time = 0.0
@@ -147,7 +146,6 @@ class World:
     def reset(self) -> None:
         L, g = self.layout, self.graph
         self.time = 0.0
-        self.fac_in_seen.clear()
         self.events.clear()
         ents: dict[str, Entity] = {}
         for f in L.seed.forklifts:

@@ -12,7 +12,7 @@ import { pickHandlers } from "./Units";
 import { Baked } from "./Baked";
 import { Box, Cyl, Decal, Label, mat, OutlineContext } from "./parts";
 
-const LIGHT: Record<string, string> = { running: color.ok, idle: color.warn, maintenance: color.warn, fault: color.crit };
+const LIGHT: Record<string, string> = { running: color.ok, idle: color.warn, starved: color.warn, blocked: color.warn, setup: color.warn, maintenance: color.warn, fault: color.crit };
 
 function useMachineState(id: string): string {
   return useWorld((s) => s.units[id]?.state ?? "no_data");

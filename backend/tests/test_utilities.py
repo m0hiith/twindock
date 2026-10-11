@@ -13,7 +13,8 @@ from site_sim import SITES, SiteSim  # noqa: E402
 CFG = json.loads(SITES.read_text())
 
 
-def core_sim(hour: float = 12.0, seed: int = 21) -> SiteSim:
+def core_sim(hour: float = 11.0, seed: int = 21) -> SiteSim:
+    """11:00 is mid-shift A (12:00 is its lunch break)."""
     """The whole campus's true state, no devices publishing."""
     s = SiteSim(CFG, [], seed=seed)
     s.verbose = False
@@ -146,7 +147,7 @@ def test_generator_start_sequence_timing() -> None:
 
 def test_energy_balance_in_every_state() -> None:
     """Supply equals load at every step: normal, the transfer gap, on generator, retransfer."""
-    s = core_sim(hour=12.0)
+    s = core_sim(hour=11.0)
     worst = [0.0]
     run(s, 120, lambda s: worst.__setitem__(0, max(worst[0], abs(balance(s)))))
     s.core.command("PM-04", "grid_failure", {})
@@ -157,7 +158,7 @@ def test_energy_balance_in_every_state() -> None:
 
 
 def test_solar_never_exports_and_follows_the_day() -> None:
-    noon, night = core_sim(hour=12.0), core_sim(hour=23.0)
+    noon, night = core_sim(hour=11.5), core_sim(hour=23.5)
     run(noon, 120)
     run(night, 120)
     pn, pm = noon.core.get("power"), night.core.get("power")
@@ -169,7 +170,7 @@ def test_solar_never_exports_and_follows_the_day() -> None:
 def test_power_factor_is_physical() -> None:
     """Feeders show their loads' PF. At night the APFC bank holds the incomer near its target; at midday solar
     supplies real power only, so the incomer's PF falls even with the bank in (a real effect at solar-heavy sites)."""
-    night, noon = core_sim(hour=22.0), core_sim(hour=12.0)
+    night, noon = core_sim(hour=22.5), core_sim(hour=11.0)
     run(night, 120)
     run(noon, 120)
     for s in (night, noon):

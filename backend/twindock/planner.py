@@ -21,9 +21,8 @@ RECEIVING_ZONE = "ZONE_A"
 STAGING_ZONE = "ZONE_B"
 FACTORY_OUT = "FAC_OUT"       # FAC-01 line output: finished pallets wait here for a forklift
 RAW_STOCK = "RAW_STOCK"       # raw material store: delivered pallets wait here for the raw forklift
-FACTORY_IN = "FAC_IN"         # the line's inbound spot: the line uses a pallet up after RAW_USE_S
+FACTORY_IN = "FAC_IN"         # the line's inbound spot: the presses use its pallets up (engine._raw_material)
 RAW_CHARGERS = {"RAW_CHARGER"}
-RAW_USE_S = 25.0
 CHARGE_BELOW_PCT = 25.0
 TRUCK_DEPART_AT = 4          # an outbound truck leaves once it has this many pallets
 TRUCK_DEPART_IDLE_S = 8.0    # ...and nothing has been loaded for this long
@@ -262,21 +261,7 @@ def auto_step(world: World, rng: random.Random) -> list[str]:
                 if world.command(t.id, d.node, "dock", source="auto").ok:
                     notes.append(f"{t.id} assigned to {d.label}")
                     break
-    # The line uses raw material up (only while a machine runs), one pallet per RAW_USE_S at the inbound spot.
-    seen = world.fac_in_seen
-    here = [p.id for p in world.pallets_at(FACTORY_IN)] if FACTORY_IN in world.graph.nodes else []
-    for pid in list(seen):
-        if pid not in here:
-            del seen[pid]
-    for pid in here:
-        seen.setdefault(pid, now)
-    if line_running(world):
-        for pid in here:
-            if now - seen[pid] >= RAW_USE_S:
-                world.consume_pallet(pid)
-                del seen[pid]
-                notes.append(f"The line used up raw material pallet {pid}")
-                break
+    # Raw material is used up by the presses themselves: the engine counts their parts (engine._raw_material).
     return notes
 
 

@@ -353,7 +353,7 @@ export interface GatewayStatus {
   replay?: boolean;
 }
 /**
- * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); goto, buzz, fall, still, cancel, sos, checkin, skip_checkin (badges, demo); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness).
+ * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); goto, buzz, fall, still, cancel, sos, checkin, skip_checkin (badges, demo); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness); feed (a press monitor: a raw pallet was dropped at the infeed, units = blanks), repair (machine monitor: a work order fits a new bearing, seconds); fix_leaks, service (compressor monitors).
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "site_cmd".
@@ -371,6 +371,10 @@ export interface SiteCmd {
    * @maxItems 80
    */
   path?: [number, number][];
+  /**
+   * feed only: blanks on the raw pallet dropped at the press infeed.
+   */
+  units?: number;
 }
 /**
  * Retained. Announces a commissioned device, like the board's hello. The backend checks it against backend/world/sites.json.
@@ -786,9 +790,9 @@ export interface ProductionUpdate {
     device_id: DeviceId;
     label: string;
     /**
-     * no_data: the machine monitor is not online, so the state is unknown.
+     * From the machine monitor: running (cycling), starved (no input), blocked (no room downstream), setup (shift start-up), planned_stop (break, handover), fault (breakdown or minor stop; see last_fault), maintenance; idle from older simulators. no_data: the monitor is not online, so the state is unknown.
      */
-    state: "running" | "idle" | "fault" | "maintenance" | "no_data";
+    state: "running" | "starved" | "blocked" | "setup" | "planned_stop" | "fault" | "maintenance" | "idle" | "no_data";
     state_since_ms: number | null;
     data_ms: number | null;
     cycle_time_s: number | null;
@@ -816,6 +820,22 @@ export interface ProductionUpdate {
     performance: number | null;
     quality: number | null;
     oee: number | null;
+    /**
+     * OEE losses folded from the machine's event log (seconds): breakdown, set-up, starved, blocked, speed (running beyond the ideal cycle), quality (ideal time spent on scrap), and planned stops (excluded from planned time).
+     */
+    losses: {
+      breakdown_s: number;
+      setup_s: number;
+      starved_s: number;
+      blocked_s: number;
+      speed_s: number;
+      quality_s: number;
+      planned_stop_s: number;
+    };
+    /**
+     * ISO 10816-1 severity zone of the recent running vibration (sites.json production.vibration_zones_mm_s).
+     */
+    iso_zone: ("A" | "B" | "C" | "D") | null;
   }[];
   line: {
     units_today: number;
@@ -829,6 +849,10 @@ export interface ProductionUpdate {
     performance: number | null;
     quality: number | null;
     oee: number | null;
+    /**
+     * Raw blanks the presses have used (parts made), from their counters.
+     */
+    blanks_used: number;
   };
   config: {
     z_threshold: number;

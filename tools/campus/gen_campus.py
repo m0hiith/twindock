@@ -518,6 +518,11 @@ def main() -> None:
     build_sites(s, l)
     # production config for line 2
     s["production"]["ideal_cycle_s"].update({"M-03": 6.0, "M-04": 8.0})
+    # R2: the plant's material and vibration settings (the simulator's params must agree: tests/test_sim_core.py).
+    s["production"]["raw_material"] = {"_doc": "Raw blanks for the presses: one raw pallet holds blanks_per_pallet; line_side_kit_blanks were already at the presses when the twin started. Blanks used = parts the presses made.",
+                                       "presses": ["M-01", "M-03"], "blanks_per_pallet": 240, "line_side_kit_blanks": 480}
+    s["production"]["vibration_zones_mm_s"] = {"_doc": "ISO 10816-1 class I (machines up to 15 kW): upper limits of zones A, B and C in mm/s RMS; above C is zone D.",
+                                               "A": 0.71, "B": 1.8, "C": 4.5}
     LAYOUT.write_text(json.dumps(l, indent=2, ensure_ascii=False) + "\n")
     SITES.write_text(json.dumps(s, indent=2, ensure_ascii=False) + "\n")
     print(f"layout: {len(l['nodes'])} nodes, {len(l['lanes'])} lanes; sites: {sum(len(x['zones']) for x in s['sites'])} zones, "

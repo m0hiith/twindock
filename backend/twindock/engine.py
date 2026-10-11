@@ -124,6 +124,8 @@ class Engine:
         self._last_wire: dict[str, dict[str, Any]] = {}
         self._auto_acc = 0.0
         self._truck_cargo: dict[str, int] = {}
+        self._raw_fed: list[str] = []   # raw pallets at the infeed already announced to the presses, oldest first
+        self._raw_used = 0              # raw pallets the presses' counters say they have used
         self._led_cmd_counter = 0
         self._rule_retry_after: dict[str, int] = {}
         self._auto_mode_dirty = False
@@ -598,6 +600,8 @@ class Engine:
         fresh = self._fresh()
         self.production.tick(now, fresh)
         task = {"running": "Running", "idle": "Idle, waiting for material", "fault": "Fault",
+                "starved": "Starved: waiting for material", "blocked": "Blocked: no room downstream",
+                "setup": "Setting up for the shift", "planned_stop": "Planned stop (break or handover)",
                 "maintenance": "Under maintenance", "no_data": "No data from machine monitor"}
         for mid, pm in self.production.machines.items():
             e = self.world.entities.get(mid)
@@ -610,6 +614,7 @@ class Engine:
             elif e.state == "running" and pm.base.abnormal:
                 t = "Running · abnormal vibration"
             e.meta["task"] = t
+        self._raw_material()
         # Finished units become pallets at the factory outbound spot (forklifts take them away).
         out = self.production.outbound_node
         while self.production.pallets_waiting > 0 and out in self.world.graph.nodes:
@@ -627,6 +632,28 @@ class Engine:
         if self._prod_acc >= PRODUCTION_FLUSH_S:
             self._prod_acc = 0.0
             self._send_production()
+
+    def _raw_material(self) -> None:
+        """Raw pallets at the line infeed. A pallet a forklift drops there is announced to the (simulated) presses; a
+        pallet is used up once the presses' own counters show a pallet's worth of blanks taken (after the line-side
+        kit they started with). The world never consumes raw material on a timer."""
+        prod = self.production
+        node = planner.FACTORY_IN
+        if not prod.presses or node not in self.world.graph.nodes:
+            return
+        first = next((m for m in prod.machines.values() if m.id in prod.presses), None)
+        for p in self.world.pallets_at(node):
+            if p.id not in self._raw_fed and first is not None and self.sim_reachable:
+                self._site_command(first.device_id, "feed", {"units": prod.blanks_per_pallet})
+                self._raw_fed.append(p.id)
+                self.event("info", f"{p.id} at the press infeed: {prod.blanks_per_pallet} blanks for the presses", "production", p.id)
+        due = max(0, prod.blanks_used() - prod.kit_blanks) // max(1, prod.blanks_per_pallet)
+        while self._raw_used < due and self._raw_fed:
+            pid = self._raw_fed.pop(0)
+            self._raw_used += 1
+            if pid in self.world.entities and self.world.entities[pid].node == node:
+                self.world.consume_pallet(pid)
+                self.event("info", f"The presses used up raw pallet {pid} ({prod.blanks_per_pallet} blanks counted by their monitors)", "production", pid)
 
     def _send_production(self, to: str | None = None) -> None:
         w = self.production.wire(self._fresh())
@@ -779,6 +806,8 @@ class Engine:
         self.selected = None
         self.auto_mode = False
         self._truck_cargo.clear()
+        self._raw_fed.clear()
+        self._raw_used = 0
         self._send(self.snapshot())
         self.event("info", "World reset to the seed layout")
         self._sync_rule_leds()

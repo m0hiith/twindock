@@ -49,7 +49,9 @@
           "availability",
           "performance",
           "quality",
-          "oee"
+          "oee",
+          "losses",
+          "iso_zone"
         ],
         "properties": {
           "id": {
@@ -64,12 +66,16 @@
           "state": {
             "enum": [
               "running",
-              "idle",
+              "starved",
+              "blocked",
+              "setup",
+              "planned_stop",
               "fault",
               "maintenance",
+              "idle",
               "no_data"
             ],
-            "description": "no_data: the machine monitor is not online, so the state is unknown."
+            "description": "From the machine monitor: running (cycling), starved (no input), blocked (no room downstream), setup (shift start-up), planned_stop (break, handover), fault (breakdown or minor stop; see last_fault), maintenance; idle from older simulators. no_data: the monitor is not online, so the state is unknown."
           },
           "state_since_ms": {
             "anyOf": [
@@ -252,6 +258,66 @@
                 "type": "null"
               }
             ]
+          },
+          "losses": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "breakdown_s",
+              "setup_s",
+              "starved_s",
+              "blocked_s",
+              "speed_s",
+              "quality_s",
+              "planned_stop_s"
+            ],
+            "description": "OEE losses folded from the machine's event log (seconds): breakdown, set-up, starved, blocked, speed (running beyond the ideal cycle), quality (ideal time spent on scrap), and planned stops (excluded from planned time).",
+            "properties": {
+              "breakdown_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "setup_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "starved_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "blocked_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "speed_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "quality_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "planned_stop_s": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "iso_zone": {
+            "anyOf": [
+              {
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO 10816-1 severity zone of the recent running vibration (sites.json production.vibration_zones_mm_s)."
           }
         }
       }
@@ -267,7 +333,8 @@
         "availability",
         "performance",
         "quality",
-        "oee"
+        "oee",
+        "blanks_used"
       ],
       "properties": {
         "units_today": {
@@ -330,6 +397,11 @@
               "type": "null"
             }
           ]
+        },
+        "blanks_used": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Raw blanks the presses have used (parts made), from their counters."
         }
       }
     },
