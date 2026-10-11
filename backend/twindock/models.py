@@ -110,6 +110,14 @@ class SetAutoMode(Strict):
     enabled: bool
 
 
+class ControlDecision(Strict):
+    type: Literal["control_decision"]
+    cmd_id: str
+    rec_id: str
+    decision: Literal["approve", "dismiss"]
+    by: str
+
+
 class SetSimSpeed(Strict):
     type: Literal["set_sim_speed"]
     cmd_id: str
@@ -146,7 +154,7 @@ class MachineCommand(Strict):
 
 
 ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand, AckAlert,
-                                ScenarioCommand, SafetyCommand, SetSimSpeed],
+                                ScenarioCommand, SafetyCommand, SetSimSpeed, ControlDecision],
                           Field(discriminator="type")]
 
 
@@ -337,7 +345,7 @@ class CommandAck(Strict):
     type: Literal["command_ack"] = "command_ack"
     cmd_id: str
     command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert",
-                     "scenario_command", "safety_command", "set_sim_speed"]
+                     "scenario_command", "safety_command", "set_sim_speed", "control_decision"]
     ok: bool
     reason: str | None = None
     path: list[str] | None = None
@@ -355,6 +363,18 @@ class BleTracks(Strict):
     server_ts_ms: int
     config: dict[str, Any]
     tracks: list[dict[str, Any]]
+
+
+class ControlUpdate(Strict):
+    type: Literal["control_update"] = "control_update"
+    seq: int
+    server_ts_ms: int
+    work_orders: list[dict[str, Any]]
+    recommendations: list[dict[str, Any]]
+    actions: list[dict[str, Any]]
+    shed: bool
+    leak_estimate_nm3_min: float | None
+    leak_measured_ms: int | None
 
 
 class WarmStart(Strict):

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { destinationCandidates, destinationKeys } from "../control/candidates";
 import { EventLog } from "../control/EventLog";
+import { MaintenancePanel } from "../control/MaintenancePanel";
 import { ProductionPanel } from "../control/ProductionPanel";
 import { AlertsList } from "../hud/AlertsPanel";
 import { DemoPanel } from "../control/DemoPanel";
@@ -22,7 +23,7 @@ import { useWorld } from "../store/world";
 import { Brand } from "../hud/Brand";
 import { PageTabs } from "../hud/PageTabs";
 
-type Tab = "move" | "gateway" | "log" | "factory" | "alerts" | "demo";
+type Tab = "move" | "gateway" | "log" | "factory" | "alerts" | "demo" | "maintenance";
 
 
 /** One click restores the seed world (POST /api/reset). The page then updates from the
@@ -52,6 +53,7 @@ function ResetButton() {
 }
 
 export function ControlPage() {
+  const decisions = useWorld((s) => s.control?.recommendations.length ?? 0);
   const [tab, setTab] = useState<Tab>("move");
   const layout = useWorld((s) => s.layout);
   const unit = useWorld((s) => (s.selected ? s.units[s.selected] : undefined));
@@ -126,6 +128,9 @@ export function ControlPage() {
           <TabButton active={tab === "move"} onClick={() => setTab("move")}>Move</TabButton>
           <TabButton active={tab === "gateway"} onClick={() => setTab("gateway")}>Gateway</TabButton>
           <TabButton active={tab === "factory"} onClick={() => setTab("factory")}>Factory</TabButton>
+          <TabButton active={tab === "maintenance"} onClick={() => setTab("maintenance")}>
+            Maintenance{decisions > 0 && <span className="tabular rounded-full bg-warn-bg px-1.5 text-[11px] text-warn">{decisions}</span>}
+          </TabButton>
           <TabButton active={tab === "demo"} onClick={() => setTab("demo")}>Demo</TabButton>
           <TabButton active={tab === "alerts"} onClick={() => setTab("alerts")}>
             Alerts{openAlerts > 0 && <span className="tabular rounded-full bg-crit-bg px-1.5 text-[11px] text-crit">{openAlerts}</span>}
@@ -140,6 +145,7 @@ export function ControlPage() {
           {tab === "factory" && <ProductionPanel />}
           {tab === "alerts" && <AlertsList />}
           {tab === "demo" && <DemoPanel />}
+          {tab === "maintenance" && <MaintenancePanel />}
           {tab === "log" && <EventLog />}
         </div>
       </aside>

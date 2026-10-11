@@ -33,7 +33,9 @@ from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_M
                        SHORT_PRESS_MAX_MS)
 from .models import (AckAlert, SafetyCommand, ScenarioCommand, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
-                     SelectUnit, SetAutoMode, SetSimSpeed, SimClockMsg, Timed, UnitUpdate, WarmStart, WorldSnapshot)
+                     SelectUnit, SetAutoMode, SetSimSpeed, SimClockMsg, Timed, UnitUpdate, WarmStart, WorldSnapshot,
+                     ControlDecision, ControlUpdate)
+from .control import ControlLoop
 from .world import Entity, World
 
 TOPIC_PREFIX = "twin/gateway/"
@@ -135,6 +137,7 @@ class Engine:
         self.production = self._new_production()
         self._seed_site_units()
         self._seed_workers()
+        self.control = ControlLoop(self)
 
     # ------------------------------------------------------------------ site twin units (FAC-01)
 
@@ -767,6 +770,27 @@ class Engine:
             return "The real board is online: board data always runs on real time"
         return None
 
+    def _send_control(self, to: str | None = None) -> None:
+        self._send(ControlUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), **self.control.c.wire()), to)
+
+    def _control_decision(self, client_id: str, m: ControlDecision) -> None:
+        reason = self.control.decide(m.rec_id, m.decision, m.by.strip() or client_id)
+        self._ack(client_id, m.cmd_id, "control_decision", reason is None, reason)
+        if reason is None:
+            self.event("info", f"{m.rec_id} {'approved' if m.decision == 'approve' else 'dismissed'} by {m.by.strip() or client_id}", client_id)
+            self._send_control()
+
+    def _walk_to(self, badge: str, target: tuple[float, float]) -> list[list[float]]:
+        """Walkway waypoints from where the badge's worker is to a point (a machine, a compressor): walkways and marked crossings only."""
+        w = self.safety.workers.get(self._worker_of_badge.get(badge, ""))
+        if w is None or w.x is None or w.z is None:
+            return []
+        start, goal = self.ped.nearest(w.x, w.z), self.ped.nearest(*target)
+        dist, prev = self.ped.dijkstra(start)
+        if goal not in dist:
+            return []
+        return [[self.ped.nodes[n][0], self.ped.nodes[n][1]] for n in self.ped.path(prev, start, goal)][:80]
+
     def _send_sim_clock(self, to: str | None = None) -> None:
         if self.sim_clock is None:
             return
@@ -787,6 +811,7 @@ class Engine:
     def on_connect(self, client_id: str) -> None:
         self._send(self.snapshot(), client_id)  # always the first message on a connection
         self._send_sim_clock(client_id)
+        self._send_control(client_id)
         self._send_ble_tracks(client_id)
         self._send_production(client_id)
         self._send_safety(client_id)
@@ -808,6 +833,7 @@ class Engine:
         self._truck_cargo.clear()
         self._raw_fed.clear()
         self._raw_used = 0
+        self.control = ControlLoop(self)
         self._send(self.snapshot())
         self.event("info", "World reset to the seed layout")
         self._sync_rule_leds()
@@ -864,6 +890,10 @@ class Engine:
         self._tick_production(dt)
         self._tick_safety(dt)
         self._tick_rules(dt)
+        self.control.tick(dt)
+        if self.control.c.dirty:
+            self.control.c.dirty = False
+            self._send_control()
         self._drain_world_events()
         if self.sim_clock is not None:
             if self.sim_clock.speed != 1 and self.gw.online:
@@ -1176,6 +1206,8 @@ class Engine:
             self._machine_command(client_id, msg)
         elif isinstance(msg, SetSimSpeed):
             self._set_sim_speed(client_id, msg)
+        elif isinstance(msg, ControlDecision):
+            self._control_decision(client_id, msg)
         elif isinstance(msg, SetAutoMode):
             self.auto_mode = msg.enabled
             self._auto_mode_dirty = True

@@ -95,15 +95,18 @@ def test_duty_trip_starts_the_standby_and_low_air_stops_the_line() -> None:
     assert names.index("low air pressure trip") < names.index("low air pressure trip cleared")
 
 
-def test_leaks_grow_and_a_leak_fix_resets_them() -> None:
+def test_leaks_grow_bleed_in_breaks_and_a_leak_fix_resets_them() -> None:
     s = core_sim()
     air = s.core.get("air")
-    start = air.leak_share
+    start = air.leak_ref
     run(s, 3600)
-    grown = air.leak_share
-    assert grown > start + 0.002
+    assert air.leak_ref > start + 0.004
+    assert abs(air.leak / (air.leak_ref * air.bar / s.params.f("air.leaks.ref_bar")) - 1) < 0.02  # orifice flow ∝ pressure (last step's)
+    s.local_hour = lambda: 12.2  # type: ignore[method-assign]  # lunch: no machine uses air, the leaks still do
+    run(s, 300)
+    assert air.demand == 0 and air.leak > 0.2
     s.core.command("CP-01", "fix_leaks", {})
-    assert air.leak_share == s.params.f("air.leaks.after_fix_share") < start
+    assert air.leak_ref == s.params.f("air.leaks.after_fix_nm3_min") < start
 
 
 # ------------------------------------------------------------------ electrical

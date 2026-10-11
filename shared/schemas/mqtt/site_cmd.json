@@ -20,7 +20,8 @@
     "seconds": {
       "type": "number",
       "minimum": 1,
-      "maximum": 600
+      "maximum": 7200,
+      "description": "door_open, still, find_me (demo, up to 10 min) and repair, service (a work order's job time, up to 2 h)."
     },
     "x": {
       "type": "number"

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/control_update.json",
+  "title": "control_update (server -> client)",
+  "description": "Automatic actions and maintenance (backend/twindock/control.py): work orders (bearing changes, leak fixes, compressor services), open recommendations a person must approve or dismiss (stopping a machine, calling emergency services), and the cause -> action -> result log of every automatic action. On connect and whenever it changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "server_ts_ms", "work_orders", "recommendations", "actions", "shed", "leak_estimate_nm3_min", "leak_measured_ms"],
+  "properties": {
+    "type": { "const": "control_update" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "server_ts_ms": { "type": "integer" },
+    "work_orders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "asset_id", "asset_label", "state", "cause", "created_ms", "updated_ms", "technician", "started_ms", "job_s", "result"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^WO-[0-9]{4}$" },
+          "kind": { "enum": ["bearing", "leak_fix", "compressor_service"] },
+          "asset_id": { "type": "string" },
+          "asset_label": { "type": "string" },
+          "state": { "enum": ["open", "awaiting_approval", "dispatched", "in_progress", "done", "dismissed", "broke_down", "waiting"] },
+          "cause": { "type": "string" },
+          "created_ms": { "type": "integer" },
+          "updated_ms": { "type": "integer" },
+          "technician": { "type": ["string", "null"] },
+          "started_ms": { "type": ["integer", "null"] },
+          "job_s": { "type": "number", "minimum": 0 },
+          "result": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "text", "created_ms", "wo_id"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^R-[0-9]{4}$" },
+          "kind": { "enum": ["stop_machine", "emergency_call"] },
+          "text": { "type": "string" },
+          "created_ms": { "type": "integer" },
+          "wo_id": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ts_ms", "cause", "action", "result"],
+        "properties": {
+          "ts_ms": { "type": "integer" },
+          "cause": { "type": "string" },
+          "action": { "type": "string" },
+          "result": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "shed": { "type": "boolean", "description": "Non-critical loads are shed for peak demand." },
+    "leak_estimate_nm3_min": { "type": ["number", "null"], "description": "Leak flow measured at the last break (compressor delivery with no machine running)." },
+    "leak_measured_ms": { "type": ["integer", "null"] }
+  }
+}

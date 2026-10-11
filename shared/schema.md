@@ -108,6 +108,7 @@ Every message is a JSON object with a `type` field.
 | `production_update` | `ws/production_update.json` | On connect and ≤ 1 Hz: FAC-01 machines (state, cycle, current, vibration, learned baseline, z, abnormal, OEE parts) and the line (units, pallets, zone OEE). |
 | `safety_update` | `ws/safety_update.json` | On connect and ≤ 2 Hz: workers (role, badge, zone, nearest moving forklift, restricted zone; **no names**), workers per zone, today's counters. |
 | `alerts_update` | `ws/alerts_update.json` | On connect and on every raise/acknowledge/resolve: open alerts (critical first) + recently resolved, and every rule from `backend/rules/*.yaml`. |
+| `control_update` | `ws/control_update.json` | On connect and on change: work orders (bearing change, leak fix, compressor service) with state, cause, technician and result; recommendations waiting for a person (stop a machine, call emergency services); the last automatic actions as cause → action → result; whether loads are shed; the leak flow measured at the last break. |
 | `sim_clock` | `ws/sim_clock.json` | On connect, on a speed change and every 5 simulated s × speed: simulated time (`sim_ms`, the same clock as every `server_ts_ms`), speed (1, 5, 20), the warm start (simulated and wall seconds, seed) and `speed_locked` (why only ×1 is allowed now: the real board is online). |
 
 ### Client → server
@@ -118,6 +119,7 @@ Every message is a JSON object with a `type` field.
 | `select_unit` | `ws/select_unit.json` | Unit exists (or null to clear). |
 | `led_command` | `ws/led_command.json` | LED is in `hello.leds`; LED0 is rule-driven (Bay 1) and rejected. Forwarded to `twin/gateway/cmd/led`. |
 | `set_auto_mode` | `ws/set_auto_mode.json` | — |
+| `control_decision` | `ws/control_decision.json` | A person approves or dismisses an open recommendation (`rec_id`, `decision`, `by`). Approving a machine stop dispatches the technician; nothing that stops production happens without it. |
 | `set_sim_speed` | `ws/set_sim_speed.json` | Speed 1, 5 or 20. Anything but 1 is refused while the real board is online, and a board coming online resets the speed to 1: board data always runs on real time. |
 | `machine_command` | `ws/machine_command.json` | Machine exists. Forwarded to the simulator (`degrade`, `restore`, `maintenance`); never to the board. |
 | `ack_alert` | `ws/ack_alert.json` | Alert is open and not yet acknowledged. `by` is the screen's name (no sign-in). |

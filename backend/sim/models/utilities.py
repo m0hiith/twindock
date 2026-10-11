@@ -73,6 +73,7 @@ class Compressor:
     power_kw: float = 0.0
     discharge_c: float = 0.0
     starts: int = 0
+    service_until: float = -1.0
 
     @property
     def loaded(self) -> bool:
@@ -89,7 +90,8 @@ class CompressedAir(Model):
         "its motor then runs up (star-delta) before it loads. It stops after running unloaded for its idle time.",
         "Delivery while loaded = free air delivery (FAD); 0 when unloaded, stopped or tripped.",
         "Power: loaded = specific power × FAD; unloaded = unloaded share × loaded power; stopped or tripped = 0.",
-        "Leaks = leak share × machine demand; the share grows slowly with time since the last leak-fix work order.",
+        "Leaks bleed all the time, like orifices: Q_leak = leak flow at 7 bar × (P / 7 bar); the leak flow grows slowly "
+        "with time since the last leak-fix work order, which brings it back down.",
         "Below the trip pressure pneumatic machines stop (low air pressure) until it recovers above the reset pressure.",
         "Discharge temperature relaxes towards the loaded or unloaded level with time constant τ.",
     )
@@ -103,7 +105,7 @@ class CompressedAir(Model):
         self.extra_leak = 0.0
         self.demand = 0.0
         self.leak = 0.0
-        self.leak_share = 0.0
+        self.leak_ref = 0.0   # leak flow (Nm³/min) at the reference pressure
         self.supply = 0.0
         self.trip = False
         self.forced: set[str] = set()  # monitors that report at once (after a command)
@@ -121,7 +123,7 @@ class CompressedAir(Model):
             c.discharge_c = p.f("air.ambient_c")
             c.state = "loaded" if c.role == "duty" else "stopped"
         self.bar = (p.f("air.duty_band_low_bar") + p.f("air.duty_band_high_bar")) / 2
-        self.leak_share = p.f("air.leaks.initial_share")
+        self.leak_ref = p.f("air.leaks.initial_nm3_min")
         core.q.air_pressure_bar = self.bar  # machines read it before this model's first step
 
     def band(self, c: Compressor) -> tuple[float, float]:
@@ -141,8 +143,9 @@ class CompressedAir(Model):
         elif action in ("clear", "restore"):
             self.extra_leak, c.tripped = 0.0, False
         elif action == "fix_leaks":
-            self.extra_leak, self.leak_share = 0.0, self.core.p.f("air.leaks.after_fix_share")
-        elif action == "service":
+            self.extra_leak, self.leak_ref = 0.0, self.core.p.f("air.leaks.after_fix_nm3_min")
+        elif action == "service":  # a service stops this compressor for the job's time (the other one covers)
+            c.service_until = self.core.t + float(data.get("seconds", self.core.p.f("air.service_default_s")))
             c.service_hours = 0.0
         else:
             return False
@@ -166,13 +169,14 @@ class CompressedAir(Model):
     def step(self, dt: float) -> None:
         core, p = self.core, self.core.p
         self.demand = sum(core.q.air_demand_nm3_min.values())
-        self.leak_share = min(p.f("air.leaks.max_share"), self.leak_share + p.f("air.leaks.growth_share_per_h") * dt / 3600.0)
-        self.leak = self.leak_share * self.demand + self.extra_leak
+        self.leak_ref = min(p.f("air.leaks.max_nm3_min"), self.leak_ref + p.f("air.leaks.growth_nm3_min_per_h") * dt / 3600.0)
+        self.leak = (self.leak_ref + self.extra_leak) * self.bar / p.f("air.leaks.ref_bar")
         supply = 0.0
         for c in self.compressors.values():
             lo, hi = self.band(c)
-            if c.tripped or not core.q.powered(c.zone):
-                self.set_state(c, "stopped", "compressor tripped" if c.tripped else "no mains power in the compressor room")
+            serviced = core.t < c.service_until
+            if c.tripped or serviced or not core.q.powered(c.zone):
+                self.set_state(c, "stopped", "compressor tripped" if c.tripped else "taken out for service" if serviced else "no mains power in the compressor room")
             elif c.state == "stopped":
                 if c.role == "duty":
                     self.set_state(c, "starting", "duty compressor enabled")
@@ -234,6 +238,7 @@ class Electrical(Model):
         "APFC bank at the main board switches capacitor steps in to bring the incomer towards its target PF (solar supplies "
         "real power only, so at midday the incomer's PF falls unless the bank compensates).",
         "Grid import (incomer) = everything on the mains − solar, while the grid is up.",
+        "Load shedding (on the twin's request): EV charging limited to its base, non-critical lighting dimmed by a share.",
         "Grid failure: the AMF controller confirms the loss, cranks, accelerates to rated speed, then transfers the "
         "critical bus to the generator; non-critical zones are shed until the grid returns.",
         "Grid return: after the retransfer delay the critical bus goes back to the mains; the engine cools down unloaded, then stops.",
@@ -267,12 +272,19 @@ class Electrical(Model):
         self.load_kw = 0.0   # everything consuming now (incl. critical loads on the generator or the UPS)
         self.ups_kw = 0.0    # critical load carried by batteries during the transfer gap
         self.forced: set[str] = set()  # meters and the genset bridge report at once (the grid just changed)
+        self.shed = False  # the BMS has shed non-critical loads (EV charging, some lighting) on the twin's request
 
     def bind(self, core: Any) -> None:
         super().bind(core)
         self.coolant_c = core.p.f("power.generator.coolant_standby_c")
 
     def command(self, target: str, action: str, data: dict[str, Any]) -> bool:
+        if target == self.u.get("incomer") and action == "shed":
+            self.shed = bool(data.get("on", True))
+            core = self.core
+            core.q.flags["shed"] = self.shed
+            core.record("non-critical loads shed" if self.shed else "shed loads restored", "shed command (peak demand control)")
+            return True
         if target != self.u.get("incomer") or action not in ("grid_failure", "grid_restore"):
             return False
         self.grid_down, self.grid_since = action == "grid_failure", self.core.t
@@ -334,6 +346,8 @@ class Electrical(Model):
         sun = day_curve(h, p.f("power.solar.sunrise_h"), p.f("power.solar.sunset_h"))
         working = day_curve(h, p.f("power.building.day_start_h"), p.f("power.building.day_end_h")) > 0
         lights = p.f("power.building.lighting_kw") * ((1 - p.f("power.building.daylight_dimming") * sun) if working else p.f("power.building.lighting_night_share"))
+        if self.shed:
+            lights *= 1 - p.f("power.shed.lighting_share")
         outdoor = float(core.q.flags.get("outdoor_c", p.f("power.building.hvac_setpoint_c")))
         hvac = p.f("power.building.hvac_base_kw") + p.f("power.building.hvac_kw_per_c") * max(0.0, outdoor - p.f("power.building.hvac_setpoint_c"))
         offices = p.f("power.building.offices_kw") * (1.0 if working else p.f("power.building.offices_night_share"))
@@ -556,9 +570,10 @@ class Water(Model):
 class CampusLoads(Model):
     """Loads that are not machines: EV chargers by time of day, the fire pump during a fire alarm."""
     key = "loads"
-    title = "Other campus loads (EV chargers, fire pump)"
+    title = "Other campus loads (EV chargers, welding, fire pump)"
     equations = (
-        "EV chargers = base + peak × sin(π (h − start) / (end − start)) while people are at work.",
+        "EV chargers = base + peak × sin(π (h − start) / (end − start)) while people are at work; base only while shed.",
+        "Welding (hot work) in the workshop = rated kW × duty during production; interlocked off by any gas or fire alarm.",
         "Fire pump = rated kW while any fire panel reports an alarm, standby kW otherwise.",
     )
     reads = ("flags.fire_alarm",)
@@ -569,15 +584,28 @@ class CampusLoads(Model):
         zones = {z["id"]: z for s in cfg["sites"] for z in s["zones"]}
         self.ev_zone = next((z for z in zones if z.endswith("PARKING")), None)
         self.pump_zone = next((z for z in zones if z.endswith("FIREPUMP")), None)
+        self.workshop = next((z for z in zones if z.endswith("WORKSHOP")), None)
+        self.hot_work_stopped = False
 
     def step(self, dt: float) -> None:
         core, p = self.core, self.core.p
         h = core.hour_of_day()
         if self.ev_zone:
-            day = day_curve(h, p.f("loads.ev.start_h"), p.f("loads.ev.end_h"))
+            day = 0.0 if core.q.flags.get("shed") else day_curve(h, p.f("loads.ev.start_h"), p.f("loads.ev.end_h"))
             core.q.power_kw["EV chargers"] = p.f("loads.ev.base_kw") + p.f("loads.ev.peak_kw") * day
             core.q.power_zone["EV chargers"] = self.ev_zone
             core.q.power_kind["EV chargers"] = "electronic"
+        if self.workshop:
+            # Hot work (welding) in the workshop during production; the gas and fire interlocks stop it campus-wide.
+            stop = bool(core.q.flags.get("gas_alarm_zones")) or bool(core.q.flags.get("fire_alarm"))
+            if stop != self.hot_work_stopped:
+                self.hot_work_stopped = stop
+                core.record("hot work stopped" if stop else "hot work permitted again",
+                            "interlock: gas or fire alarm" if stop else "gas and fire alarms clear")
+            welding = core.q.flags.get("shift_phase") == "production" and not stop
+            core.q.power_kw["Welding (hot work)"] = p.f("loads.welding.kw") * p.f("loads.welding.duty") if welding else 0.0
+            core.q.power_zone["Welding (hot work)"] = self.workshop
+            core.q.power_kind["Welding (hot work)"] = "fixed"
         if self.pump_zone:
             fire = bool(core.q.flags.get("fire_alarm"))
             core.q.power_kw["Fire pump"] = p.f("loads.fire_pump.rated_kw") if fire else p.f("loads.fire_pump.standby_kw")

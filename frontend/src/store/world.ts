@@ -1,7 +1,7 @@
 // Client mirror of server state. It only ever changes in response to server messages:
 // the UI sends intents (ws.ts) and waits for the backend to broadcast the result.
 import { create } from "zustand";
-import type { AlertsUpdate, BleTracks, CommandAck, Device, Event, Gateway, ProductionUpdate, SafetyUpdate, ServerMessage, SimClock, Site, Unit } from "../contract";
+import type { AlertsUpdate, BleTracks, CommandAck, ControlUpdate, Device, Event, Gateway, ProductionUpdate, SafetyUpdate, ServerMessage, SimClock, Site, Unit } from "../contract";
 import type { Layout } from "../layout";
 import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
@@ -25,6 +25,8 @@ interface WorldState {
   alerts: AlertsUpdate | null;
   /** The simulation clock: speed (x1 real time, x5, x20) and the warm start the backend did before serving. */
   simClock: SimClock | null;
+  /** Work orders, decisions waiting for a person, and the automatic-action log (R5). */
+  control: ControlUpdate | null;
   selected: string | null;
   autoMode: boolean;
   events: Event[];
@@ -61,6 +63,7 @@ export const useWorld = create<WorldState>((set) => ({
   safety: null,
   alerts: null,
   simClock: null,
+  control: null,
   selected: null,
   autoMode: false,
   events: [],
@@ -123,6 +126,8 @@ export const useWorld = create<WorldState>((set) => ({
           return { acks: [...s.acks, m].slice(-MAX_LOG) };
         case "event":
           return { events: [...s.events, m].slice(-MAX_LOG) };
+        case "control_update":
+          return { control: m };
         case "sim_clock":
           serverClock.speed = m.speed;
           return { simClock: m };

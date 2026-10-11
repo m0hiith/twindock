@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/control_decision.json",
+  "title": "control_decision (client -> server)",
+  "description": "A person approves or dismisses a recommendation (stop a machine for a work order, call emergency services). `by` is the screen's operator name (no sign-in in the demo).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "cmd_id", "rec_id", "decision", "by"],
+  "properties": {
+    "type": { "const": "control_decision" },
+    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
+    "rec_id": { "type": "string", "pattern": "^R-[0-9]{4}$" },
+    "decision": { "enum": ["approve", "dismiss"] },
+    "by": { "type": "string", "minLength": 1, "maxLength": 40 }
+  }
+}

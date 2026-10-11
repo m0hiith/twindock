@@ -257,6 +257,10 @@ class Production:
             elif m.state in MACHINE_STATES and (m.log.open is None or m.log.open[1] == "no_data"):
                 m.log.mark(now, m.state)
 
+    def new_baseline(self) -> Baseline:
+        c = self.cfg
+        return Baseline(c["baseline_s"], c["baseline_min_samples"], c["window_samples"], c["z_threshold"], c["z_clear"])
+
     def blanks_used(self) -> int:
         """Blanks the presses have taken from the infeed: one per part made (good or not)."""
         return sum(m.good + m.rejects for m in self.machines.values() if m.id in self.presses)

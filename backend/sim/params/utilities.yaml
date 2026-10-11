@@ -30,11 +30,13 @@ air:
   discharge_loaded_c: {value: 82.0, unit: °C, source: "typical industry value: oil-injected screw discharge 75-90 °C"}
   discharge_unloaded_c: {value: 72.0, unit: °C, source: "typical industry value: discharge cools when unloaded"}
   discharge_tau_s: {value: 120.0, unit: s, source: "assumption: oil and element thermal mass"}
+  service_default_s: {value: 1800.0, unit: s, source: "typical industry value: a 2000 h screw compressor service (oil, filters, separator) takes 30-60 min"}
   leaks:
-    initial_share: {value: 0.15, unit: "1", source: "typical industry value: leaks are 10-30 % of compressed-air demand (15 % = reasonably maintained)"}
-    growth_share_per_h: {value: 0.004, unit: 1/h, source: "assumption: new leaks add ~10 % of demand a day until someone fixes them (in sim hours)"}
-    max_share: {value: 0.4, unit: "1", source: "typical industry value: badly neglected systems lose 30-40 %"}
-    after_fix_share: {value: 0.08, unit: "1", source: "typical industry value: a leak survey and repair brings leaks under 10 %"}
+    ref_bar: {value: 7.0, unit: bar g, source: "assumption: leak flows are quoted at the header's mid-band pressure"}
+    initial_nm3_min: {value: 0.25, unit: Nm³/min, source: "typical industry value: leaks of 10-30 % of demand; 0.25 is ~15 % of the 1.6 Nm³/min the four machines use"}
+    growth_nm3_min_per_h: {value: 0.006, unit: Nm³/min/h, source: "assumption: new leaks (fittings, hoses) add ~0.15 Nm³/min a day until someone fixes them"}
+    max_nm3_min: {value: 0.8, unit: Nm³/min, source: "typical industry value: badly neglected systems lose 30-40 % of their output"}
+    after_fix_nm3_min: {value: 0.1, unit: Nm³/min, source: "typical industry value: a leak survey and repair brings leaks under 10 %"}
     injected_nm3_min: {value: 0.8, unit: Nm³/min, source: "assumption: a burst hose for the demo"}
   dryer:
     pressure_dew_point_c: {value: -40.0, unit: °C, source: "standard: ISO 8573-1 class 2 (−40 °C pressure dew point), what a heatless desiccant dryer delivers"}
@@ -58,6 +60,8 @@ power:
     target_pf: {value: 0.98, unit: "1", source: "typical industry value: APFC panels are set to 0.97-0.99 to avoid utility PF penalties"}
     step_kvar: {value: 12.5, unit: kvar, source: "datasheet: APFC panels switch capacitors in 12.5 / 25 kvar steps"}
     capacity_kvar: {value: 100.0, unit: kvar, source: "typical industry value: APFC sized ~0.5-0.6 kvar per kW of motor load"}
+  shed:
+    lighting_share: {value: 0.3, unit: "1", source: "typical industry value: BMS load shedding dims non-essential lighting by 20-40 %"}
   zone_fixed_kw: {value: {FAC01_PRODUCTION: 6.0, FAC01_COMPRESSOR: 1.0, FAC01_RAW: 5.0}, unit: kW, source: "assumption: lighting and ventilation of the metered zones"}
   pf:
     motor: {value: 0.85, unit: "1", source: "typical industry value: induction motors near rated load 0.8-0.9"}
@@ -105,6 +109,9 @@ loads:
     peak_kw: {value: 12.0, unit: kW, source: "assumption: a few 7 kW AC chargers in use at midday"}
     start_h: {value: 7.0, unit: h, source: "assumption: staff plug in when they arrive"}
     end_h: {value: 18.0, unit: h, source: "assumption: and leave by the evening"}
+  welding:
+    kw: {value: 12.0, unit: kW, source: "typical industry value: a MIG welding set draws 8-15 kW while welding"}
+    duty: {value: 0.35, unit: "1", source: "typical industry value: arc-on time in a maintenance workshop is 20-40 %"}
   fire_pump:
     rated_kw: {value: 45.0, unit: kW, source: "typical industry value: electric fire pump for a mid-size site (NFPA 20 class)"}
     standby_kw: {value: 1.0, unit: kW, source: "assumption: jockey pump and controller"}

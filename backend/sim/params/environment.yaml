@@ -31,6 +31,8 @@ doors:
   open_s: {dist: uniform, low: 6, high: 20, unit: s, source: "assumption: someone walks through"}
   closed_s: {dist: uniform, low: 60, high: 150, unit: s, source: "assumption: a busy door is used once or twice a few minutes"}
   default_hold_s: {value: 90.0, unit: s, source: "assumption: demo hold-open"}
+  cold_door_alarm_s: {value: 120.0, unit: s, source: "typical industry value: cold room door alarms sound after 1-3 min open"}
+  fire_doors: {value: [DR-04, DR-05, DR-07], unit: "-", source: "assumption: reception, canteen and QC lab doors are in fire-rated walls and held open on magnetic holds the fire panel releases"}
 occupancy:
   occupied: {dist: bernoulli, p: 0.7, unit: "1", source: "assumption: offices are occupied most of the shift"}
   interval_s: {dist: uniform, low: 40, high: 120, unit: s, source: "assumption: people come and go every minute or two"}
@@ -42,6 +44,11 @@ gas:
   o2_air_pct: {value: 20.9, unit: "%", source: "standard: composition of dry air (ISO 2533)"}
   o2_dilution_pct: {value: 0.4, unit: "%", source: "assumption: oxygen displaced by the leaking gas"}
   alarm_ppm: {value: 35.0, unit: ppm, source: "standard: NIOSH REL for CO, 35 ppm (8 h TWA), a common first alarm level"}
+  tau_vent_s: {value: 8.0, unit: s, source: "assumption: the extract fan at full speed clears the store about 3× faster"}
+  vent_dilution: {value: 0.4, unit: "1", source: "assumption: with full extract, a continuing leak settles at ~40 % of its still-air level"}
+  vent_off_ppm: {value: 10.0, unit: ppm, source: "assumption: the fan returns to normal once CO is well below the alarm level"}
+  fan_kw: {value: 5.5, unit: kW, source: "typical industry value: an ATEX extract fan for a small store"}
+  fan_idle_kw: {value: 1.1, unit: kW, source: "typical industry value: background extract at low speed"}
 effluent:
   tau_s: {value: 20.0, unit: s, source: "assumption: probe and mixing response"}
   inflow:

@@ -221,6 +221,8 @@ export interface TwinDockContract {
   alerts_update?: AlertsUpdate;
   ble_tracks?: BleTracks;
   command_ack?: CommandAck;
+  control_decision?: ControlDecision;
+  control_update?: ControlUpdate;
   device_update?: DeviceUpdate;
   event?: Event;
   gateway_update?: GatewayUpdate;
@@ -361,6 +363,9 @@ export interface GatewayStatus {
 export interface SiteCmd {
   cmd_id: string;
   on?: boolean;
+  /**
+   * door_open, still, find_me (demo, up to 10 min) and repair, service (a work order's job time, up to 2 h).
+   */
   seconds?: number;
   x?: number;
   z?: number;
@@ -560,7 +565,8 @@ export interface CommandAck {
     | "ack_alert"
     | "scenario_command"
     | "safety_command"
-    | "set_sim_speed";
+    | "set_sim_speed"
+    | "control_decision";
   ok: boolean;
   /**
    * Short human reason when ok is false.
@@ -570,6 +576,67 @@ export interface CommandAck {
    * Planned path for an accepted (or dry-run) move_unit.
    */
   path?: NodeId[];
+}
+/**
+ * A person approves or dismisses a recommendation (stop a machine for a work order, call emergency services). `by` is the screen's operator name (no sign-in in the demo).
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "control_decision".
+ */
+export interface ControlDecision {
+  type: "control_decision";
+  cmd_id: CmdId;
+  rec_id: string;
+  decision: "approve" | "dismiss";
+  by: string;
+}
+/**
+ * Automatic actions and maintenance (backend/twindock/control.py): work orders (bearing changes, leak fixes, compressor services), open recommendations a person must approve or dismiss (stopping a machine, calling emergency services), and the cause -> action -> result log of every automatic action. On connect and whenever it changes.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "control_update".
+ */
+export interface ControlUpdate {
+  type: "control_update";
+  seq: number;
+  server_ts_ms: number;
+  work_orders: {
+    id: string;
+    kind: "bearing" | "leak_fix" | "compressor_service";
+    asset_id: string;
+    asset_label: string;
+    state:
+      "open" | "awaiting_approval" | "dispatched" | "in_progress" | "done" | "dismissed" | "broke_down" | "waiting";
+    cause: string;
+    created_ms: number;
+    updated_ms: number;
+    technician: string | null;
+    started_ms: number | null;
+    job_s: number;
+    result: string | null;
+  }[];
+  recommendations: {
+    id: string;
+    kind: "stop_machine" | "emergency_call";
+    text: string;
+    created_ms: number;
+    wo_id: string | null;
+  }[];
+  actions: {
+    ts_ms: number;
+    cause: string;
+    action: string;
+    result: string | null;
+  }[];
+  /**
+   * Non-critical loads are shed for peak demand.
+   */
+  shed: boolean;
+  /**
+   * Leak flow measured at the last break (compressor delivery with no machine running).
+   */
+  leak_estimate_nm3_min: number | null;
+  leak_measured_ms: number | null;
 }
 /**
  * Devices whose status, readings, battery or signal changed. At most 2 Hz.

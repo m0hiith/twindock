@@ -81,18 +81,23 @@ class Rooms(Model):
 
 class Doors(Model):
     key = "doors"
-    title = "Doors (people walking through)"
+    title = "Doors (people walking through, fire door holds, cold room door alarm)"
     equations = (
         "Each door alternates open and closed; open and closed times are drawn from their distributions.",
         "A demo command can hold a door open for a given time; door_close shuts it now.",
+        "Interlock: on a fire alarm the magnetic holds release and every fire door closes (and stays closed until the alarm clears).",
+        "The cold room door sounds its local alarm once it has been open longer than its limit.",
     )
-    writes = ("flags.door_open_zones",)
+    reads = ("flags.fire_alarm",)
+    writes = ("flags.door_open_zones", "flags.cold_door_alarm")
     params_prefix = ("doors",)
 
     def __init__(self, cfg: dict[str, Any]) -> None:
-        self.doors = {d["id"]: {"zone": d["zone_id"], "open": False, "next": 0.0, "forced_until": -1.0}
+        self.doors = {d["id"]: {"zone": d["zone_id"], "open": False, "next": 0.0, "forced_until": -1.0, "opened_at": None}
                       for d in cfg["devices"] if d["type"] == "door_sensor"}
         self.changed: set[str] = set()
+        self.fire = False
+        self.cold_alarm = False
 
     def command(self, target: str, action: str, data: dict[str, Any]) -> bool:
         dr = self.doors.get(target)
@@ -101,7 +106,7 @@ class Doors(Model):
         t = self.core.t
         if action == "door_open":
             secs = float(data.get("seconds", self.core.p.f("doors.default_hold_s")))
-            dr.update(open=True, forced_until=t + secs, next=t + secs)
+            dr.update(open=True, forced_until=t + secs, next=t + secs, opened_at=t)
         elif action == "door_close":
             dr.update(open=False, forced_until=-1.0, next=t + self.core.rng.draw("doors.closed_s", f"{target}.door"))
         else:
@@ -111,13 +116,34 @@ class Doors(Model):
         return True
 
     def step(self, dt: float) -> None:
-        t = self.core.t
+        core, t = self.core, self.core.t
+        fire = bool(core.q.flags.get("fire_alarm"))
+        fire_doors = set(core.p.v("doors.fire_doors"))
+        if fire != self.fire:
+            self.fire = fire
+            core.record("fire door holds released" if fire else "fire door holds back on", "interlock: fire alarm" if fire else "fire alarm reset")
+        alarm = False
         for did, dr in self.doors.items():
+            if fire and did in fire_doors:
+                if dr["open"]:
+                    dr["open"], dr["next"], dr["forced_until"] = False, t, -1.0
+                    self.changed.add(did)
+                continue
             if t >= dr["next"] and t >= dr["forced_until"]:
                 dr["open"] = not dr["open"]
-                dr["next"] = t + self.core.rng.draw("doors.open_s" if dr["open"] else "doors.closed_s", f"{did}.door")
+                dr["next"] = t + core.rng.draw("doors.open_s" if dr["open"] else "doors.closed_s", f"{did}.door")
+                dr["opened_at"] = t if dr["open"] else None
                 self.changed.add(did)
-        self.core.q.flags["door_open_zones"] = {dr["zone"] for dr in self.doors.values() if dr["open"]}
+            if dr["open"] and dr.get("opened_at") is None:
+                dr["opened_at"] = t
+            if "COLD" in dr["zone"] and dr["open"] and t - (dr.get("opened_at") or t) >= core.p.f("doors.cold_door_alarm_s"):
+                alarm = True
+        if alarm != self.cold_alarm:
+            self.cold_alarm = alarm
+            core.record("cold room door alarm sounding" if alarm else "cold room door alarm silent",
+                        f"door open longer than {core.p.f('doors.cold_door_alarm_s'):.0f} s" if alarm else "door closed")
+        core.q.flags["cold_door_alarm"] = alarm
+        core.q.flags["door_open_zones"] = {dr["zone"] for dr in self.doors.values() if dr["open"]}
 
 
 class Occupancy(Model):
@@ -144,8 +170,10 @@ class Gas(Model):
     title = "Gas (CO and O₂) at the fixed detectors"
     equations = (
         "CO relaxes towards the leak level while a leak is on (τ_rise) and back to background after (τ_fall).",
+        "Interlock: a detector in alarm runs its zone's extract fan at full speed: the decay is faster (τ_vent) and the fan draws its kW.",
         "O₂ is displaced in proportion: O₂ = 20.9 % − dilution × CO / leak level.",
     )
+    writes = ("flags.gas_alarm_zones", "power_kw")
     params_prefix = ("gas",)
 
     def __init__(self, cfg: dict[str, Any]) -> None:
@@ -165,12 +193,26 @@ class Gas(Model):
         return True
 
     def step(self, dt: float) -> None:
-        p = self.core.p
-        for g in self.points.values():
-            goal = p.f("gas.co_leak_ppm") if g["leaking"] else p.f("gas.co_background_ppm")
-            tau = p.f("gas.tau_rise_s") if g["leaking"] else p.f("gas.tau_fall_s")
+        core, p = self.core, self.core.p
+        alarm_zones: set[str] = set()
+        for did, g in self.points.items():
+            vent = g.get("vent", False)
+            goal = p.f("gas.co_leak_ppm") * (p.f("gas.vent_dilution") if vent else 1.0) if g["leaking"] else p.f("gas.co_background_ppm")
+            tau = p.f("gas.tau_rise_s") if g["leaking"] else (p.f("gas.tau_vent_s") if vent else p.f("gas.tau_fall_s"))
             g["co"] += (goal - g["co"]) * min(1.0, dt / tau)
             g["o2"] = p.f("gas.o2_air_pct") - (g["co"] / p.f("gas.co_leak_ppm")) * p.f("gas.o2_dilution_pct")
+            alarm = self.alarm(did)
+            if alarm:
+                alarm_zones.add(g["zone"])
+            if alarm != vent and (alarm or g["co"] < p.f("gas.vent_off_ppm")):
+                g["vent"] = alarm
+                core.record(f"{g['zone']} extract fan {'full speed' if alarm else 'back to normal'}",
+                            f"interlock: {did} {'in alarm' if alarm else 'clear'}")
+            name = f"Extract fan {did}"
+            core.q.power_kw[name] = p.f("gas.fan_kw") if g.get("vent") else p.f("gas.fan_idle_kw")
+            core.q.power_zone[name] = g["zone"]
+            core.q.power_kind[name] = "motor"
+        core.q.flags["gas_alarm_zones"] = alarm_zones
 
     def alarm(self, did: str) -> bool:
         return float(self.points[did]["co"]) >= self.core.p.f("gas.alarm_ppm")

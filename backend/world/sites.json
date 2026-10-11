@@ -2703,5 +2703,30 @@
       "turbidity_ntu": 25,
       "_note": "Example discharge limits for the demo; a real plant uses the values in its permit."
     }
+  },
+  "cmms": {
+    "_doc": "Maintenance and automatic actions (backend/twindock/control.py): who is sent, standard job times, limits. A plant's CMMS and BMS settings, not simulation physics.",
+    "technicians": {
+      "mechanical": "WK-06",
+      "utilities": "WK-07"
+    },
+    "bearing_change_min": 25,
+    "bearing_failure_alarm": "Bearing failure",
+    "leak_fix_min": 20,
+    "compressor_service_min": 40,
+    "compressor_service_interval_h": 2000,
+    "last_service_run_hours": {
+      "CP-01": 60.0,
+      "CP-02": 0.0
+    },
+    "leak_limit_nm3_min": 0.35,
+    "leak_min_samples": 120,
+    "arrive_m": 4.0,
+    "work_offset_m": 2.5,
+    "dismiss_quiet_min": 30,
+    "peak_shed_share": 0.95,
+    "peak_restore_share": 0.85,
+    "restore_after_min": 10,
+    "eval_s": 1.0
   }
 }

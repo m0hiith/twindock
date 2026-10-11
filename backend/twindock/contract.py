@@ -31,9 +31,9 @@ MQTT_SCHEMAS = {
     "site_cmd": "site_cmd",
 }
 CLIENT_TYPES = ("move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert",
-                "scenario_command", "safety_command", "set_sim_speed")
+                "scenario_command", "safety_command", "set_sim_speed", "control_decision")
 SERVER_TYPES = ("world_snapshot", "unit_update", "gateway_update", "selection_changed", "command_ack", "event",
-                "ble_tracks", "device_update", "production_update", "safety_update", "alerts_update", "sim_clock")
+                "ble_tracks", "device_update", "production_update", "safety_update", "alerts_update", "sim_clock", "control_update")
 
 
 @lru_cache(maxsize=1)

@@ -519,6 +519,12 @@ def main() -> None:
     # production config for line 2
     s["production"]["ideal_cycle_s"].update({"M-03": 6.0, "M-04": 8.0})
     # R2: the plant's material and vibration settings (the simulator's params must agree: tests/test_sim_core.py).
+    s["cmms"] = {"_doc": "Maintenance and automatic actions (backend/twindock/control.py): who is sent, standard job times, limits. A plant's CMMS and BMS settings, not simulation physics.",
+                 "technicians": {"mechanical": "WK-06", "utilities": "WK-07"},
+                 "bearing_change_min": 25, "bearing_failure_alarm": "Bearing failure", "leak_fix_min": 20, "compressor_service_min": 40,
+                 "compressor_service_interval_h": 2000, "last_service_run_hours": {"CP-01": 60.0, "CP-02": 0.0},
+                 "leak_limit_nm3_min": 0.35, "leak_min_samples": 120, "arrive_m": 4.0, "work_offset_m": 2.5, "dismiss_quiet_min": 30,
+                 "peak_shed_share": 0.95, "peak_restore_share": 0.85, "restore_after_min": 10, "eval_s": 1.0}
     s["production"]["raw_material"] = {"_doc": "Raw blanks for the presses: one raw pallet holds blanks_per_pallet; line_side_kit_blanks were already at the presses when the twin started. Blanks used = parts the presses made.",
                                        "presses": ["M-01", "M-03"], "blanks_per_pallet": 240, "line_side_kit_blanks": 480}
     s["production"]["vibration_zones_mm_s"] = {"_doc": "ISO 10816-1 class I (machines up to 15 kW): upper limits of zones A, B and C in mm/s RMS; above C is zone D.",
