@@ -92,12 +92,16 @@ def test_fall_not_cancelled_becomes_man_down_with_location() -> None:
 
 def test_no_movement_starts_a_prealert_and_walking_clears_it() -> None:
     s = safety()
-    at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0)
+    for k in range(0, 90):  # the badge reports once a second from the same spot
+        at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0 + k * S)
     step(s, T0 + 89 * S)
     assert s.workers["WK-03"].prealert is None
-    at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0 + 91 * S)
+    for k in range(90, 92):
+        at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0 + k * S)
     step(s, T0 + 91 * S)
     assert s.workers["WK-03"].prealert is not None and s.workers["WK-03"].prealert.kind == "no_motion"
+    for k in range(92, 123):
+        at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0 + k * S)
     step(s, T0 + 122 * S)
     assert s.workers["WK-03"].man_down == "no_motion"
     at(s, "WK-03", 104.0, 12.0, "FAC01_PRODUCTION", T0 + 123 * S)
@@ -325,3 +329,13 @@ def test_simulated_badge_fall_cancel_and_goto() -> None:
         sim.step(1.0)
     assert abs(m.x - mp["x"]) < 1 and abs(m.z - mp["z"]) < 1  # type: ignore[attr-defined]
     assert random  # noqa
+
+
+def test_a_data_gap_does_not_count_as_standing_still() -> None:
+    s = safety()
+    at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0)
+    at(s, "WK-03", 102.0, 12.0, "FAC01_PRODUCTION", T0 + 20 * MIN)  # the badge was silent for 20 minutes, then reports from the same spot
+    step(s, T0 + 20 * MIN + S)
+    assert s.workers["WK-03"].prealert is None
+    step(s, T0 + 20 * MIN + 95 * S)
+    assert s.workers["WK-03"].prealert is not None  # but really standing still for 90 s is

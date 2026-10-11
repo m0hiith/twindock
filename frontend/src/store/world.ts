@@ -147,6 +147,15 @@ interface ViewState {
   /** Campus building the inspect card shows (local to this screen). */
   building: string | null;
   setBuilding: (id: string | null) => void;
+  /** Level of detail from the camera zoom (pixels per metre): far = campus overview, mid = a site, near = a building. */
+  lod: "far" | "mid" | "near";
+  setLod: (l: "far" | "mid" | "near") => void;
+  /** Ground corners of what the camera sees, for the mini-map. */
+  viewRect: [number, number][] | null;
+  setViewRect: (r: [number, number][]) => void;
+  /** The camera follows the selected unit or worker. */
+  follow: boolean;
+  setFollow: (v: boolean) => void;
   /** Interiors: roofs off and the walls facing the camera drop, like the warehouse and factory. */
   cutaway: boolean;
   setCutaway: (v: boolean) => void;
@@ -175,6 +184,12 @@ export const useView = create<ViewState>((set) => ({
   setHovered: (hovered) => set({ hovered }),
   building: null,
   setBuilding: (building) => set({ building }),
+  lod: "mid",
+  setLod: (lod) => set({ lod }),
+  viewRect: null,
+  setViewRect: (viewRect) => set({ viewRect }),
+  follow: false,
+  setFollow: (follow) => set({ follow }),
   cutaway: false,
   setCutaway: (cutaway) => set({ cutaway }),
   rotation: 0,

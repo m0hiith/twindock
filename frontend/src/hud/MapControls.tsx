@@ -1,4 +1,5 @@
 import { useView, useWorld, ZOOM_MAX, ZOOM_MIN } from "../store/world";
+import { CameraMenu } from "./CameraMenu";
 
 function Btn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
@@ -36,6 +37,7 @@ export function MapControls() {
       <Btn label="Rotate right" onClick={() => rotate(1)}>
         <svg viewBox="0 0 24 24" {...icon}><path d="M20 12a8 8 0 1 1-2.4-5.7" /><path d="M20 4v4h-4" /></svg>
       </Btn>
+      <CameraMenu />
       <Btn label="Center on selection" onClick={focusSelected}>
         <svg viewBox="0 0 24 24" {...icon}><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z" /></svg>
       </Btn>

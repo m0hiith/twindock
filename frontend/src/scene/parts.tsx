@@ -2,6 +2,7 @@
 // a handful of GPU objects; every part can show the hover outline via OutlineContext.
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import * as THREE from "three";
+import { useView } from "../store/world";
 import { color, font } from "../theme";
 
 const materials = new Map<string, THREE.MeshStandardMaterial>();
@@ -134,6 +135,8 @@ export function Label({ text, at, width, rotY = 0, flat = false, ...opts }: {
   text: string; at: V3; width: number; rotY?: number; flat?: boolean; color?: string; bg?: string; weight?: number;
 }) {
   const tex = useTextTexture(text, opts);
+  const far = useView((s) => s.lod === "far");
+  if (far && flat) return null; // ground labels are unreadable from the overview: skip their draw calls
   const aspect = 4; // canvas is 512x128
   return (
     <mesh position={at} rotation={flat ? [-Math.PI / 2, 0, rotY] : [0, rotY, 0]}>

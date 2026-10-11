@@ -2,7 +2,7 @@
 // treatment plant, hazardous materials store, fire pump house and tank, rooftop solar. Utilities animate with the
 // state of their (simulated) devices: generator running, compressor cycling, tank levels, solar by time of day.
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { Layout } from "../../layout";
 import { useView } from "../../store/world";
@@ -211,22 +211,32 @@ const panelMat = new THREE.MeshStandardMaterial({ color: "#2E3238", roughness: 0
 const cellGeo = new THREE.BoxGeometry(1, 1, 1);
 
 function SolarArray({ panels, y }: { panels: [number, number, number, number][]; y: number }) {
-  const group = useRef<THREE.Group>(null);
+  const im = useRef<THREE.InstancedMesh>(null);
   const cells = useMemo(() => panels.flatMap(([x, z, w, d]) => {
     const out: { x: number; z: number }[] = [];
     for (let i = 0; i < Math.floor(w / 2.2); i++) for (let j = 0; j < Math.floor(d / 1.4); j++) out.push({ x: x + 1.1 + i * 2.2, z: z + 0.8 + j * 1.4 });
     return out;
   }), [panels]);
+  // One instanced mesh per array: hundreds of panels cost one draw call.
+  useLayoutEffect(() => {
+    const m = im.current;
+    if (!m) return;
+    const o = new THREE.Object3D();
+    cells.forEach((c, i) => {
+      o.position.set(c.x, y + 0.2, c.z);
+      o.rotation.set(-0.14, 0, 0);
+      o.scale.set(2.0, 0.08, 1.25);
+      o.updateMatrix();
+      m.setMatrixAt(i, o.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+  }, [cells, y]);
   useFrame(() => {
     const f = sunFactor();
     panelMat.color.setRGB(0.18 + 0.2 * f, 0.2 + 0.22 * f, 0.22 + 0.28 * f); // brighter in the sun
     panelMat.emissive.setRGB(0.12 * f, 0.1 * f, 0.02 * f);
   });
-  return (
-    <group ref={group} position={[0, y, 0]}>
-      {cells.map((c, i) => <mesh key={i} geometry={cellGeo} material={panelMat} position={[c.x, 0.2, c.z]} scale={[2.0, 0.08, 1.25]} rotation={[-0.14, 0, 0]} />)}
-    </group>
-  );
+  return <instancedMesh ref={im} args={[cellGeo, panelMat, cells.length]} frustumCulled={false} />;
 }
 
 export function SolarRoofs({ layout }: { layout: Layout }) {

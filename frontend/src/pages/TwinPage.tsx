@@ -11,6 +11,7 @@ import { SiteDevicesCard } from "../hud/SiteDevicesCard";
 import { ProductionKpis } from "../hud/ProductionKpis";
 import { SafetyPanel } from "../hud/SafetyPanel";
 import { AlertsCard } from "../hud/AlertsPanel";
+import { MiniMap } from "../hud/MiniMap";
 import { useView } from "../store/world";
 
 // The scene fills the viewport; HUD cards float over it. The overlay itself ignores the pointer
@@ -32,6 +33,7 @@ export function TwinPage() {
             <div className="flex flex-col items-end gap-3">
               <InspectCard />
               <AlertsCard />
+              <MiniMap />
             </div>
           </div>
         </div>

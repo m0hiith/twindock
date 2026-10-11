@@ -6,7 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertRow, type Alert } from "../hud/AlertsPanel";
 import { Brand } from "../hud/Brand";
 import { InspectCard } from "../hud/InspectCard";
+import { CameraMenu } from "../hud/CameraMenu";
 import { LivePill } from "../hud/LivePill";
+import { MiniMap } from "../hud/MiniMap";
+import { Search } from "../hud/Search";
 import { kpiCounts } from "../hud/kpis";
 import { PageTabs } from "../hud/PageTabs";
 import { SafetyPanel } from "../hud/SafetyPanel";
@@ -30,14 +33,17 @@ export function MonitorPage() {
       <header className="card flex h-[56px] shrink-0 items-center gap-4 px-4">
         <Brand />
         <span className="text-[15px] font-semibold">Monitoring centre</span>
-        <span className="text-[13px] text-ink-2">Riverside campus · WH-01 and FAC-01 · privacy: zone counts only; positions appear during an alert or evacuation</span>
+        <span className="hidden text-[13px] text-ink-2 2xl:inline">Riverside campus</span>
         <PageTabs className="ml-4" />
+        <Search />
         <div className="ml-auto"><LivePill /></div>
       </header>
       <div className="flex min-h-0 flex-1 gap-3">
         <section className="card relative min-w-0 flex-1 overflow-hidden" aria-label="Campus map">
           <Scene alertPulses />
-          <div className="pointer-events-none absolute right-3 top-3 z-10"><InspectCard /></div>
+          <div className="pointer-events-none absolute right-3 top-3 z-10 flex flex-col items-end gap-2"><InspectCard /></div>
+          <div className="pointer-events-none absolute bottom-3 right-3 z-10"><MiniMap /></div>
+          <div className="card pointer-events-auto absolute left-3 top-3 z-10 flex flex-col"><CameraMenu /></div>
           <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-white/90 px-2.5 py-1 text-[12px] text-ink-2">
             Pulsing rings are open alerts · click any unit, worker or device to inspect it
           </div>

@@ -195,6 +195,8 @@ class Safety:
             w.shift_start_ms = now  # check-in: first position on site
             w.last_break_ms = now
             w.still_since_ms = now
+        if w.data_ms is not None and now - w.data_ms > 10_000:
+            w.still_since_ms = now  # the badge was silent for a while: "not moving" is counted from its first new position, not from before
         if w.x is not None and w.z is not None:
             dx, dz = x - w.x, z - w.z
             w.moving = math.hypot(dx, dz) > 0.3

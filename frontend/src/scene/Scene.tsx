@@ -52,6 +52,18 @@ function DrawCalls() {
       return { avgMs: Math.round(avg * 100) / 100, p95Ms: Math.round(times[Math.floor(frames * 0.95)]! * 100) / 100,
         maxMs: Math.round(times.at(-1)! * 100) / 100 };
     };
+    // The same numbers on <body data-twin-stats> once a second, and a "twindock-bench" event that writes <body data-twin-bench>:
+    // readable from outside the page (browser automation, a console snippet) without touching window.
+    const stats = setInterval(() => {
+      document.body.dataset.twinStats = JSON.stringify({ calls: gl.info.render.calls, triangles: gl.info.render.triangles,
+        geometries: gl.info.memory.geometries, textures: gl.info.memory.textures });
+    }, 1000);
+    const onBench = (e: Event) => {
+      const frames = Number((e as CustomEvent<number>).detail) || 90;
+      document.body.dataset.twinBench = JSON.stringify((w.__twindockBench as (n: number) => unknown)(frames));
+    };
+    window.addEventListener("twindock-bench", onBench);
+    return () => { clearInterval(stats); window.removeEventListener("twindock-bench", onBench); };
   }, [gl, scene, advance]);
   return null;
 }

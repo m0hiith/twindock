@@ -147,13 +147,17 @@ export function Building({ b, layout, children, interior, sign, wall, roof, roof
   const gap = doorGap(b, layout);
   const pick = usePick(b.id);
   const selected = useView((s) => s.building === b.id);
+  const cutaway = useView((s) => s.cutaway);
+  const lod = useView((s) => s.lod);
+  // Level of detail: from far away a building is its shell and roof; windows and signage from a site view; the inside only
+  // when the roof is off (it is hidden under the roof otherwise, so it is never drawn then).
   return (
     <group {...pick}>
-      <Shell b={b} layout={layout} wall={wall} roof={roof} roofExtras={roofExtras} floor={floor} />
-      {windows && <Windows b={b} gap={gap} y0={y0 ?? Math.min(2, b.h / 2.4)} hh={hh ?? Math.min(1.3, b.h / 4)} spacing={spacing} />}
-      <Sign b={b} text={sign ?? b.name} gap={gap} y={Math.min(b.h - 0.6, 3.6)} width={signW ?? Math.min(7, Math.max(3.6, (sign ?? b.name).length * 0.42))} />
-      {interior}
-      {children}
+      <Shell b={b} layout={layout} wall={wall} roof={roof} roofExtras={lod === "far" ? undefined : roofExtras} floor={floor} />
+      {windows && lod !== "far" && <Windows b={b} gap={gap} y0={y0 ?? Math.min(2, b.h / 2.4)} hh={hh ?? Math.min(1.3, b.h / 4)} spacing={spacing} />}
+      {lod !== "far" && <Sign b={b} text={sign ?? b.name} gap={gap} y={Math.min(b.h - 0.6, 3.6)} width={signW ?? Math.min(7, Math.max(3.6, (sign ?? b.name).length * 0.42))} />}
+      {cutaway && lod !== "far" && interior}
+      {lod !== "far" && children}
       {selected && <SelectionBrackets b={b} />}
     </group>
   );
@@ -205,6 +209,7 @@ export function Yard({ b, layout, wall = 0.9, c = palette.concrete, floor = "#D8
 }) {
   const pick = usePick(b.id);
   const selected = useView((s) => s.building === b.id);
+  const lod = useView((s) => s.lod);
   const cb = { ...b, kind: "yard", name: b.name ?? b.id, h: b.h ?? 3, zone: "" } as CampusBuilding;
   const gap = doorGap(cb, layout);
   const gaps = gap ? [gap] : [];
@@ -220,8 +225,8 @@ export function Yard({ b, layout, wall = 0.9, c = palette.concrete, floor = "#D8
         {segsW.map((s) => <Box key={`w${s.from}`} size={[0.3, wall, s.to - s.from]} at={[b.x, 0, (s.from + s.to) / 2]} color={c} />)}
         {segsE.map((s) => <Box key={`e${s.from}`} size={[0.3, wall, s.to - s.from]} at={[b.x + b.w, 0, (s.from + s.to) / 2]} color={c} />)}
       </Baked>
-      {sign && <Sign b={cb} text={sign} gap={gap} y={wall + 0.9} width={Math.max(3.6, sign.length * 0.4)} bg={signBg} />}
-      {children}
+      {sign && lod !== "far" && <Sign b={cb} text={sign} gap={gap} y={wall + 0.9} width={Math.max(3.6, sign.length * 0.4)} bg={signBg} />}
+      {lod !== "far" && children}
       {selected && <SelectionBrackets b={cb} />}
     </group>
   );

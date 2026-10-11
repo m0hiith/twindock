@@ -6,7 +6,7 @@ import * as THREE from "three";
 import type { Layout } from "../layout";
 import { useView, useWorld } from "../store/world";
 import { ZOOM_MAX, ZOOM_MIN } from "../store/world";
-import { cameraState, ELEVATION } from "./camera";
+import { cameraState, ELEVATION, lodFor, viewCorners } from "./camera";
 import { dragState } from "./dragState";
 
 const DIST = 200;
@@ -23,6 +23,7 @@ const HOME = new THREE.Vector3(32, 0, 27); // WH-01: between the warehouse and t
 const DRAG_PX = 4; // movement before a press counts as a drag rather than a click
 
 export function CameraRig({ layout }: { layout: Layout }) {
+  const rectClock = useRef(0);
   const { camera, size, gl } = useThree();
   const rotation = useView((s) => s.rotation);
   const zoom = useView((s) => s.zoom);
@@ -110,7 +111,23 @@ export function CameraRig({ layout }: { layout: Layout }) {
       cam.zoom = ppm;
       cam.updateProjectionMatrix();
     }
+    // Level of detail with hysteresis (so the model doesn't flicker at a threshold), and the visible ground area for the mini-map.
+    const v = useView.getState();
+    const next = lodFor(ppm, v.lod);
+    if (next !== v.lod) v.setLod(next);
     const yaw = cameraState.yaw, c = Math.cos(ELEVATION);
+    if (v.follow) {
+      const sel = useWorld.getState().selected;
+      const u = sel ? useWorld.getState().units[sel] : undefined;
+      if (u) goal.current.set(u.x, 0, u.z);
+    }
+    rectClock.current += dt;
+    if (rectClock.current > 0.12) {
+      rectClock.current = 0;
+      const rect = viewCorners(target.current, yaw, ppm, size.width, size.height);
+      const old = v.viewRect;
+      if (!old || old.some((p, i) => Math.abs(p[0] - rect[i]![0]) > 0.3 || Math.abs(p[1] - rect[i]![1]) > 0.3)) v.setViewRect(rect);
+    }
     cam.position.set(target.current.x + Math.cos(yaw) * c * DIST, Math.sin(ELEVATION) * DIST, target.current.z + Math.sin(yaw) * c * DIST);
     cam.lookAt(target.current);
   });
