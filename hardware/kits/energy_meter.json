@@ -624,7 +624,7 @@
     {
       "id": "meter",
       "name": "DIN-rail energy meter",
-      "part_number": "Eastron SDM230-Modbus",
+      "part_number": "Eastron SDM630MCT-Modbus (with 3 × 400/5 A CTs)",
       "quantity": 1,
       "location": "external",
       "kind": "module",
@@ -662,9 +662,9 @@
       ],
       "drawing": {
         "family": "din_meter",
-        "label": "SDM230",
-        "w_mm": 36.0,
-        "h_mm": 90.0,
+        "label": "SDM630MCT",
+        "w_mm": 72.0,
+        "h_mm": 100.0,
         "dims_evidence": "typical"
       }
     },
@@ -850,11 +850,11 @@
     },
     {
       "id": "meter",
-      "part_number": "Eastron SDM230-Modbus",
+      "part_number": "Eastron SDM630MCT-Modbus (with 3 × 400/5 A CTs)",
       "manufacturer": "unverified",
-      "description": "Single-phase DIN-rail meter with Modbus RTU (three-phase feeders use the SDM630 class)",
+      "description": "Three-phase CT-operated DIN-rail meter with Modbus RTU, class 1, plus three 400/5 A split-core CTs",
       "quantity": 1,
-      "unit_cost_usd": 45.0,
+      "unit_cost_usd": 160.0,
       "link": null,
       "source": "unverified",
       "covers": [

@@ -9,6 +9,7 @@ import { PartsGallery } from "./pages/PartsGallery";
 import { EnergyPage } from "./pages/EnergyPage";
 import { MonitorPage } from "./pages/MonitorPage";
 import { MePage } from "./pages/MePage";
+import { ModelPage } from "./pages/ModelPage";
 import { KitsPage } from "./pages/KitsPage";
 import { WiringPage } from "./pages/WiringPage";
 import { connect } from "./store/ws";
@@ -46,6 +47,7 @@ export default function App() {
   if (path.startsWith("/kits")) return <KitsPage />;
   if (path.startsWith("/monitor")) return <MonitorPage />;
   if (path.startsWith("/energy")) return <EnergyPage />;
+  if (path.startsWith("/model")) return <ModelPage />;
   if (path.startsWith("/me")) return <MePage />;
   if (path.startsWith("/parts")) return <PartsGallery />;
   if (path !== "/twin") history.replaceState(null, "", "/twin" + location.search);

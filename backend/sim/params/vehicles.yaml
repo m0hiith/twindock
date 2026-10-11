@@ -1,0 +1,18 @@
+# Truck telematics and dock bays (backend/sim/models/vehicles.py).
+vehicles:
+  target_speeds_kmh: {value: [0, 0, 8, 14, 22], unit: km/h, source: "assumption: stopped, yard and site-road speeds"}
+  speed_change_s: {dist: uniform, low: 10, high: 40, unit: s, source: "assumption: stop-and-go driving on site roads"}
+  speed_tau_s: {value: 4.0, unit: s, source: "typical industry value: a loaded box truck reaches site speed in a few seconds"}
+  harsh_event_interval_s: {dist: uniform, low: 120, high: 300, unit: s, source: "assumption: demo rate, far higher than a careful driver's"}
+  harsh_event_kinds: {value: ["hard_brake", "hard_accel", "impact"], unit: "-", source: "assumption: the event classes a telematics IMU reports"}
+  cargo:
+    ambient_c: {value: 17.0, unit: °C, source: "assumption: an unrefrigerated box"}
+    tau_s: {value: 500.0, unit: s, source: "typical industry value: an insulated box drifts over many minutes"}
+    walk_c_per_sqrt_s: {value: 0.02, unit: °C/√s, source: "assumption: sun and door openings the model does not track"}
+  door:
+    stopped_below_kmh: {value: 1.0, unit: km/h, source: "assumption: doors only open when parked"}
+    opened_when_stopped: {dist: bernoulli, p: 0.3, unit: "1", source: "assumption: the driver checks the load at some stops"}
+docks:
+  occupied_s: {dist: uniform, low: 90, high: 200, unit: s, source: "assumption: R0 port"}
+  free_s: {dist: uniform, low: 40, high: 120, unit: s, source: "assumption: R0 port"}
+  occupied_kw: {value: 4.0, unit: kW, source: "typical industry value: hydraulic leveler and dock lights"}

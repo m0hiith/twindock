@@ -949,12 +949,14 @@ def energy_meter():
     k.part("rs485", "RS-485 transceiver", "MAX3485 breakout (3.3 V)", "module", d, p,
            "Turns the board's serial port into the two-wire RS-485 line the meter speaks.", bus="uart", supply=(3.0, 3.6), supplied_from="vmcu",
            bom={"desc": "MAX3485 3.3 V RS-485 transceiver breakout", "cost": 5.0})
-    k.part("meter", "DIN-rail energy meter", "Eastron SDM230-Modbus", "module",
-           {"family": "din_meter", "label": "SDM230", "w_mm": 36.0, "h_mm": 90.0, "dims_evidence": "typical"},
+    # Three-phase and CT-operated: the feeders it meters (compressor, production, incomer) are 400 V three-phase and
+    # well above the 100 A a direct-connected single-phase meter (SDM230) can take.
+    k.part("meter", "DIN-rail energy meter", "Eastron SDM630MCT-Modbus (with 3 × 400/5 A CTs)", "module",
+           {"family": "din_meter", "label": "SDM630MCT", "w_mm": 72.0, "h_mm": 100.0, "dims_evidence": "typical"},
            [{"name": "A", "signal": "RS485_A", "gpio": None, "x_mm": 14.0, "y_mm": 0.4, "side": "top", "evidence": UNV},
             {"name": "B", "signal": "RS485_B", "gpio": None, "x_mm": 22.0, "y_mm": 0.4, "side": "top", "evidence": UNV}],
            "The certified meter that actually measures the electricity; we only read its registers.", bus="rs485", measures="kW, kWh, V, A",
-           bom={"desc": "Single-phase DIN-rail meter with Modbus RTU (three-phase feeders use the SDM630 class)", "cost": 45.0})
+           bom={"desc": "Three-phase CT-operated DIN-rail meter with Modbus RTU, class 1, plus three 400/5 A split-core CTs", "cost": 160.0})
     k.part("psu", "DIN-rail 5 V supply", "Mean Well HDR-15-5", "module",
            {"family": "din_meter", "label": "5V PSU", "w_mm": 18.0, "h_mm": 90.0, "dims_evidence": "typical"},
            [{"name": "V+", "signal": "5V", "gpio": None, "x_mm": 6.0, "y_mm": 0.4, "side": "top", "evidence": UNV},

@@ -15,7 +15,6 @@ twin shows the devices going stale, then offline.
 from __future__ import annotations
 
 import argparse
-import inspect
 import json
 import random
 import signal
@@ -27,11 +26,12 @@ from typing import Any, Callable
 import jsonschema
 from referencing import Registry, Resource
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sim_models import Model, Physics, make  # noqa: E402
-
 ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
+sys.path.insert(0, str(BACKEND))  # the simulation core lives in backend/sim (shared with the embedded simulator)
+from sim import Params, build_core  # noqa: E402
+from sim.devices import Device, make_device  # noqa: E402
+
 SITES = BACKEND / "world" / "sites.json"
 LAYOUT = BACKEND / "world" / "layout.json"
 SCHEMAS = ROOT / "shared" / "schemas"
@@ -62,17 +62,25 @@ def select_devices(cfg: dict[str, Any], site: str | None, zones: list[str] | Non
     return out
 
 
+def wall_hour() -> float:
+    lt = time.localtime()
+    return lt.tm_hour + lt.tm_min / 60.0
+
+
 class SiteSim:
-    def __init__(self, cfg: dict[str, Any], devices: list[dict[str, Any]], seed: int | None = None) -> None:
+    """The whole campus's true state (backend/sim core) plus the selected SIM devices that publish readings of it.
+    `models` maps device id -> its simulated device (kept under that name for the tools and tests that use it)."""
+
+    def __init__(self, cfg: dict[str, Any], devices: list[dict[str, Any]], seed: int | None = None,
+                 params: Params | None = None) -> None:
         self.cfg = cfg
-        self.rng = random.Random(seed)
-        devices = [self.with_routes(d) for d in devices]
-        self.models: dict[str, Model] = {d["id"]: make(d, self.rng) for d in devices}
-        # Campus-level coupling (power, generator, compressed air) when the config describes it and its meters are simulated.
-        util = cfg.get("utilities")
-        self.physics = Physics(self.models, util) if util and util["incomer"] in self.models else None
-        self.hour = 12.0
-        self.local_hour = lambda: time.localtime().tm_hour + time.localtime().tm_min / 60.0
+        self.params = params or Params.load()
+        self.seed = seed if seed is not None else random.randrange(1 << 30)
+        self.local_hour: Callable[[], float] = wall_hour  # the backend points this at its simulation clock
+        self.core = build_core(cfg, json.loads(LAYOUT.read_text()), self.params, self.seed, lambda: self.local_hour())
+        for d in devices:
+            assert d["source"] == "sim", "refusing to simulate a real device"
+        self.models: dict[str, Device] = {d["id"]: make_device(d, self.core) for d in devices}
         self.v = load_validators()
         self.t = 0.0  # simulated seconds since start (advanced by step(dt), so tests run fast)
         self.client: Any = None  # paho client when publishing to a broker
@@ -83,23 +91,13 @@ class SiteSim:
         # the engine still validates every message it receives, so nothing unchecked reaches the twin.
         self.validate = True
 
-    def with_routes(self, d: dict[str, Any]) -> dict[str, Any]:
-        """Badges walk their worker's routes: node ids from sites.json -> layout coordinates."""
-        w = next((w for w in self.cfg.get("workers", []) if w["badge"] == d["id"]), None)
-        if w is None:
-            return d
-        nodes = {n["id"]: n for n in json.loads(LAYOUT.read_text())["nodes"]}
-        routes = {name: [(nid, float(nodes[nid]["x"]), float(nodes[nid]["z"]), bool(nodes[nid]["kinds"])) for nid in ids]
-                  for name, ids in w["routes"].items()}
-        return {**d, "_routes": routes, "_walk_speed": self.cfg.get("safety", {}).get("walk_speed_mps", 1.3)}
-
-    def topic(self, m: Model, channel: str) -> str:
+    def topic(self, m: Device, channel: str) -> str:
         assert m.d["source"] == "sim", "refusing to publish for a real device"
         t = f"twin/{m.d['site_id']}/{m.id}/{channel}"
         assert not t.startswith("twin/gateway/")
         return t
 
-    def publish(self, m: Model, channel: str, payload: dict[str, Any], retain: bool = False) -> None:
+    def publish(self, m: Device, channel: str, payload: dict[str, Any], retain: bool = False) -> None:
         kind = channel if channel in ("hello", "status") else "reading"
         if self.validate:
             self.v[kind].validate(payload)
@@ -125,47 +123,33 @@ class SiteSim:
             if self.verbose:
                 print(f"[sim] ignored invalid command on {topic}: {e}")
             return
-        t = self.t
-        action = parts[4]
-        if action == "silence":
-            m.silent = bool(data.get("on", True))
-        elif action == "door_open" and hasattr(m, "force_open"):
-            m.force_open(t, float(data.get("seconds", 90)))  # type: ignore[attr-defined]
-        elif hasattr(m, "command"):
-            # Models whose command() takes the payload (badges, asset tags) get it; the others only the action.
-            if len(inspect.signature(m.command).parameters) >= 4:  # type: ignore[attr-defined]
-                m.command(action, t, int(t * 1000), data)  # type: ignore[attr-defined]
-            else:
-                m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]
+        self.command(m.id, parts[4], data)
+
+    def command(self, device_id: str, action: str, data: dict[str, Any] | None = None) -> bool:
+        """A command to one simulated device: the device itself (silence) or the true-state model behind it."""
+        data = data or {}
+        m = self.models[device_id]
+        ok = m.command(action, data) or self.core.command(device_id, action, data)
         if self.verbose:
-            print(f"[sim] {m.id}: {action} ({data.get('cmd_id')})")
+            print(f"[sim] {device_id}: {action} ({data.get('cmd_id')}){'' if ok else ' (not handled)'}")
+        return ok
 
     def hellos(self) -> None:
         for m in self.models.values():
             self.publish(m, "hello", m.hello(), retain=True)
 
-    def couple(self) -> None:
-        """Cross-device physics: a cold room's env sensors feel its door."""
-        doors = [m for m in self.models.values() if m.d["type"] == "door_sensor"]
-        for m in self.models.values():
-            if m.d["type"] == "env_sensor":
-                m.door_open = any(getattr(dm, "open", False) for dm in doors if dm.d["zone_id"] == m.d["zone_id"])  # type: ignore[attr-defined]
-
     def step(self, dt: float) -> None:
         self.t += dt
-        t = self.t
-        ts_ms = int(t * 1000)
-        self.couple()
-        if self.physics is not None:
-            self.physics.hour = self.local_hour()
-            self.physics.step(t, dt)
+        self.core.advance(dt)
+        t = self.core.t
+        ts_ms = int(self.t * 1000)
         for m in self.models.values():
-            out = m.step(t, dt, ts_ms)
+            out, status_due = m.step(t, dt, ts_ms)
             if m.silent or m.power_off:
                 continue
             for channel, payload in out:
                 self.publish(m, channel, payload)
-            if m.every("status", t, 10.0):
+            if status_due:
                 self.publish(m, "status", m.status(ts_ms))
 
 

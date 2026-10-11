@@ -1,0 +1,5 @@
+# The simulation core (backend/sim/core.py). Every parameter: value, unit, source.
+core:
+  _doc: Fixed step for the continuous models and the size of the cause log.
+  dt_s: {value: 0.25, unit: s, source: "assumption: 4 steps a second resolves a forklift-pace near miss and a 1 s sensor clock; finer adds cost, not fidelity"}
+  event_log_max: {value: 5000, unit: events, source: "assumption: enough cause records for the last few hours of discrete events"}

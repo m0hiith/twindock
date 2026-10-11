@@ -1,0 +1,62 @@
+# Production line (backend/sim/models/production.py).
+production:
+  _doc: FAC-01 machines (presses and packers) and conveyors.
+  ambient_c: {value: 24.0, unit: °C, source: "assumption: ventilated shop floor"}
+  supply_v: {value: 400.0, unit: V, source: "standard: IEC 60038 low-voltage three-phase 400 V"}
+  power_factor: {value: 0.85, unit: "1", source: "typical industry value: induction motor near rated load (0.8-0.9)"}
+  idle_current_a: {value: 1.2, unit: A, source: "typical industry value: hydraulic pump / controls idling, ~10 % of rated"}
+  stopped_vibration_mm_s: {value: 0.15, unit: mm/s, source: "typical industry value: background floor vibration on a stopped machine"}
+  wear_current_a_per_mm_s: {value: 0.8, unit: A/(mm/s), source: "assumption: friction of a worn bearing loads the motor a little"}
+  wear_slowdown_per_mm_s: {value: 0.05, unit: 1/(mm/s), source: "assumption: a worn machine loses ~5 % speed per mm/s of extra vibration"}
+  cycle_variation: {value: 0.12, unit: "1", source: "typical industry value: micro-stops make real cycles 0-12 % slower than ideal"}
+  demo_degrade_rate_mm_s_per_s: {value: 0.015, unit: (mm/s)/s, source: "assumption: demo wear visible within a minute (0.9 mm/s per minute)"}
+  maintenance_s: {value: 30.0, unit: s, source: "assumption: short demo maintenance stop"}
+  thermal:
+    k_current_c_per_a: {value: 2.6, unit: °C/A, source: "assumption: steady surface rise of a motor housing per amp"}
+    k_wear_c_per_mm_s: {value: 3.0, unit: °C/(mm/s), source: "assumption: friction heat of a worn bearing"}
+    tau_s: {value: 50.0, unit: s, source: "assumption: thermal time constant of the bearing housing surface"}
+  air:
+    slow_below_bar: {value: 6.0, unit: bar, source: "typical industry value: pneumatic tools are rated at 6 bar"}
+    factor_per_bar: {value: 0.45, unit: 1/bar, source: "assumption: cylinders stroke slower as supply pressure falls"}
+    max_factor: {value: 2.2, unit: "1", source: "assumption: below this the machine would stop (R1 trips it)"}
+  conveyor:
+    jam_s: {value: 25.0, unit: s, source: "assumption: an operator clears a jam in about half a minute"}
+    run_current_a: {value: 7.5, unit: A, source: "typical industry value: 3-4 kW conveyor drive at 400 V"}
+    jam_current_a: {value: 13.5, unit: A, source: "typical industry value: a stalled belt drive draws well above running current until its overload trips"}
+    belt_speed_m_s: {value: 0.55, unit: m/s, source: "typical industry value: carton conveyor 0.3-0.8 m/s"}
+  state:
+    first_dwell_s: {dist: uniform, low: 40, high: 90, unit: s, source: "assumption: machines start their first spell at different moments"}
+    running_dwell_s: {dist: uniform, low: 40, high: 120, unit: s, source: "assumption: R0 port of the original random dwell (R2 replaces it with failures and starving)"}
+    fault_dwell_s: {dist: uniform, low: 15, high: 40, unit: s, source: "assumption: R0 port"}
+    idle_dwell_s: {dist: uniform, low: 8, high: 25, unit: s, source: "assumption: R0 port"}
+    p_fault: {value: 0.08, unit: "1", source: "assumption: R0 port"}
+    p_idle: {value: 0.14, unit: "1", source: "assumption: R0 port"}
+  machines:
+    M-01:
+      ideal_cycle_s: {value: 6.0, unit: s, source: "assumption: small mechanical press, 10 strokes a minute"}
+      rated_current_a: {value: 14.0, unit: A, source: "typical industry value: 7.5 kW hydraulic press motor at 400 V"}
+      healthy_vibration_mm_s: {value: 2.8, unit: mm/s, source: "standard: ISO 10816-3 zone A/B boundary region for a medium machine on a rigid foundation"}
+      scrap_rate: {value: 0.0, unit: "1", source: "assumption: the press's scrap shows at the packer's check"}
+      air_nm3_min: {value: 0.5, unit: Nm³/min, source: "typical industry value: pneumatic clamps and ejector on a small press"}
+      alarms: {value: ["Die jam", "Hydraulic pressure low"], unit: "-", source: "assumption: the press's two commonest stop reasons"}
+    M-02:
+      ideal_cycle_s: {value: 8.0, unit: s, source: "assumption: shrink packer, 7.5 packs a minute"}
+      rated_current_a: {value: 6.5, unit: A, source: "typical industry value: 3 kW packer drives at 400 V"}
+      healthy_vibration_mm_s: {value: 1.8, unit: mm/s, source: "standard: ISO 10816-3 zone A for a small machine"}
+      scrap_rate: {value: 0.03, unit: "1", source: "typical industry value: packing rejects 1-5 %"}
+      air_nm3_min: {value: 0.3, unit: Nm³/min, source: "typical industry value: film cutter and pushers"}
+      alarms: {value: ["Film break", "Carton feed empty"], unit: "-", source: "assumption: the packer's two commonest stop reasons"}
+    M-03:
+      ideal_cycle_s: {value: 6.0, unit: s, source: "assumption: same press as M-01 on line 2"}
+      rated_current_a: {value: 13.0, unit: A, source: "typical industry value: 7.5 kW hydraulic press motor at 400 V"}
+      healthy_vibration_mm_s: {value: 2.6, unit: mm/s, source: "standard: ISO 10816-3 zone A/B for a medium machine"}
+      scrap_rate: {value: 0.0, unit: "1", source: "assumption: the press's scrap shows at the packer's check"}
+      air_nm3_min: {value: 0.5, unit: Nm³/min, source: "typical industry value: pneumatic clamps and ejector on a small press"}
+      alarms: {value: ["Die jam", "Hydraulic pressure low"], unit: "-", source: "assumption: the press's two commonest stop reasons"}
+    M-04:
+      ideal_cycle_s: {value: 8.0, unit: s, source: "assumption: same packer as M-02 on line 2"}
+      rated_current_a: {value: 7.0, unit: A, source: "typical industry value: 3 kW packer drives at 400 V"}
+      healthy_vibration_mm_s: {value: 1.9, unit: mm/s, source: "standard: ISO 10816-3 zone A for a small machine"}
+      scrap_rate: {value: 0.02, unit: "1", source: "typical industry value: packing rejects 1-5 %"}
+      air_nm3_min: {value: 0.3, unit: Nm³/min, source: "typical industry value: film cutter and pushers"}
+      alarms: {value: ["Film jam"], unit: "-", source: "assumption: the packer's commonest stop reason"}

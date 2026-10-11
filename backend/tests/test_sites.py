@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import json
-import random
 import sys
 from pathlib import Path
 
@@ -14,7 +13,6 @@ from twindock.contract import def_validator, first_error, mqtt_validator, valida
 from twindock.devices import load_sites, parse_site_topic, point_in_polygon
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
-import sim_models  # noqa: E402
 from site_sim import SiteSim, select_devices  # noqa: E402
 
 HELLO_MM = {"type": "machine_monitor", "protocol": "wifi", "fw_version": "sim-2.3", "source": "sim",
@@ -151,4 +149,5 @@ def test_zone_filter() -> None:
     cfg = json.loads((Path(__file__).resolve().parents[1] / "world" / "sites.json").read_text())
     assert {d["zone_id"] for d in select_devices(cfg, None, ["cold_room"])} == {"FAC01_COLD"}
     assert {d["site_id"] for d in select_devices(cfg, "WH-01", None)} == {"WH-01"}
-    assert sim_models.make(cfg["devices"][1], random.Random(1)).hello()["fw_version"].startswith("sim-")
+    s = SiteSim(cfg, [cfg["devices"][1]], seed=1)
+    assert s.models[cfg["devices"][1]["id"]].hello()["fw_version"].startswith("sim-")

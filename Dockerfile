@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends tzdata && rm -r
 # Same layout as the repo, so every path in the code works unchanged.
 COPY shared shared
 COPY hardware hardware
-COPY tools/site_sim.py tools/sim_models.py tools/
+COPY tools/site_sim.py tools/
+COPY backend/sim backend/sim
 COPY backend/twindock backend/twindock
 COPY backend/world backend/world
 COPY backend/rules backend/rules

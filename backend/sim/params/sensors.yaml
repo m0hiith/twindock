@@ -1,0 +1,65 @@
+# The measurement layer (backend/sim/sensors.py): how each simulated device's sensor reads the true state.
+# value: period_s (report interval), sigma (noise, 1 sd), resolution, range [min, max] the part can report,
+# dropout_p (chance a sample is lost), part (the real part in the device's kit, hardware/kits/*.json).
+sensors:
+  env_sensor:
+    temperature: {value: {period_s: 5, sigma: 0.02, resolution: 0.01, range: [-40, 125], dropout_p: 0.005, part: "Sensirion SHT45"}, unit: °C, source: "datasheet: Sensirion SHT45 (±0.1 °C accuracy, 0.01 °C resolution, −40…125 °C); 5 s report from the env node firmware"}
+    humidity: {value: {period_s: 5, sigma: 0.1, resolution: 0.1, range: [0, 100], dropout_p: 0.005, part: "Sensirion SHT45"}, unit: "%RH", source: "datasheet: Sensirion SHT45 (±1 %RH accuracy, 0–100 %RH)"}
+    co2_ppm: {value: {period_s: 5, sigma: 5, resolution: 1, range: [0, 40000], dropout_p: 0.005, part: "Sensirion SCD40"}, unit: ppm, source: "datasheet: Sensirion SCD40 (5 s periodic measurement, ±(50 ppm + 5 %) in 400–2000 ppm, output to 40000 ppm)"}
+    pm25_ugm3: {value: {period_s: 5, sigma: 0.3, resolution: 0.1, range: [0, 1000], dropout_p: 0.005, part: "Sensirion SPS30"}, unit: µg/m³, source: "datasheet: Sensirion SPS30 (0–1000 µg/m³, ±10 µg/m³ up to 100)"}
+  air_quality:
+    co2_ppm: {value: {period_s: 10, sigma: 5, resolution: 1, range: [0, 40000], dropout_p: 0.005, part: "Sensirion SCD40"}, unit: ppm, source: "datasheet: Sensirion SCD40"}
+    pm25_ugm3: {value: {period_s: 10, sigma: 0.3, resolution: 0.1, range: [0, 1000], dropout_p: 0.005, part: "Sensirion SPS30"}, unit: µg/m³, source: "datasheet: Sensirion SPS30"}
+  door_sensor:
+    open: {value: {period_s: 30, part: "reed contact + magnet"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+  occupancy_sensor:
+    occupied: {value: {period_s: 30, part: "PIR occupancy sensor"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+  machine_monitor:
+    vibration_rms: {value: {period_s: 1, sigma: 0.12, resolution: 0.001, range: [0, 45], dropout_p: 0.002, part: "LIS3DH (velocity RMS computed on the node)"}, unit: mm/s, source: "typical industry value: RMS velocity from a MEMS accelerometer repeats to ~0.1 mm/s; range covers ISO 10816 zone D"}
+    current_a: {value: {period_s: 1, sigma: 0.3, resolution: 0.01, range: [0, 30], dropout_p: 0.002, part: "YHDC SCT-013-030 + 16-bit ADC"}, unit: A, source: "datasheet: YHDC SCT-013-030 split-core CT, 30 A full scale"}
+    temperature_c: {value: {period_s: 1, sigma: 0.1, resolution: 0.25, range: [-200, 1350], dropout_p: 0.002, part: "MAX31855K + type K thermocouple"}, unit: °C, source: "datasheet: Maxim MAX31855K (0.25 °C resolution, ±2 °C, type K −200…1350 °C)"}
+    cycle_time_s: {value: {period_s: 1, resolution: 0.01, part: "cycle input (stack light)"}, unit: s, source: "assumption: measured between cycle-complete pulses"}
+    state: {value: {period_s: 5, part: "stack light inputs"}, unit: "-", source: "assumption: reported on change and every 5 s"}
+    units: {value: {period_s: 5, part: "cycle input"}, unit: "-", source: "assumption: counter reported on change and every 5 s"}
+    rejects: {value: {period_s: 5, part: "reject input"}, unit: "-", source: "assumption: counter reported on change and every 5 s"}
+  badge:
+    position: {value: {period_s: 1, sigma: 0.0, resolution: 0.01, range: [-60, 300], part: "BLE positioning (EFR32BG27 advertising)"}, unit: m, source: "assumption: R0 reports the true position; R4 adds BLE zone error"}
+  truck_telematics:
+    speed_kmh: {value: {period_s: 2, sigma: 0.2, resolution: 0.1, range: [0, 200], dropout_p: 0.002, part: "u-blox MAX-M10S"}, unit: km/h, source: "datasheet: u-blox MAX-M10S (velocity accuracy 0.05 m/s ≈ 0.2 km/h)"}
+    cargo_temp_c: {value: {period_s: 2, sigma: 0.05, resolution: 0.01, range: [-55, 125], dropout_p: 0.002, part: "DS18B20"}, unit: °C, source: "datasheet: Maxim DS18B20 (±0.5 °C, −55…125 °C)"}
+    door_open: {value: {period_s: 45, part: "cargo door contact"}, unit: "-", source: "assumption: reported every 45 s"}
+  dock_bay:
+    occupied: {value: {period_s: 30, part: "VL53L1X ToF"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+    door_position: {value: {period_s: 30, part: "door contacts"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+    leveler: {value: {period_s: 30, part: "leveler input"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+    dock_light: {value: {period_s: 30, part: "dock light relay"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+  conveyor_monitor:
+    jam: {value: {period_s: 2, part: "VL53L1X jam sensor"}, unit: "-", source: "assumption: one report every 2 s"}
+    motor_current_a: {value: {period_s: 2, sigma: 0.25, resolution: 0.01, range: [0, 30], dropout_p: 0.002, part: "YHDC SCT-013-030"}, unit: A, source: "datasheet: YHDC SCT-013-030, 30 A full scale"}
+    belt_speed_m_s: {value: {period_s: 2, sigma: 0.01, resolution: 0.001, range: [0, 5], dropout_p: 0.002, part: "Hall roller pulse sensor"}, unit: m/s, source: "assumption: roller pulses over 2 s"}
+  compressor_monitor:
+    pressure_bar: {value: {period_s: 2, sigma: 0.01, resolution: 0.01, range: [0, 10], dropout_p: 0.002, part: "0-10 bar ratiometric transducer + 16-bit ADC"}, unit: bar, source: "datasheet: 0–10 bar 0.5–4.5 V transducer, ±0.5 % FS typical"}
+    current_a: {value: {period_s: 2, sigma: 0.3, resolution: 0.1, range: [0, 30], dropout_p: 0.002, part: "YHDC SCT-013-030"}, unit: A, source: "datasheet: YHDC SCT-013-030, 30 A full scale"}
+    run_hours: {value: {period_s: 2, resolution: 0.01, range: [0, 200000], part: "hour meter"}, unit: h, source: "assumption: loaded-hours counter"}
+    dew_point_c: {value: {period_s: 2, sigma: 0.3, resolution: 0.1, range: [-60, 20], dropout_p: 0.002, part: "dew-point transmitter 4-20 mA"}, unit: °C, source: "datasheet: pressure dew-point transmitter −60…+20 °C, ±2 °C"}
+  helmet_clip:
+    worn: {value: {period_s: 30, part: "VCNL4040 proximity"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+    impact_g: {value: {sigma: 0.5, resolution: 0.1, range: [0, 200], period_s: 1, part: "ADXL372"}, unit: g, source: "datasheet: Analog Devices ADXL372 (±200 g)"}
+  gas_detector:
+    co_ppm: {value: {period_s: 2, sigma: 0.2, resolution: 0.1, range: [0, 500], dropout_p: 0.002, part: "electrochemical CO module"}, unit: ppm, source: "datasheet: electrochemical CO module, 0–500 ppm, 1 ppm resolution class"}
+    o2_pct: {value: {period_s: 2, sigma: 0.01, resolution: 0.01, range: [0, 25], dropout_p: 0.002, part: "electrochemical O₂ cell"}, unit: "%", source: "datasheet: galvanic O₂ cell, 0–25 %"}
+  leak_sensor:
+    wet: {value: {period_s: 30, part: "leak probe + comparator"}, unit: "-", source: "assumption: reported on change and every 30 s"}
+  tank_level:
+    level_pct: {value: {period_s: 10, sigma: 0.15, resolution: 0.1, range: [0, 100], dropout_p: 0.005, part: "A02YYUW-class ultrasonic"}, unit: "%", source: "datasheet: waterproof ultrasonic distance sensor 3–450 cm, ±(1 cm + 0.3 %)"}
+  fire_panel:
+    alarm: {value: {period_s: 10, part: "panel dry contacts"}, unit: "-", source: "assumption: read every 10 s and on change"}
+  power_meter:
+    power_kw: {value: {period_s: 5, sigma: 0.15, resolution: 0.01, range: [0, 277], dropout_p: 0.002, part: "Eastron SDM630MCT + 400/5 A CTs"}, unit: kW, source: "datasheet: Eastron SDM630MCT (class 1, CT-operated); with 400/5 A CTs at 400 V full scale is √3 × 400 V × 400 A ≈ 277 kW"}
+    energy_kwh: {value: {period_s: 5, resolution: 0.01, range: [0, 9999999], part: "Eastron SDM630MCT register"}, unit: kWh, source: "datasheet: Eastron SDM630MCT import energy register"}
+    voltage_v: {value: {period_s: 5, sigma: 1.2, resolution: 0.1, range: [0, 500], dropout_p: 0.002, part: "Eastron SDM630MCT"}, unit: V, source: "datasheet: Eastron SDM630MCT, 3 × 230/400 V"}
+  water_quality:
+    ph: {value: {period_s: 10, sigma: 0.02, resolution: 0.01, range: [0, 14], dropout_p: 0.005, part: "industrial pH electrode"}, unit: pH, source: "typical industry value: pH electrode ±0.1 pH, 0–14"}
+    turbidity_ntu: {value: {period_s: 10, sigma: 0.5, resolution: 0.1, range: [0, 1000], dropout_p: 0.005, part: "optical turbidity module"}, unit: NTU, source: "typical industry value: analog optical turbidity module, 0–1000 NTU"}
+  asset_tag:
+    find_me: {value: {period_s: 20, part: "EFR32BG22 tag"}, unit: "-", source: "assumption: heartbeat every 20 s"}

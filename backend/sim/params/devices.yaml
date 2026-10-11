@@ -1,0 +1,9 @@
+# What every simulated device reports about itself (backend/sim/devices.py).
+devices:
+  status_period_s: {value: 10.0, unit: s, source: "assumption: device status heartbeat"}
+  rssi_dbm: {dist: uniform, low: -78, high: -52, unit: dBm, source: "typical industry value: indoor Wi-Fi / BLE link at 5-30 m"}
+  rssi_sigma_db: {value: 1.5, unit: dB, source: "typical industry value: RSSI jitter of a static link"}
+  initial_battery_pct: {dist: uniform, low: 55, high: 98, unit: "%", source: "assumption: batteries were changed at different times before commissioning"}
+  battery_drain_pct_per_s: {value: 0.0005, unit: "%/s", source: "assumption: visible over a long demo (a real node lasts months)"}
+  power_meter:
+    initial_kwh_default: {value: 5200.0, unit: kWh, source: "assumption: register reading when the twin was commissioned"}

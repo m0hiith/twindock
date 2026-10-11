@@ -1,0 +1,9 @@
+# People wearing simulated badges (backend/sim/models/people.py).
+people:
+  walk_speed_mps: {value: 1.3, unit: m/s, source: "typical industry value: walking pace 1.2-1.4 m/s (pedestrian design guides)"}
+  walkway_offset_m: {value: 1.7, unit: m, source: "assumption: walkway beside a forklift aisle, outside a passing forklift but inside its 3 m warning radius"}
+  evacuation_pace_factor: {value: 1.3, unit: "1", source: "typical industry value: people walk briskly when evacuating"}
+  arrive_within_m: {value: 0.5, unit: m, source: "assumption: a person is at a waypoint within half a step"}
+  work_stand_pause_s: {dist: uniform, low: 5, high: 18, unit: s, source: "assumption: a task at a work stand"}
+  fall_lie_still_s: {value: 3600.0, unit: s, source: "assumption: after a fall the worker lies still until they cancel or are helped"}
+  still_default_s: {value: 120.0, unit: s, source: "assumption: demo no-movement spell, longer than the 90 s man-down rule"}

@@ -1,0 +1,63 @@
+# Utilities (backend/sim/models/utilities.py): compressed air, electrical supply, tanks, other loads.
+air:
+  _doc: One screw compressor on load/unload control feeding a receiver and the FAC-01 header.
+  band_low_bar: {value: 6.5, unit: bar g, source: "typical industry value: load/unload band 6.5-7.5 bar for 6 bar tools"}
+  band_high_bar: {value: 7.5, unit: bar g, source: "typical industry value: load/unload band 6.5-7.5 bar for 6 bar tools"}
+  safety_valve_bar: {value: 8.5, unit: bar g, source: "typical industry value: receiver safety valve set above the unload pressure"}
+  p_atm_bar: {value: 1.013, unit: bar, source: "standard: ISO 2533 standard atmosphere at sea level"}
+  receiver_m3: {value: 0.5, unit: m³, source: "typical industry value: 6-10 L of receiver per l/s of compressor delivery for load/unload control (2.4 m³/min = 40 l/s)"}
+  leak_share: {value: 0.15, unit: "1", source: "typical industry value: leaks are 10-30 % of compressed-air demand in a typical plant (15 % = reasonably maintained)"}
+  injected_leak_nm3_min: {value: 0.8, unit: Nm³/min, source: "assumption: a burst hose for the demo"}
+  ambient_c: {value: 30.0, unit: °C, source: "assumption: compressor room air"}
+  compressor:
+    fad_nm3_min: {value: 2.4, unit: Nm³/min, source: "datasheet: 15 kW oil-injected screw compressors deliver about 2.3-2.5 m³/min FAD at 7.5 bar (ISO 1217 Annex C)"}
+    specific_power_kw_per_nm3_min: {value: 6.3, unit: kW/(Nm³/min), source: "typical industry value: 6-7 kW per m³/min for a 15 kW screw at 7.5 bar"}
+    unloaded_power_share: {value: 0.3, unit: "1", source: "typical industry value: a screw compressor running unloaded draws 25-35 % of its loaded power"}
+    power_factor: {value: 0.88, unit: "1", source: "typical industry value: compressor motor at load"}
+    initial_run_hours: {value: 1240.0, unit: h, source: "assumption: hour meter when the twin was commissioned"}
+    discharge_loaded_c: {value: 80.0, unit: °C, source: "typical industry value: oil-injected screw discharge 75-90 °C"}
+    discharge_unloaded_c: {value: 70.0, unit: °C, source: "typical industry value: discharge cools when unloaded"}
+    discharge_tau_s: {value: 120.0, unit: s, source: "assumption: oil and element thermal mass"}
+  dryer:
+    pressure_dew_point_c: {value: -40.0, unit: °C, source: "standard: ISO 8573-1 class 2 (−40 °C pressure dew point), what a heatless desiccant dryer delivers"}
+power:
+  _doc: Grid incomer, rooftop solar, diesel generator for the critical zones.
+  nominal_v: {value: 400.0, unit: V, source: "standard: IEC 60038 low-voltage three-phase 400 V"}
+  zone_fixed_kw: {value: {FAC01_PRODUCTION: 6.0, FAC01_COMPRESSOR: 1.0, FAC01_RAW: 5.0}, unit: kW, source: "assumption: lighting and ventilation of the metered zones"}
+  other:
+    base_kw: {value: 40.0, unit: kW, source: "assumption: offices, lighting and HVAC of the unmetered buildings"}
+    night_share: {value: 0.55, unit: "1", source: "typical industry value: a 24 h site keeps about half its building load at night"}
+    critical_share: {value: 0.1, unit: "1", source: "assumption: emergency lighting and IT on the generator"}
+    day_start_h: {value: 6.0, unit: h, source: "assumption: first shift arrives"}
+    day_end_h: {value: 20.0, unit: h, source: "assumption: second shift's office load ends"}
+  solar:
+    kwp: {value: 360.0, unit: kWp, source: "assumption: rooftop arrays 110 + 160 + 90 kWp (layout.json campus.solar)"}
+    performance_ratio: {value: 0.8, unit: "1", source: "typical industry value: PV performance ratio 0.75-0.85"}
+    sunrise_h: {value: 6.0, unit: h, source: "assumption: equinox day, sun up at 06:00 (front end scene/campus/shared.tsx uses the same curve)"}
+    sunset_h: {value: 18.0, unit: h, source: "assumption: equinox day, sun down at 18:00"}
+  generator:
+    start_s: {value: 8.0, unit: s, source: "standard: ISO 8528-12 / NFPA 110 Type 10 emergency generator: load within 10 s"}
+    cooldown_s: {value: 6.0, unit: s, source: "assumption: R0 port (R1 adds a real cool-down)"}
+    litres_per_kwh: {value: 0.27, unit: L/kWh, source: "typical industry value: diesel genset at 50-75 % load uses 0.25-0.3 L per kWh"}
+loads:
+  _doc: Loads that are not machines.
+  ev:
+    base_kw: {value: 2.0, unit: kW, source: "assumption: charger standby and a car topping up"}
+    peak_kw: {value: 12.0, unit: kW, source: "assumption: a few 7 kW AC chargers in use at midday"}
+    start_h: {value: 7.0, unit: h, source: "assumption: staff plug in when they arrive"}
+    end_h: {value: 18.0, unit: h, source: "assumption: and leave by the evening"}
+  fire_pump:
+    rated_kw: {value: 45.0, unit: kW, source: "typical industry value: electric fire pump for a mid-size site (NFPA 20 class)"}
+    standby_kw: {value: 1.0, unit: kW, source: "assumption: jockey pump and controller"}
+tanks:
+  _doc: Water tanks with pump control, and the generator's diesel day tank.
+  water:
+    initial_pct: {value: 72.0, unit: "%", source: "assumption: level at start"}
+    volume_l: {value: 20000.0, unit: L, source: "assumption: process / fire water tank"}
+    fill_pct_per_s: {value: 0.11, unit: "%/s", source: "assumption: fill pump refills in ~10 min"}
+    draw_pct_per_s: {value: 0.012, unit: "%/s", source: "assumption: steady draw-off empties the band in ~1.5 h"}
+    pump_on_pct: {value: 30.0, unit: "%", source: "typical industry value: pump start level"}
+    pump_off_pct: {value: 90.0, unit: "%", source: "typical industry value: pump stop level"}
+  diesel:
+    initial_pct: {value: 72.0, unit: "%", source: "assumption: level at start"}
+    volume_l: {value: 1000.0, unit: L, source: "typical industry value: generator day tank 8-24 h at load"}

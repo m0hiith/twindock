@@ -14,7 +14,7 @@ from twindock import planner
 from twindock.production import Baseline, oee
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
-from sim_models import MachineMonitor  # noqa: E402
+from site_sim import SiteSim  # noqa: E402
 
 SITES = json.loads((Path(__file__).resolve().parents[1] / "world" / "sites.json").read_text())
 MM01 = next(d for d in SITES["devices"] if d["id"] == "MM-01")
@@ -23,49 +23,61 @@ HELLO = {"type": "machine_monitor", "protocol": "wifi", "fw_version": "sim-2.3",
          "capabilities": MM01["capabilities"]}
 
 
-def run_sim(m: MachineMonitor, seconds: float, t0: float = 0.0, dt: float = 0.25) -> list[tuple[float, str, dict]]:
-    out = []
-    t = t0
-    while t < t0 + seconds:
-        t += dt
-        for ch, p in m.step(t, dt, int(t * 1000)):
-            out.append((t, ch, p))
-    return out
+def machine_sim(seed: int) -> tuple[SiteSim, list[tuple[float, str, dict]]]:
+    """The simulator with only MM-01 publishing; returns it and the list its readings go to."""
+    s = SiteSim(SITES, [MM01], seed=seed)
+    s.verbose = False
+    out: list[tuple[float, str, dict]] = []
+    s.publish = lambda m, ch, p, retain=False: out.append((s.t, ch, p))  # type: ignore[method-assign]
+    return s, out
+
+
+def run_sim(s: SiteSim, seconds: float) -> None:
+    for _ in range(round(seconds / 0.25)):
+        s.step(0.25)
 
 
 # ------------------------------------------------------------------ simulator state machine
 
 def test_machine_states_and_production() -> None:
-    m = MachineMonitor(MM01, random.Random(3))
-    out = run_sim(m, 1800)
+    s, out = machine_sim(3)
+    run_sim(s, 1800)
     states = {p["value"] for _, ch, p in out if ch == "state"}
     assert states <= {"running", "idle", "fault", "maintenance"}
     assert {"running", "idle", "fault"} <= states  # over 30 min all three happen
     units = [p["value"] for _, ch, p in out if ch == "units"]
     assert units == sorted(units) and units[-1] > 100  # cumulative, ~6 s cycles
-    # alarms only accompany faults
-    assert all(p["value"] in MM01["sim"]["alarms"] for _, ch, p in out if ch == "alarm")
+    # alarms only accompany faults, and come from the machine's params
+    alarms = set(s.params.v("production.machines.M-01.alarms"))
+    assert all(p["value"] in alarms for _, ch, p in out if ch == "alarm")
 
 
 def test_no_production_outside_running() -> None:
-    m = MachineMonitor(MM01, random.Random(1))
-    m.command("maintenance", 0.0, 0)
+    s, _ = machine_sim(1)
+    m = s.core.get("production").machines["MM-01"]
+    s.command("MM-01", "maintenance")
     before = m.units
-    run_sim(m, 25)
+    run_sim(s, 25)
     assert m.state == "maintenance" and m.units == before
-    run_sim(m, 10, t0=25)
+    run_sim(s, 10)
     assert m.state == "running"
 
 
 def test_degrade_raises_vibration_and_restore_clears() -> None:
-    m = MachineMonitor(MM01, random.Random(2))
+    s, out = machine_sim(2)
+    m = s.core.get("production").machines["MM-01"]
     m.state_until = 10_000  # keep it running
-    base = [p["value"] for _, ch, p in run_sim(m, 30) if ch == "vibration_rms"]
-    m.command("degrade", 30, 30_000)
-    worn = [p["value"] for _, ch, p in run_sim(m, 90, t0=30) if ch == "vibration_rms"]
+    run_sim(s, 30)
+    base = [p["value"] for _, ch, p in out if ch == "vibration_rms"]
+    out.clear()
+    s.command("MM-01", "degrade")
+    run_sim(s, 90)
+    worn = [p["value"] for _, ch, p in out if ch == "vibration_rms"]
     assert sum(worn[-10:]) / 10 > sum(base) / len(base) + 1.0
-    m.command("restore", 120, 120_000)
-    back = [p["value"] for _, ch, p in run_sim(m, 20, t0=120) if ch == "vibration_rms"]
+    out.clear()
+    s.command("MM-01", "restore")
+    run_sim(s, 20)
+    back = [p["value"] for _, ch, p in out if ch == "vibration_rms"]
     assert abs(sum(back) / len(back) - sum(base) / len(base)) < 0.3
 
 

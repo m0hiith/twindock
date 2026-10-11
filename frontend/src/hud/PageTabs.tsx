@@ -10,6 +10,7 @@ export const PAGES = [
   { path: "/device", label: "Device" },
   { path: "/kits", label: "Kits" },
   { path: "/wiring", label: "Wiring" },
+  { path: "/model", label: "Model" },
 ] as const;
 
 export function navigate(path: string): void {

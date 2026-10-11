@@ -1,0 +1,57 @@
+# Rooms, doors, gas, effluent, tags, helmets (backend/sim/models/environment.py).
+rooms:
+  _doc: First-order room air models, one per zone with an environment or air-quality sensor.
+  ambient_c: {value: 18.0, unit: °C, source: "assumption: conditioned hall air outside the cold room"}
+  tau_door_s: {value: 240.0, unit: s, source: "typical industry value: an open cold-room door pulls the room towards the hall within minutes"}
+  tau_cool_s: {value: 180.0, unit: s, source: "typical industry value: a cold room's refrigeration recovers in a few minutes"}
+  temp_walk_c_per_sqrt_s: {value: 0.01, unit: °C/√s, source: "assumption: draughts and loads the model doesn't track"}
+  tau_rh_s: {value: 100.0, unit: s, source: "assumption: humidity settles in minutes"}
+  rh_walk_pct_per_sqrt_s: {value: 0.2, unit: "%RH/√s", source: "assumption: moisture from people and doors the model does not track"}
+  initial_offset_c: {dist: uniform, low: -0.3, high: 0.3, unit: °C, source: "assumption: rooms are not all exactly at setpoint"}
+  cold:
+    setpoint_c: {value: 3.0, unit: °C, source: "typical industry value: chilled storage 0-5 °C"}
+    rh_pct: {value: 82.0, unit: "%RH", source: "typical industry value: chilled store humidity 80-90 %"}
+  normal:
+    setpoint_c: {value: 19.0, unit: °C, source: "assumption: R0 port (R4 ties room temperature to the outdoor climate and activity)"}
+    rh_pct: {value: 45.0, unit: "%RH", source: "typical industry value: conditioned room 40-60 %RH"}
+  co2:
+    level_ppm: {value: 700.0, unit: ppm, source: "typical industry value: an occupied, ventilated room 600-800 ppm"}
+    tau_s: {value: 100.0, unit: s, source: "assumption: ventilation dilutes CO₂ changes over minutes"}
+    walk_ppm_per_sqrt_s: {value: 6.0, unit: ppm/√s, source: "assumption: people coming and going"}
+  pm25:
+    level_ugm3: {value: 9.0, unit: µg/m³, source: "typical industry value: indoor PM2.5 with filtered supply air"}
+    floor_ugm3: {value: 1.0, unit: µg/m³, source: "assumption: filtered air is never perfectly clean"}
+    tau_s: {value: 50.0, unit: s, source: "assumption: filtered supply air clears dust within a minute or two"}
+    walk_ugm3_per_sqrt_s: {value: 0.4, unit: µg/m³/√s, source: "assumption: dust raised by people and pallets"}
+doors:
+  open_s: {dist: uniform, low: 6, high: 20, unit: s, source: "assumption: someone walks through"}
+  closed_s: {dist: uniform, low: 60, high: 150, unit: s, source: "assumption: a busy door is used once or twice a few minutes"}
+  default_hold_s: {value: 90.0, unit: s, source: "assumption: demo hold-open"}
+occupancy:
+  occupied: {dist: bernoulli, p: 0.7, unit: "1", source: "assumption: offices are occupied most of the shift"}
+  interval_s: {dist: uniform, low: 40, high: 120, unit: s, source: "assumption: people come and go every minute or two"}
+gas:
+  co_background_ppm: {value: 1.5, unit: ppm, source: "typical industry value: indoor background CO 0.5-5 ppm"}
+  co_leak_ppm: {value: 90.0, unit: ppm, source: "assumption: a demo leak that clearly exceeds the alarm level"}
+  tau_rise_s: {value: 12.0, unit: s, source: "assumption: gas reaches the detector within seconds"}
+  tau_fall_s: {value: 25.0, unit: s, source: "assumption: ventilation clears it in about a minute"}
+  o2_air_pct: {value: 20.9, unit: "%", source: "standard: composition of dry air (ISO 2533)"}
+  o2_dilution_pct: {value: 0.4, unit: "%", source: "assumption: oxygen displaced by the leaking gas"}
+  alarm_ppm: {value: 35.0, unit: ppm, source: "standard: NIOSH REL for CO, 35 ppm (8 h TWA), a common first alarm level"}
+effluent:
+  tau_s: {value: 20.0, unit: s, source: "assumption: probe and mixing response"}
+  inflow:
+    ph: {value: 6.9, unit: pH, source: "typical industry value: raw industrial effluent around neutral"}
+    turbidity_ntu: {value: 180.0, unit: NTU, source: "typical industry value: untreated effluent 100-300 NTU"}
+  outflow:
+    ph: {value: 7.3, unit: pH, source: "typical industry value: treated effluent inside a 6.5-8.5 permit band"}
+    turbidity_ntu: {value: 12.0, unit: NTU, source: "typical industry value: clarified effluent < 25 NTU"}
+  upset:
+    ph: {value: 9.4, unit: pH, source: "assumption: an over-dosed neutraliser for the demo"}
+    turbidity_ntu: {value: 60.0, unit: NTU, source: "assumption: solids carry-over for the demo"}
+tags:
+  find_me_s: {value: 10.0, unit: s, source: "assumption: long enough to walk to the pallet and see it"}
+  finding_report_s: {value: 1.0, unit: s, source: "assumption: the tag reports every second while it beeps"}
+helmets:
+  time_between_knocks_s: {dist: exponential, mean: 1600, unit: s, source: "assumption: an occasional bump on a rack or door frame (a few an hour at most)"}
+  knock_g: {dist: uniform, low: 6, high: 14, unit: g, source: "typical industry value: a light bump on a hard hat is 5-15 g"}

@@ -99,8 +99,8 @@ def test_grid_failure_chain(h: Harness) -> None:
 def test_gas_leak_in_the_hazardous_store_chain(h: Harness) -> None:
     b = Bridge(h, ["GD-04", "BG-06"])
     e = h.engine
-    badge = b.sim.models["BG-06"]  # a maintenance worker (allowed in the store) is inside it, standing still
-    badge.x, badge.z, badge.still_until = 203.0, 70.0, 1e9  # type: ignore[attr-defined]
+    badge = b.sim.core.get("people").walkers["BG-06"]  # a maintenance worker (allowed in the store) is inside it, standing still
+    badge.x, badge.z, badge.still_until = 203.0, 70.0, 1e9
     b.run(30)
     wk = e.safety.workers["WK-06"]
     assert wk.zone_id == "FAC01_HAZMAT" and wk.fresh
@@ -167,15 +167,16 @@ def test_compressor_fault_chain(h: Harness) -> None:
     assert "low_air_pressure" in alerts  # pressure fell below 6 bar for 10 s
     cp = e.devices.sim["CP-01"].readings
     assert cp["pressure_bar"].value < 6.0 and cp["current_a"].value < 1.0
-    assert b.sim.models["MM-01"].air_factor > 1.2  # type: ignore[attr-defined]  # machines slow when the air is short
+    assert b.sim.core.get("production").air_factor > 1.2  # machines slow when the air is short
     slow = e.production.machines["M-01"].cycle_time_s
     assert slow is not None and slow > base * 1.15, (base, slow)
     pm06 = next(z for z in e.power_summary()["by_zone"] if z["meter"] == "PM-06")["kw"]
     assert pm06 < 5  # a tripped compressor draws nothing
     b.beat("reset")
-    b.run(60)
+    # One compressor with ~0.6 Nm³/min to spare refills the header slowly (R1 adds the standby compressor).
+    b.run(240)
     assert "compressor_fault" not in b.open_alerts()
-    assert b.sim.models["MM-01"].air_factor == 1.0 or b.sim.models["CP-01"].bar > 6.0  # type: ignore[attr-defined]
+    assert b.sim.core.get("production").air_factor == 1.0 or b.sim.core.get("air").bar > 6.0
 
 
 def test_energy_dashboard_numbers_and_peak_warning(h: Harness) -> None:
@@ -198,7 +199,7 @@ def test_etp_outflow_out_of_band_warning(h: Harness) -> None:
     b = Bridge(h, ["WQ-01", "WQ-02"])
     b.run(40)
     assert "etp_outflow_ph" not in b.open_alerts()
-    b.sim.models["WQ-02"].command("upset", b.sim.t, 0)  # type: ignore[attr-defined]
+    b.sim.command("WQ-02", "upset")
     b.run(120)
     a = b.open_alerts()
     assert "etp_outflow_ph" in a and "etp_outflow_turbidity" in a
@@ -209,7 +210,7 @@ def test_evacuating_badges_follow_the_walkways(h: Harness) -> None:
     """The route a badge walks is the pedestrian graph's, not a straight line through buildings."""
     b = Bridge(h, ["BG-08"])
     e = h.engine
-    badge = b.sim.models["BG-08"]
+    badge = b.sim.core.get("people").walkers["BG-08"]
     b.run(5)
     badge.x, badge.z = 194.5, 22.0  # at the ETP door
     mp = next(m for m in CFG["muster_points"] if m["id"] == "MP-3")
@@ -217,9 +218,9 @@ def test_evacuating_badges_follow_the_walkways(h: Harness) -> None:
     assert path and path[0][0] in (194.5, 192) and path[-1] == [e.ped.nodes[mp["node"]][0], e.ped.nodes[mp["node"]][1]]
     nodes = [e.ped.nearest(x, z) for x, z in path]
     assert "XS3" in nodes or "XN3" in nodes  # it uses the marked crossing X3 over the service road
-    badge.command("goto", b.sim.t, 0, {"x": mp["x"], "z": mp["z"], "path": path})  # type: ignore[attr-defined]
+    b.sim.command("BG-08", "goto", {"x": mp["x"], "z": mp["z"], "path": path})
     seen_corridor = False
     for _ in range(400):
         b.step()
-        seen_corridor = seen_corridor or abs(badge.x - 192) < 0.6  # type: ignore[attr-defined]
-    assert seen_corridor and abs(badge.x - mp["x"]) < 1 and abs(badge.z - mp["z"]) < 1  # type: ignore[attr-defined]
+        seen_corridor = seen_corridor or abs(badge.x - 192) < 0.6
+    assert seen_corridor and abs(badge.x - mp["x"]) < 1 and abs(badge.z - mp["z"]) < 1

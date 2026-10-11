@@ -312,22 +312,22 @@ def test_simulated_badge_fall_cancel_and_goto() -> None:
     seen: list[str] = []
     real = sim.publish
     sim.publish = lambda m, ch, p, retain=False: (seen.append(ch), real(m, ch, p, retain))[-1]  # type: ignore[method-assign]
-    m = sim.models["BG-01"]
+    m = sim.core.get("people").walkers["BG-01"]  # the worker's true position (the badge reports it)
     sim.step(1.0)
-    m.command("fall", sim.t, 0)  # type: ignore[attr-defined]
+    sim.command("BG-01", "fall")
     sim.step(1.0)
     assert "fall" in seen
-    x0 = m.x  # type: ignore[attr-defined]
+    x0 = m.x
     sim.step(5.0)
-    assert m.x == x0  # lying still  # type: ignore[attr-defined]
-    m.command("cancel", sim.t, 0)  # type: ignore[attr-defined]
+    assert m.x == x0  # lying still
+    sim.command("BG-01", "cancel")
     sim.step(1.0)
     assert "cancel" in seen
     mp = cfg["muster_points"][1]
-    m.command("goto", sim.t, 0, {"x": mp["x"], "z": mp["z"]})  # type: ignore[attr-defined]
+    sim.command("BG-01", "goto", {"x": mp["x"], "z": mp["z"]})
     for _ in range(200):
         sim.step(1.0)
-    assert abs(m.x - mp["x"]) < 1 and abs(m.z - mp["z"]) < 1  # type: ignore[attr-defined]
+    assert abs(m.x - mp["x"]) < 1 and abs(m.z - mp["z"]) < 1
     assert random  # noqa
 
 

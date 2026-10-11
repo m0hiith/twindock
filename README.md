@@ -177,6 +177,9 @@ Note: the fake board's retained `hello` stays in the broker. Before a demo, clea
 .venv/bin/python tools/site_sim.py --zones cold_room  # only some zones (id or kind)
 ```
 
+The simulator is a cause-and-effect model of the campus (`backend/sim/`, explained in `docs/sim_architecture.md`):
+machines draw air and power because they run, the compressor loads because pressure fell, and every number has a
+source in `backend/sim/params/*.yaml`. The `/model` page lists every model, equation, parameter and simulated sensor.
 It publishes on `twin/<site>/<device>/<channel>` with `source: "sim"` and `fw_version: "sim-x.y"`,
 validated against `shared/schemas/mqtt/site_*.json`. It never touches `twin/gateway/*`. Stop it with
 Ctrl-C: the devices then go stale (15 s) and offline (60 s) in the twin, which is the honest outcome.

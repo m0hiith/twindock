@@ -30,6 +30,7 @@ from .embedded_sim import STEP_S, EmbeddedSim, broker_reachable
 from .engine import Engine, MqttOut, WsOut
 from .graph import DEFAULT_LAYOUT, load_layout
 from .hub import Hub
+from .model_card import model_card
 from .models import WarmStart
 from .mqtt_bridge import BrokerConfig, MqttBridge
 from .simclock import SimClock, day_seed
@@ -206,6 +207,12 @@ def health() -> dict[str, Any]:
             "devices_online": sum(d["status"] == "online" for d in devices), "devices_total": len(devices),
             "mqtt": str(BROKER) if MQTT_ENABLED else None, "mqtt_connected": e.mqtt_connected,
             "gateway_online": e.gw.online, "gateway_fake": e.gw.fake, "clients": len(state.hub.clients), "auto_mode": e.auto_mode}
+
+
+@app.get("/api/model")
+def model() -> dict[str, Any]:
+    """The simulation's model card for /model: models, equations, parameters with sources, sensors, distributions."""
+    return model_card(state.engine.devices.cfg, state.layout_json, state.sim)
 
 
 @app.get("/api/layout")

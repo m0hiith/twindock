@@ -904,16 +904,6 @@
       "label": "Press monitor",
       "source": "sim",
       "attached_to": "M-01",
-      "sim": {
-        "cycle_s": 6.0,
-        "vibration_mm_s": 2.8,
-        "current_a": 14.0,
-        "reject_rate": 0.0,
-        "alarms": [
-          "Die jam",
-          "Hydraulic pressure low"
-        ]
-      },
       "kit": "machine_monitor"
     },
     {
@@ -937,16 +927,6 @@
       "label": "Packer monitor",
       "source": "sim",
       "attached_to": "M-02",
-      "sim": {
-        "cycle_s": 8.0,
-        "vibration_mm_s": 1.6,
-        "current_a": 6.5,
-        "reject_rate": 0.03,
-        "alarms": [
-          "Film break",
-          "Carton feed empty"
-        ]
-      },
       "kit": "machine_monitor"
     },
     {
@@ -1378,10 +1358,7 @@
       ],
       "label": "Production feeder meter",
       "kit": "energy_meter",
-      "source": "sim",
-      "sim": {
-        "base_kw": 42.0
-      }
+      "source": "sim"
     },
     {
       "id": "DR-02",
@@ -1415,9 +1392,6 @@
       "label": "EV chargers feeder",
       "kit": "energy_meter",
       "source": "sim",
-      "sim": {
-        "base_kw": 14.0
-      },
       "campus": true
     },
     {
@@ -1612,9 +1586,6 @@
       "label": "Raw store feeder",
       "kit": "energy_meter",
       "source": "sim",
-      "sim": {
-        "base_kw": 8.0
-      },
       "campus": true
     },
     {
@@ -1639,16 +1610,6 @@
       "kit": "machine_monitor",
       "source": "sim",
       "attached_to": "M-03",
-      "sim": {
-        "cycle_s": 6.0,
-        "vibration_mm_s": 2.6,
-        "current_a": 13.0,
-        "reject_rate": 0.0,
-        "alarms": [
-          "Die jam",
-          "Hydraulic pressure low"
-        ]
-      },
       "campus": true
     },
     {
@@ -1673,15 +1634,6 @@
       "kit": "machine_monitor",
       "source": "sim",
       "attached_to": "M-04",
-      "sim": {
-        "cycle_s": 8.0,
-        "vibration_mm_s": 1.9,
-        "current_a": 7.0,
-        "reject_rate": 0.02,
-        "alarms": [
-          "Film jam"
-        ]
-      },
       "campus": true
     },
     {
@@ -1806,9 +1758,6 @@
       "label": "Substation incomer",
       "kit": "energy_meter",
       "source": "sim",
-      "sim": {
-        "base_kw": 120.0
-      },
       "campus": true
     },
     {
@@ -1862,9 +1811,6 @@
       "label": "Generator output meter",
       "kit": "energy_meter",
       "source": "sim",
-      "sim": {
-        "base_kw": 0.0
-      },
       "campus": true
     },
     {
@@ -1900,9 +1846,6 @@
       "label": "Compressor feeder",
       "kit": "energy_meter",
       "source": "sim",
-      "sim": {
-        "base_kw": 30.0
-      },
       "campus": true
     },
     {
@@ -2111,9 +2054,6 @@
       "label": "Fire pump feeder",
       "kit": "energy_meter",
       "source": "sim",
-      "sim": {
-        "base_kw": 1.0
-      },
       "campus": true
     },
     {
@@ -2597,12 +2537,11 @@
     }
   ],
   "utilities": {
-    "_doc": "Campus physics for the simulator (tools/sim_models.py Physics) and the energy summary. Feeder meters follow what runs in their zone; the incomer reads the whole campus minus solar; critical zones keep power (generator) in a grid failure.",
+    "_doc": "Campus wiring for the simulator (backend/sim/models/utilities.py) and the energy summary: which meter is the incomer, the generator and each feeder, and which zones are critical (generator-backed). Every physical number is in backend/sim/params/utilities.yaml.",
     "incomer": "PM-04",
     "generator": "PM-05",
     "diesel_tank": "TL-02",
     "generator_kw": 150,
-    "generator_start_s": 8,
     "feeders": {
       "PM-01": "FAC01_PRODUCTION",
       "PM-02": "WH01_PARKING",
@@ -2617,9 +2556,6 @@
       "FAC01_GENERATOR",
       "WH01_ADMIN"
     ],
-    "other_load_kw": 40,
-    "critical_share": 0.1,
-    "diesel_pct_per_kwh": 0.35,
     "peak_kw": 160,
     "solar": [
       {
