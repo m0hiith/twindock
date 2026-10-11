@@ -69,3 +69,22 @@ test("simulated data can never get the live tone", () => {
   for (const state of ["running", "idle", "fault", "maintenance", "no_data"]) assert.notEqual(toneOf({ kind: "machine", state }), "live");
   for (const state of ["walking", "working", "no_data"]) assert.notEqual(toneOf({ kind: "worker", state }), "live");
 });
+
+test("every wiring page shows its status banner, and a reference design is never violet", () => {
+  const page = readFileSync(join(ROOT, "pages/WiringPage.tsx"), "utf8");
+  const kits = readFileSync(join(ROOT, "wiring/kits.tsx"), "utf8");
+  assert.match(page, /<KitBanner kit=\{wiring\.kit\}/);
+  assert.match(kits, /Built and verified/);
+  assert.match(kits, /Reference design · simulated/);
+  assert.equal((kits.match(LIVE) ?? []).length, 0, "kit status must not use the violet LIVE styling");
+});
+
+test("campus pages label every simulated value", () => {
+  for (const f of ["pages/EnergyPage.tsx", "pages/MonitorPage.tsx", "hud/BuildingCard.tsx"]) {
+    assert.match(readFileSync(join(ROOT, f), "utf8"), /SimBadge/, `${f} must carry SIM badges`);
+  }
+  // nothing on the energy page or the building card can look like board data
+  for (const f of ["pages/EnergyPage.tsx", "hud/BuildingCard.tsx", "monitor/report.ts", "scene/campus/BatchC.tsx"]) {
+    assert.equal((readFileSync(join(ROOT, f), "utf8").match(LIVE) ?? []).length, 0, `${f} must not use LIVE styling`);
+  }
+});

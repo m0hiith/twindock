@@ -35,6 +35,24 @@ const CAMPUS_BEATS: { beat: Exclude<Beat, "reset">; title: string; watch: string
     watch: "The compressor trips: critical alert, air pressure falls below 6 bar (second alert) and the machines' cycle times grow." },
 ];
 
+// Worker safety demo (K3): drives WK-01's SIMULATED badge. A real badge is never commanded.
+type SafetyAct = "sim_fall" | "sim_cancel" | "sim_sos";
+function SafetyButton({ action, label }: { action: SafetyAct; label: string }) {
+  const [state, setState] = useState<"idle" | "busy" | string>("idle");
+  const run = async () => {
+    setState("busy");
+    const r = await request({ type: "safety_command", action, worker_id: "WK-01" }).ack;
+    setState(r.type === "local_failure" ? r.reason : r.ok ? "idle" : r.reason ?? "Rejected");
+  };
+  return (
+    <span className="flex flex-col items-start gap-0.5">
+      <button type="button" disabled={state === "busy"} onClick={() => void run()}
+        className="h-9 whitespace-nowrap rounded-xl border border-[var(--card-border)] px-3 text-[13px] font-medium hover:bg-idle-bg disabled:opacity-50">{label}</button>
+      {state !== "idle" && state !== "busy" && <span className="text-[11px] text-crit">{state}</span>}
+    </span>
+  );
+}
+
 function RunButton({ beat, label, primary = false }: { beat: Beat; label: string; primary?: boolean }) {
   const [state, setState] = useState<"idle" | "busy" | "done" | string>("idle");
   const run = async () => {
@@ -98,8 +116,22 @@ export function DemoPanel() {
         </div>
       ))}
 
+      <div className="flex items-center gap-2 px-1 pt-1"><span className="font-semibold">4. Worker safety (WK-01)</span><SimBadge /></div>
+      <div className="card flex flex-col gap-2 p-3">
+        <div className="text-[12px] text-ink-2">
+          <b>Simulate fall</b>: the badge reports a fall and the worker lies still. A pre-alert opens and the worker has 30 s to cancel.
+          <b> Worker cancels</b> inside that time is a false alarm (counted, no alert). Left alone it becomes a critical <i>man down</i> with location and the nearest first-aider;
+          close it on /monitor or the safety card. <b>SOS</b> is the long press.
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <SafetyButton action="sim_fall" label="Simulate fall" />
+          <SafetyButton action="sim_cancel" label="Worker cancels" />
+          <SafetyButton action="sim_sos" label="SOS" />
+        </div>
+      </div>
+
       <div className="card flex flex-col gap-1 p-3">
-        <div className="font-medium">4. Fleet and planning</div>
+        <div className="font-medium">5. Fleet and planning</div>
         <div className="text-[12px] text-ink-2">Open /fleet: GW-01 (LIVE) on top, AQ-01 under Needs attention. /plan (S8) is not built yet.</div>
       </div>
 

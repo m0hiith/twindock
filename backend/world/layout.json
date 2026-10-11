@@ -2286,13 +2286,6 @@
     },
     {
       "a": "GATE_IN",
-      "b": "ROAD_IN",
-      "kinds": [
-        "truck"
-      ]
-    },
-    {
-      "a": "GATE_IN",
       "b": "WEIGH",
       "kinds": [
         "truck"
@@ -2302,6 +2295,14 @@
     {
       "a": "WEIGH",
       "b": "ROAD_E",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "WEIGH",
+      "b": "ROAD_IN",
       "kinds": [
         "truck"
       ],
@@ -3866,10 +3867,10 @@
         "b": "XS4",
         "over": "road",
         "x": 79.0,
-        "z": 42.48,
+        "z": 42.75,
         "hotspot": {
           "x": 79.0,
-          "z": 42.48,
+          "z": 42.75,
           "radius_m": 4.0
         }
       },

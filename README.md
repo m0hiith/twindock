@@ -45,9 +45,50 @@ which cannot reach the board's state, its LEDs or its commands (`backend/tests/t
 
 Every value on every page and its source: [docs/value_audit.md](docs/value_audit.md).
 
-**Privacy (worker badges).** Badges show role and zone only. Names are visible to authorised
-users only, and this demo has no sign-in, so names are never sent to browsers. Nothing is recorded
-beyond the event log.
+## Riverside Campus
+
+WH-01 and FAC-01 are one campus (plan and ASCII map: [docs/campus_plan.md](docs/campus_plan.md)): main gate with
+weighbridge, car park with EV chargers, admin block, canteen, first aid, raw material store, a manufacturing hall with two
+lines, QC lab, maintenance workshop, utilities (substation, generator, compressor room, water tanks, ETP), a bunded
+hazardous materials store, the fire pump house, hydrants, muster points and rooftop solar. Vehicles and people use separate
+graphs that meet only at marked crossings. All of it is simulated (SIM) except GW-01.
+
+```
+ WAREHOUSE+yard ── gate/weighbridge ── FACTORY (2 lines) ── QC lab ── UTILITIES (substation, generator,
+   (WH-01)           main road z=44        cold room         workshop    compressor, tanks, ETP)
+ car park · admin · canteen · first aid · raw material store ── fire pump · HAZMAT (far south-east)
+```
+
+Pages: `/monitor` (control room wall display), `/energy`, `/kits`, `/wiring/:kit`, `/parts`, `/me/<worker>` (a worker's own data).
+Four emergency scenarios run from `/control` → Demo: grid failure, gas leak, fire alarm, compressor fault.
+
+## Device kits
+
+One sensor kit per kind of asset, with a wiring page drawn from real part dimensions. **Only the FL-01 kit is built**
+(SiWx917 BRD2605A); every other kit is a **reference design**: real, buyable parts and a correct wiring plan, with simulated data
+(`source: "sim"`, never LIVE). Third-party values are marked *unverified* in each kit until checked against a datasheet.
+
+| Kit | Asset | Radio (Silicon Labs) | Status |
+|---|---|---|---|
+| fl01_sensor_pack | Forklift | Wi-Fi 6 + BLE, SiWG917 | **Built** (real board) |
+| truck_telematics, dock_bay, machine_monitor, conveyor_monitor, compressor_monitor, gas_detector_node, energy_meter, fire_panel_bridge, water_quality_node | Trucks, docks, production, utilities | Wi-Fi 6 + BLE, SiWG917 (mains or vehicle powered) | Reference design |
+| worker_badge, smart_helmet_clip, pallet_asset_tag | People, pallets | BLE, EFR32BG27 / BG22 (battery) | Reference design |
+| env_node, door_access, water_leak_node, tank_level_node | Building and environment | Thread, EFR32MG24 | Reference design |
+
+Plan: [docs/kits_plan.md](docs/kits_plan.md). Credits and part graphics: [CREDITS.md](CREDITS.md).
+
+## Privacy (worker safety)
+
+- **Zone counts by default.** Screens show how many people are in each zone. A worker's position appears only while that worker has an
+  active safety condition (a fall or SOS, a forklift too close, a restricted zone, a missed check-in, an evacuation order) or an evacuation is running.
+- **No tracking off site or off shift.** Positions outside the site bounds are dropped; a shift starts at the first position on site and ends after 30 minutes
+  without data.
+- **Roles, never names.** Badges are identified by id and role. This demo has no sign-in, so names are not sent to browsers at all.
+- **PPE reminders are not records.** A missing helmet gives the wearer a buzz, at most every 10 minutes; nothing is stored, counted per person or shown with an id.
+- **Hours and breaks** are served only to the worker (`/me/<id>`) and the supervisor, never broadcast.
+- **Retention.** Incident history (falls, SOS, closed incidents) is deleted after `privacy.retention_days` (30 by default, `backend/world/sites.json`).
+- **Workers can see their own data** at `/me/<worker id>`.
+- Safety features **advise**: TwinDock never closes, locks or silences anything, and the fire panel and gas nodes only add information next to certified systems.
 
 ## Repo layout
 
@@ -55,14 +96,16 @@ beyond the event log.
 |---|---|
 | `firmware/` | Simplicity Studio project (WiSeConnect SDK, C) |
 | `backend/` | FastAPI + aiomqtt: world state, movement engine, WebSocket hub |
-| `frontend/` | Vite + React + TS + React Three Fiber: `/twin`, `/control` (phone), `/fleet`, `/rules`, `/device`, `/wiring` |
+| `frontend/` | Vite + React + TS + React Three Fiber: `/twin`, `/monitor`, `/energy`, `/control` (phone), `/fleet`, `/rules`, `/device`, `/kits`, `/wiring/:kit` |
 | `shared/` | `schema.md` and JSON Schemas for every MQTT and WebSocket message |
 | `broker/` | Mosquitto config |
 | `tools/fake_board.py` | **Development-only** board simulator |
-| `tools/site_sim.py` | Simulator for every site-twin device (SIM), one process |
+| `tools/site_sim.py` | Simulator for every site-twin device (SIM), one process, with the campus physics (power, generator, compressed air) |
+| `tools/kits/gen_reference_kits.py`, `tools/campus/gen_campus.py` | Generators for the reference kits and the campus layout (idempotent) |
+| `hardware/kits/*.json` | One file per device kit (parts, pins, wires, bill of materials) |
 | `backend/world/sites.json` | Sites, zones, commissioned devices, workers, production and safety settings |
 | `backend/rules/*.yaml` | Every alert rule, in plain language too |
-| `docs/` | `site_plan.md` (S0 plan), `value_audit.md` |
+| `docs/` | `site_plan.md`, `kits_plan.md`, `campus_plan.md`, `value_audit.md`, `perf_report.md` |
 | `HARDWARE.md` | Verified inventory of the physical board |
 
 ## Status

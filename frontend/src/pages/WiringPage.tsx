@@ -178,7 +178,7 @@ function Intro({ wiring }: { wiring: Wiring | null }) {
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 text-[14px]">
       <div>
         <div className="text-[20px] font-semibold leading-tight">Click a part</div>
-        <p className="mt-1 text-ink-2">See what it does on the forklift, how it is connected and its latest reading.</p>
+        <p className="mt-1 text-ink-2">See what it does in this kit, how it is connected{wiring?.kit.status === "built" ? " and its latest reading" : ""}.</p>
       </div>
       <div className="flex flex-col gap-2.5">
         <div className="text-[13px] font-semibold">What the colours mean</div>
@@ -187,12 +187,12 @@ function Intro({ wiring }: { wiring: Wiring | null }) {
         <LegendRow swatch={<span className="block h-4 w-7 rounded border-2 border-ok bg-white" />}>Verified · the firmware has read it</LegendRow>
         {wiring?.kit.status === "built" && <LegendRow swatch={<span className="block h-3 w-3 rounded-full bg-live" />}>Live reading from the board</LegendRow>}
       </div>
-      <div className="flex flex-col gap-2.5">
+      {(wiring?.connections.some((c) => c.medium === "qwiic_cable") ?? true) && <div className="flex flex-col gap-2.5">
         <div className="text-[13px] font-semibold">Qwiic cable wires</div>
         {([["#D7262E", "Red", "3.3 V power"], ["#1C1C1C", "Black", "Ground"], ["#2463EB", "Blue", "SDA · data"], ["#F2C230", "Yellow", "SCL · clock"]] as const).map(([c, n, l]) => (
           <LegendRow key={n} swatch={<span className="block h-1.5 w-7 rounded-full" style={{ background: c }} />}>{n} · {l}</LegendRow>
         ))}
-      </div>
+      </div>}
       {wiring && wiring.open_questions.length > 0 && (
         <div className="rounded-xl bg-warn-bg p-3 text-[13px]">
           <div className="font-semibold text-warn">Still open</div>

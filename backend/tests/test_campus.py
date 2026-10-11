@@ -71,6 +71,9 @@ def test_vehicle_graphs_are_connected_along_the_flows() -> None:
         assert g.shortest_path("truck", a, b), f"no truck route {a} -> {b}"
     path = g.shortest_path("truck", "ROAD_E", "BAY_1")
     assert path is not None and path.index("WEIGH") < path.index("GATE_IN") < path.index("BAY_1")
+    # a truck waiting at the factory's road also crosses the weighbridge on its way in
+    inbound = g.shortest_path("truck", "ROAD_IN", "BAY_1")
+    assert inbound is not None and "WEIGH" in inbound
     # forklifts: raw material -> manufacturing -> warehouse (-> dispatch docks)
     for a, b in (("RAW_DOCK_1", "FAC_AISLE_1"), ("RAW_DOCK_2", "FAC_OUT"), ("FAC_OUT", "DOCK_1"), ("RAW_DOCK_1", "DOCK_3")):
         assert g.shortest_path("forklift", a, b), f"no forklift route {a} -> {b}"

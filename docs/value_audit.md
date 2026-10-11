@@ -93,7 +93,39 @@ Result: **no simulated value is shown as LIVE** anywhere.
 | Rule list and plain-language text | `backend/rules/*.yaml` |
 | Alerts and history | Rules engine over device, sim and computed facts; a missing or stale value never fires a rule |
 
-## /device, /wiring
+## /device
 
 Unchanged by the site twin: BLE calibration (device: real `ble_tracks`), RSSI chart (device),
-threshold suggestions (computed in the browser), wiring readings (device: `gateway.sensors`).
+threshold suggestions (computed in the browser).
+
+## /kits and /wiring/:kit_id (factory extension, audited 2026-10-11)
+
+| Value | Source |
+|---|---|
+| Kit cards: asset type, radio, power, part count, BOM cost, devices using it | `hardware/kits/*.json` (design data). Costs are rough budget estimates, not quotes; "≥" means some parts have no price |
+| Status badge and banner | Kit status: **BUILT** only for `fl01_sensor_pack` ("Built and verified"); every other kit shows "Reference design · simulated". Never violet |
+| Readings on the FL-01 kit page | Device: `gateway.sensors` while the board is online, "Waiting for firmware" otherwise (unchanged) |
+| Readings on a reference kit page | None: the part panel says the design is not built and its devices report simulated values (SIM) elsewhere |
+| Part drawings and sizes | Procedural SVG at 10 px per mm; `dims_evidence` says datasheet or typical |
+| Third-party part numbers, addresses, supply ranges, costs | From memory, marked unverified in each kit and its open questions; Silicon Labs boards checked on silabs.com |
+| /parts | Visual test page, no data |
+
+## /monitor, /energy and the building card (factory extension)
+
+| Value | Source |
+|---|---|
+| Campus map, alert rings | Server geometry and open alerts (rules engine) |
+| Open alerts, incident timeline, response and resolution times | Rules engine log (last 24 h); times computed from who acknowledged and when |
+| Daily safety report (PDF) | Computed in the browser from `GET /api/monitor`; roles and zones only |
+| Worker safety card | Computed from simulated badges (SIM). Positions only during an alert or evacuation; otherwise zone counts |
+| Evacuation headcount and routes | Computed from badge positions and the pedestrian graph (SIM); advice only |
+| Production, device health, air quality tiles | SIM devices, computed |
+| Logistics tile | Server units |
+| Energy tile, `/energy` | Simulated meters (SIM). Solar is **computed** from the time of day and the design size (never measured). "Other loads" is the incomer minus the metered feeders. Today vs yesterday starts counting when the backend starts: "no data yet" until a day has passed. kWh per unit = production feeder energy ÷ units since the backend started |
+| GW-01 tile | **Device** (LIVE, violet): only from the board's own messages, "Waiting for device" until one arrives |
+| Building card | Zone attributes (design data), people count (count only), KPIs computed from the building's SIM devices, device readings with age (SIM) |
+| Rooftop solar and utility animations | Driven by simulated devices (generator running, compressor loaded, tank levels) and the time of day |
+
+## /wiring (FL-01)
+
+Wiring readings (device: `gateway.sensors`), unchanged.

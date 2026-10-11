@@ -111,6 +111,32 @@ the demo; present them as the roadmap slide.
 - **No forklift moves for beat b**: all forklifts are busy (the Demo tab says so). Turn auto mode off, wait for them to stop, retry.
 - **Beat buttons say "Not connected to the MQTT broker"**: the backend lost the broker; check terminal 1.
 
+## Campus demo (6 minutes): the board, the campus, safety, emergencies
+
+The full story. Part 1 is the **real** board; everything after it is **simulated** (grey SIM badges) and driven from the phone
+(`/control` → **Demo** tab) while the projector shows **`/monitor`** (the control-room wall display) and, for one beat, `/twin`.
+Rehearsal: run it once with `tools/fake_board.py` standing in for the board, then once with the real board.
+
+**Setup (T-10 min):** broker, backend, frontend and the simulator (`.venv/bin/python tools/site_sim.py`) running, as above. Projector: `http://localhost:5173/monitor`
+at 1920 × 1080. Phone: `/control` → Demo → **Reset demo**. Check the monitor's bottom strip (all SIM tiles populated, GW-01 tile violet and Online) and wait
+2 minutes so the machines have learned their baselines.
+
+| Time | You do | Audience sees | Say |
+|---|---|---|---|
+| 0:00 | **The real board.** Projector on `/monitor`; point at the right-most tile. Press **BTN1**, **BTN0** on the board. | The **GW-01 · real board** tile is violet LIVE and Online with its Wi-Fi level and age; it is the only violet thing on the page. FL-01 moves on the map after BTN0. | "One thing here is real: this SiWx917. Everything violet comes from it. Everything grey is simulated, and says so." |
+| 0:40 | **The campus.** Hover the map; open the camera menu (top-left of the map): *Campus overview*, then *Raw material store*, then *Interiors* on the map. | The whole campus from above: gate and weighbridge, car park, admin, canteen, two factory lines, utilities, the hazmat store far in the corner, solar roofs. The building card shows hazard level, PPE, devices (SIM) with ages. | "Every building is a zone with its hazard level and the PPE it needs, and its own sensors. Vehicles and people use separate graphs and meet only at marked crossings." |
+| 1:10 | **A truck through the gate.** Phone → Move tab → **TR-02** → Dock at bay → Bay 1. | TR-02 drives in past the boom barrier (it lifts), over the weighbridge, into the yard and backs into Bay 1. Dock-bay monitor DB-01 flips to occupied; the Logistics tile ticks. | "Gate, weighbridge, yard, dock. The same server plans it and every screen follows." |
+| 1:50 | **A machine anomaly.** Phone → Demo → **a. Degrade M-01**. | Within a minute the press shows an amber ring and an alert: abnormal vibration compared with its own baseline. Production tile OEE reacts. | "Each machine learned its own normal. This compares with it; it doesn't predict failure." |
+| 2:30 | **A worker falls, and cancels.** Phone → Demo → **4. Simulate fall**, then within 30 s **Worker cancels**. | A pre-alert opens: *Possible fall: waiting 30 s for the worker to cancel*; after the cancel it closes, **falls today 1 (1 cancelled)**. | "The badge asks first. A false alarm is counted but doesn't wake anyone." |
+| 3:00 | **A fall that isn't cancelled.** **Simulate fall** again and wait 30 s. | Critical **Man down** with the zone and the nearest first-aider; a pulsing ring at the location on the map; the worker's position is shown *because* of the alert. | "Now it's real: location and the nearest first-aider. Only now does the system show where the worker is; otherwise it shows zone counts." Then **Close** on the safety card. |
+| 3:30 | **A gas leak and an evacuation.** Phone → Demo → **b. Gas leak in the hazardous store**. Then on the projector press **Start evacuation drill**. | Critical **Gas alarm**; badges in and next to the store get *evacuate*; green dashed routes to a muster point away from the leak; the **headcount** counts up as badges reach the muster points and lists who is unaccounted for and where they were last. | "Routes are advice; the system closes and locks nothing. The headcount tells the incident lead who is still missing." Press **End** when it reads all accounted for. |
+| 4:30 | **Power.** Phone → Demo → **a. Grid failure**; switch the projector to **/energy**. | Critical *Grid failure*; grid import 0, solar 0, the generator picks up the critical loads only; mains devices elsewhere stop reporting. **Reset demo**. | "The generator keeps the fire pump house and the hazmat store on. Solar is computed from the time of day, and is labelled that way." |
+| 5:00 | **The kits.** Projector: **/kits**, then open **Worker badge**. | Cards for each kit (BUILT only for the forklift pack), the wiring page with true-size parts and the banner **Reference design · simulated**. | "Every asset type has a kit with real parts and a wiring plan. Only the forklift pack is built; the others are designs, and say so." |
+| 5:30 | **Back to the monitoring centre.** Projector: **/monitor** → **Incident timeline** → **Daily report (PDF)**. | Every alert of the run with who acknowledged and how fast, then the one-page report. | "Everything we just did is in the log, with response times." |
+
+Fallbacks: a beat button says "Not connected to the MQTT broker" → check the broker terminal. The man-down beat needs the previous pre-alert to be over (**Reset demo**).
+No fall? WK-01's badge must be online (10/10 badges online on the safety card).
+
 ## Rehearsal with the fake board (no hardware)
 
 Shows a red FAKE BOARD banner on every page. Never in front of an audience.

@@ -167,7 +167,7 @@ VEH_NODES = [
     dict(id="FAC_DOOR_S", type="junction", x=113, z=24, kinds=["forklift"], label="Factory south door"),
 ]
 VEH_LANES = [
-    ("GATE_IN", "WEIGH", ["truck"]), ("WEIGH", "ROAD_E", ["truck"]),
+    ("GATE_IN", "WEIGH", ["truck"]), ("WEIGH", "ROAD_E", ["truck"]), ("WEIGH", "ROAD_IN", ["truck"]),
     ("ROAD_IN", "RD_110", ["truck"]), ("RD_110", "RD_158", ["truck"]), ("RD_158", "RD_186", ["truck"]), ("RD_186", "RD_215", ["truck"]),
     ("RD_158", "RR_1", ["truck"]), ("RR_1", "RR_2", ["truck"]), ("RR_2", "RR_3", ["truck"]), ("RR_3", "RR_4", ["truck"]),
     ("RAW_DOCK_1", "RAW_AISLE_E", ["forklift"]), ("RAW_DOCK_2", "RAW_AISLE_E", ["forklift"]), ("RAW_AISLE_E", "RAW_AISLE_W", ["forklift"]),
@@ -341,7 +341,7 @@ def build_layout(l: dict) -> None:
     l["nodes"] = [n for n in l["nodes"] if not n.get("campus")]
     l["lanes"] = [x for x in l["lanes"] if not x.get("campus")]
     # the weighbridge splits the old GATE_IN -> ROAD_E lane
-    l["lanes"] = [x for x in l["lanes"] if {x["a"], x["b"]} != {"GATE_IN", "ROAD_E"}]
+    l["lanes"] = [x for x in l["lanes"] if {x["a"], x["b"]} not in ({"GATE_IN", "ROAD_E"}, {"GATE_IN", "ROAD_IN"})]
     ids = {n["id"] for n in l["nodes"]}
     for n in VEH_NODES:
         assert n["id"] not in ids, n["id"]
