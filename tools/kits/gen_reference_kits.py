@@ -604,7 +604,7 @@ def compressor_monitor():
                     ["Shows the air pressure the factory gets, and when the compressor loads and unloads.", "A leak shows up as the compressor running more often.",
                      "Wet air damages tools: the dew point says how dry it is."],
                     [("pressure_bar", "bar", "Receiver pressure"), ("current_a", "A", "Motor current"), ("run_hours", "h", "Loaded hours (from current)"),
-                     ("dew_point_c", "°C", "Pressure dew point after the dryer")],
+                     ("dew_point_c", "°C", "Pressure dew point after the dryer"), ("tripped", None, "Compressor tripped (the controller's fault contact)")],
                     budget=(110, 260, 24.0, "SiWx917 connected (~60 mA), 4-20 mA loop (up to 20 mA at 24 V), pressure transducer (~5 mA at 5 V). Estimate."),
                     ), "siwx917"))
     std_buses_wifi(k, [("analog", "Analog inputs", "analog", None), ("v24", "24 V DC", "power", 24.0), ("v5", "5 V (from pad 18)", "power", 5.0)])
@@ -1077,8 +1077,59 @@ def fire_panel_bridge():
     k.save()
 
 
+def water_quality_node():
+    k = reg(Kit(kit("water_quality_node", "Water quality node", "utility",
+                    ("wifi", WIFI, "Mains-powered in the ETP control cabinet; Wi-Fi reaches the utilities block and the probes need a steady supply and a fast ADC."),
+                    ("mains", "24 V DC from the ETP control panel, stepped down to 3.3 V."),
+                    "Board in the ETP cabinet; pH and turbidity probes in a flow cell on the inflow or outflow pipe.",
+                    "pH and turbidity of the effluent, at the plant inflow or its outflow.",
+                    ["Shows whether the treated water leaving the plant is inside its limits.", "A pH or cloudiness reading outside the limits raises a warning."],
+                    [("ph", "pH", "pH (probe + interface board)"), ("turbidity_ntu", "NTU", "Turbidity (optical sensor)")],
+                    budget=(80, 200, 24.0, "SiWx917 connected (~60 mA), probe interface boards (~10 mA each at 5 V), ADC. Estimate."),
+                    ), "siwx917"))
+    std_buses_wifi(k, [("analog", "Probe outputs", "analog", None), ("v24", "24 V DC", "power", 24.0)])
+    k.mcu({"pad2": "VMCU_IN", "pad1": "GND", "pad26": "GND", "pad20": "3V3", "pad16": "SDA", "pad15": "SCL"}, "Reads both probes through the ADC and reports over Wi-Fi.")
+    buck(k, "v24", 24.0, "vmcu", 3.3, (4.5, 36.0))
+    ads1115(k, [("A0", "AIN_PH"), ("A1", "AIN_NTU")])
+    k.part("ph_board", "pH interface board", "Analog pH interface board (BNC input, 0-3 V output)", "module",
+           {"family": "pcb", "w_mm": 42.0, "h_mm": 32.0, "pcb_color": "black", "dims_evidence": "typical", "label": "pH",
+            "features": [{"family": "connector", "variant": "jst_ph_3", "x_mm": 2.0, "y_mm": 24.0, "w_mm": 6.0, "h_mm": 6.0}, silk(12.0, 14.0, "pH BOARD", 2.0)]},
+           [{"name": "VCC", "signal": "3V3", "gpio": None, "x_mm": 3.0, "y_mm": 31.6, "side": "bottom", "evidence": UNV},
+            {"name": "GND", "signal": "GND", "gpio": None, "x_mm": 5.0, "y_mm": 31.6, "side": "bottom", "evidence": UNV},
+            {"name": "OUT", "signal": "AIN_PH", "gpio": None, "x_mm": 7.0, "y_mm": 31.6, "side": "bottom", "evidence": UNV},
+            {"name": "BNC", "signal": "PH_SIGNAL", "gpio": None, "x_mm": 41.6, "y_mm": 6.0, "side": "right", "evidence": UNV}],
+           "Amplifies the tiny signal from the pH probe into a voltage the ADC can read.", supply=(3.0, 5.5), supplied_from="vmcu",
+           bom={"desc": "Analog pH interface board with BNC connector", "cost": 30.0})
+    k.part("ph_probe", "pH probe", "Industrial pH electrode, BNC", "transducer",
+           {"family": "probe", "w_mm": 120.0, "h_mm": 14.0, "dims_evidence": "typical"},
+           [{"name": "BNC", "signal": "PH_SIGNAL", "gpio": None, "x_mm": 119.6, "y_mm": 7.0, "side": "right", "evidence": UNV}],
+           "The glass electrode that sits in the water.", measures="pH", bom={"desc": "Industrial pH electrode with BNC connector and 1 m cable", "cost": 60.0})
+    k.part("turbidity", "Turbidity sensor", "Optical turbidity sensor module (analog output)", "module",
+           {"family": "pcb", "w_mm": 40.0, "h_mm": 30.0, "pcb_color": "black", "dims_evidence": "typical", "label": "NTU",
+            "features": [{"family": "sensor_window", "variant": "light", "x_mm": 28.0, "y_mm": 8.0, "w_mm": 8.0, "h_mm": 8.0}]},
+           [{"name": "VCC", "signal": "3V3", "gpio": None, "x_mm": 4.0, "y_mm": 29.6, "side": "bottom", "evidence": UNV},
+            {"name": "GND", "signal": "GND", "gpio": None, "x_mm": 6.0, "y_mm": 29.6, "side": "bottom", "evidence": UNV},
+            {"name": "OUT", "signal": "AIN_NTU", "gpio": None, "x_mm": 8.0, "y_mm": 29.6, "side": "bottom", "evidence": UNV}],
+           "Shines light through the water and measures how cloudy it is.", supply=(3.0, 5.5), supplied_from="vmcu", measures="Turbidity",
+           bom={"desc": "Optical turbidity sensor with analog output", "cost": 20.0})
+    k.wire("buck.VOUT", "mcu.pad2", "3V3", "red", bus="vmcu")
+    k.wire("buck.GND", "mcu.pad1", "GND", "black", bus="vmcu")
+    i2c_hdr(k, "adc")
+    k.wire("mcu.pad20", "ph_board.VCC", "3V3", "red", bus="vmcu")
+    k.wire("mcu.pad26", "ph_board.GND", "GND", "black", bus="vmcu")
+    k.wire("ph_board.OUT", "adc.A0", "AIN_PH", "white", bus="analog")
+    k.wire("ph_probe.BNC", "ph_board.BNC", "PH_SIGNAL", "grey", bus="analog")
+    k.wire("mcu.pad20", "turbidity.VCC", "3V3", "red", bus="vmcu")
+    k.wire("mcu.pad26", "turbidity.GND", "GND", "black", bus="vmcu")
+    k.wire("turbidity.OUT", "adc.A1", "AIN_NTU", "white", bus="analog")
+    k.question("probe_cal", "pH probes need two-point calibration and turbidity sensors a reference; plan a calibration routine (not simulated here).", ["ph_probe", "turbidity"])
+    k.question("parts_tbc", "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.", ["ph_board", "ph_probe", "turbidity", "adc"])
+    k.save()
+
+
 if __name__ == "__main__":
     for fn in (truck_telematics, dock_bay, pallet_asset_tag, machine_monitor, conveyor_monitor, compressor_monitor, worker_badge,
-               smart_helmet_clip, env_node, gas_detector_node, door_access, energy_meter, water_leak_node, tank_level_node, fire_panel_bridge):
+               smart_helmet_clip, env_node, gas_detector_node, door_access, energy_meter, water_leak_node, tank_level_node, fire_panel_bridge,
+               water_quality_node):
         fn()
     print("wrote", len(ALL), "kits", file=sys.stderr)

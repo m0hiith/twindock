@@ -254,7 +254,58 @@ DEVICES = [
     ("FP-03", "fire_panel", "wifi", "FAC01_FIREPUMP", 182, 58, ["alarm", "trouble"], "Fire pump house panel bridge (read only)", "fire_panel_bridge", {}),
     ("TL-05", "tank_level", "thread", "FAC01_FIREPUMP", 194, 59, ["level_pct", "pump_on"], "Fire water tank", "tank_level_node", {}),
     ("PM-07", "power_meter", "wifi", "FAC01_FIREPUMP", 185, 56, ["power_kw", "energy_kwh", "voltage_v"], "Fire pump feeder", "energy_meter", {"sim": {"base_kw": 1.0}}),
+    ("WQ-01", "water_quality", "wifi", "FAC01_ETP", 199, 16, ["ph", "turbidity_ntu"], "ETP inflow quality", "water_quality_node", {"sim": {"inflow": True}}),
+    ("WQ-02", "water_quality", "wifi", "FAC01_ETP", 208, 28, ["ph", "turbidity_ntu"], "ETP outflow quality", "water_quality_node", {}),
 ]
+UTILITIES = {
+    "_doc": "Campus physics for the simulator (tools/sim_models.py Physics) and the energy summary. Feeder meters follow what runs in their zone; the incomer reads the whole campus minus solar; critical zones keep power (generator) in a grid failure.",
+    "incomer": "PM-04",
+    "generator": "PM-05",
+    "diesel_tank": "TL-02",
+    "generator_kw": 150,
+    "generator_start_s": 8,
+    "feeders": {
+        "PM-01": "FAC01_PRODUCTION",
+        "PM-02": "WH01_PARKING",
+        "PM-03": "FAC01_RAW",
+        "PM-06": "FAC01_COMPRESSOR",
+        "PM-07": "FAC01_FIREPUMP"
+    },
+    "critical_zones": [
+        "FAC01_FIREPUMP",
+        "FAC01_HAZMAT",
+        "FAC01_SUBSTATION",
+        "FAC01_GENERATOR",
+        "WH01_ADMIN"
+    ],
+    "other_load_kw": 40,
+    "critical_share": 0.1,
+    "diesel_pct_per_kwh": 0.35,
+    "peak_kw": 160,
+    "solar": [
+        {
+            "building": "WAREHOUSE",
+            "kwp": 110
+        },
+        {
+            "building": "FACTORY",
+            "kwp": 160
+        },
+        {
+            "building": "RAW_STORE",
+            "kwp": 90
+        }
+    ],
+    "quality_bands": {
+        "ph": [
+            6.5,
+            8.5
+        ],
+        "turbidity_ntu": 25,
+        "_note": "Example discharge limits for the demo; a real plant uses the values in its permit."
+    }
+}
+
 MOVED = {  # existing devices that now live in the building built for them: id -> (zone, x, z)
     "CP-01": ("FAC01_COMPRESSOR", 180, 18), "TL-01": ("FAC01_TANKS", 177, 32), "TT-01": ("WH01_DOCKS", 22, 36.5),
 }
@@ -384,7 +435,11 @@ def build_sites(s: dict, l: dict) -> None:
     for site in s["sites"]:
         for z in site["zones"]:
             z.update(attrs.get(z["id"], {}))
-    s["muster_points"] = [{k: v for k, v in m.items() if k != "node"} for m in MUSTER]
+    s["utilities"] = UTILITIES
+    for d in s["devices"]:
+        if d["id"] == "CP-01" and "tripped" not in d["capabilities"]:
+            d["capabilities"].append("tripped")
+    s["muster_points"] = [dict(m) for m in MUSTER]  # `node` is the walkway node the route ends on
     # devices
     s["devices"] = [d for d in s["devices"] if not d.get("campus")]
     for d in s["devices"]:
@@ -402,8 +457,10 @@ def build_sites(s: dict, l: dict) -> None:
     for wid, name, role, badge, route, aider, sim in WORKERS:
         s["workers"].append({"id": wid, "name": name, "role": role, "badge": badge, "routes": {"default": route}, "first_aider": aider, "campus": True})
         n0 = nodes[route[0]]
-        zone = next((z["id"] for site in s["sites"] for z in site["zones"] if z["id"] in mine and _inside(n0["x"], n0["z"], z["polygon"])), "WH01_GATE")
-        dev = {"id": badge, "site_id": zone_site[zone], "zone_id": zone, "type": "badge", "protocol": "ble", "x": n0["x"], "z": n0["z"],
+        zone = next((z["id"] for site in s["sites"] for z in site["zones"] if z["id"] in mine and _inside(n0["x"], n0["z"], z["polygon"])), None)
+        site_id = "FAC-01" if n0["x"] >= 84 else "WH-01"  # a badge reports on its site's topic; walkways are outside every zone
+        zone = zone or ("FAC01_RAWYARD" if site_id == "FAC-01" else "WH01_GATE")
+        dev = {"id": badge, "site_id": site_id, "zone_id": zone, "type": "badge", "protocol": "ble", "x": n0["x"], "z": n0["z"],
                "capabilities": ["position", "fall", "sos", "cancel", "checkin"], "label": f"Badge of {wid}", "kit": "worker_badge", "source": "sim",
                "attached_to": wid, "sim": {"battery_pct": 70 + (sum(map(ord, badge)) % 25), **sim}, "campus": True}
         s["devices"].append(dev)

@@ -6,7 +6,7 @@ import { PageTabs } from "../hud/PageTabs";
 import { Pill, useTick } from "../hud/ui";
 import { useWorld } from "../store/world";
 
-const SUBJECT = { machine: "Machines", worker: "Workers", device: "Devices", gateway: "Real board", line: "Production line" } as const;
+const SUBJECT = { machine: "Machines", worker: "Workers", device: "Devices", gateway: "Real board", line: "Production line", site: "Campus" } as const;
 const TONE = { critical: "crit", warning: "warn", info: "info" } as const;
 
 export function RulesPage() {

@@ -492,7 +492,8 @@
         "gas_detector",
         "leak_sensor",
         "tank_level",
-        "fire_panel"
+        "fire_panel",
+        "water_quality"
       ]
     },
     "protocol": {

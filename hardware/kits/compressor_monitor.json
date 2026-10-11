@@ -42,6 +42,10 @@
         "channel": "dew_point_c",
         "unit": "°C",
         "description": "Pressure dew point after the dryer"
+      },
+      {
+        "channel": "tripped",
+        "description": "Compressor tripped (the controller's fault contact)"
       }
     ],
     "power_budget": {

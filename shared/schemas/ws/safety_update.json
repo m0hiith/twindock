@@ -15,6 +15,7 @@
     "on_site",
     "ppe_reminders",
     "privacy",
+    "routes",
     "seq",
     "server_ts_ms",
     "today",
@@ -534,6 +535,42 @@
         },
         "retention_days": {
           "type": "number"
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "description": "While an evacuation runs or a gas alarm is on: per zone with people (and the hazard zones), the walking route to the nearest muster point that is not next to the hazard. Advice only.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "zone_id",
+          "muster_id",
+          "length_m",
+          "points"
+        ],
+        "properties": {
+          "zone_id": {
+            "type": "string"
+          },
+          "muster_id": {
+            "type": "string"
+          },
+          "length_m": {
+            "type": "number"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
         }
       }
     }

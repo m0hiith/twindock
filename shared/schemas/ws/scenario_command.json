@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "twindock/ws/scenario_command.json",
   "title": "scenario_command (client -> server)",
-  "description": "Demo runner on /control (SITE_PROMPTS.md S10): trigger one simulated beat on cue, or reset the demo. Beats only drive the simulator (twin/<site>/<device>/cmd/*) and the movement engine; never the real board.",
+  "description": "Demo runner on /control (SITE_PROMPTS.md S10): trigger one simulated beat on cue, or reset the demo. Beats only drive the simulator (twin/<site>/<device>/cmd/*) and the movement engine; never the real board. Campus emergencies (F3): grid_failure (substation incomer loses the grid, generator starts), gas_leak (hazardous store), fire_alarm (warehouse fire panel bridge), compressor_fault (compressor trips, air pressure falls).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,7 +24,11 @@
         "visitor",
         "cold_door",
         "stale",
-        "reset"
+        "reset",
+        "grid_failure",
+        "gas_leak",
+        "fire_alarm",
+        "compressor_fault"
       ]
     }
   }

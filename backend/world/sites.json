@@ -1257,7 +1257,8 @@
         "pressure_bar",
         "current_a",
         "run_hours",
-        "dew_point_c"
+        "dew_point_c",
+        "tripped"
       ],
       "label": "Air compressor monitor",
       "kit": "compressor_monitor",
@@ -2116,6 +2117,43 @@
       "campus": true
     },
     {
+      "id": "WQ-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_ETP",
+      "type": "water_quality",
+      "protocol": "wifi",
+      "x": 199,
+      "z": 16,
+      "capabilities": [
+        "ph",
+        "turbidity_ntu"
+      ],
+      "label": "ETP inflow quality",
+      "kit": "water_quality_node",
+      "source": "sim",
+      "sim": {
+        "inflow": true
+      },
+      "campus": true
+    },
+    {
+      "id": "WQ-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_ETP",
+      "type": "water_quality",
+      "protocol": "wifi",
+      "x": 208,
+      "z": 28,
+      "capabilities": [
+        "ph",
+        "turbidity_ntu"
+      ],
+      "label": "ETP outflow quality",
+      "kit": "water_quality_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
       "id": "BG-05",
       "site_id": "WH-01",
       "zone_id": "WH01_GATE",
@@ -2141,8 +2179,8 @@
     },
     {
       "id": "BG-06",
-      "site_id": "WH-01",
-      "zone_id": "WH01_GATE",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
       "type": "badge",
       "protocol": "ble",
       "x": 141.5,
@@ -2165,8 +2203,8 @@
     },
     {
       "id": "BG-07",
-      "site_id": "WH-01",
-      "zone_id": "WH01_GATE",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
       "type": "badge",
       "protocol": "ble",
       "x": 189.5,
@@ -2190,8 +2228,8 @@
     },
     {
       "id": "BG-08",
-      "site_id": "WH-01",
-      "zone_id": "WH01_GATE",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
       "type": "badge",
       "protocol": "ble",
       "x": 194.5,
@@ -2215,8 +2253,8 @@
     },
     {
       "id": "BG-09",
-      "site_id": "WH-01",
-      "zone_id": "WH01_GATE",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
       "type": "badge",
       "protocol": "ble",
       "x": 96,
@@ -2239,8 +2277,8 @@
     },
     {
       "id": "BG-10",
-      "site_id": "WH-01",
-      "zone_id": "WH01_GATE",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAWYARD",
       "type": "badge",
       "protocol": "ble",
       "x": 110,
@@ -2538,21 +2576,72 @@
       "name": "Muster point 1 (car park south)",
       "x": 43.5,
       "z": 90.0,
-      "radius_m": 6.0
+      "radius_m": 6.0,
+      "node": "PMP1"
     },
     {
       "id": "MP-2",
       "name": "Muster point 2 (raw store west)",
       "x": 116.0,
       "z": 92.0,
-      "radius_m": 6.0
+      "radius_m": 6.0,
+      "node": "PMP2"
     },
     {
       "id": "MP-3",
       "name": "Muster point 3 (east fire pump)",
       "x": 166.0,
       "z": 88.0,
-      "radius_m": 6.0
+      "radius_m": 6.0,
+      "node": "PMP3"
     }
-  ]
+  ],
+  "utilities": {
+    "_doc": "Campus physics for the simulator (tools/sim_models.py Physics) and the energy summary. Feeder meters follow what runs in their zone; the incomer reads the whole campus minus solar; critical zones keep power (generator) in a grid failure.",
+    "incomer": "PM-04",
+    "generator": "PM-05",
+    "diesel_tank": "TL-02",
+    "generator_kw": 150,
+    "generator_start_s": 8,
+    "feeders": {
+      "PM-01": "FAC01_PRODUCTION",
+      "PM-02": "WH01_PARKING",
+      "PM-03": "FAC01_RAW",
+      "PM-06": "FAC01_COMPRESSOR",
+      "PM-07": "FAC01_FIREPUMP"
+    },
+    "critical_zones": [
+      "FAC01_FIREPUMP",
+      "FAC01_HAZMAT",
+      "FAC01_SUBSTATION",
+      "FAC01_GENERATOR",
+      "WH01_ADMIN"
+    ],
+    "other_load_kw": 40,
+    "critical_share": 0.1,
+    "diesel_pct_per_kwh": 0.35,
+    "peak_kw": 160,
+    "solar": [
+      {
+        "building": "WAREHOUSE",
+        "kwp": 110
+      },
+      {
+        "building": "FACTORY",
+        "kwp": 160
+      },
+      {
+        "building": "RAW_STORE",
+        "kwp": 90
+      }
+    ],
+    "quality_bands": {
+      "ph": [
+        6.5,
+        8.5
+      ],
+      "turbidity_ntu": 25,
+      "_note": "Example discharge limits for the demo; a real plant uses the values in its permit."
+    }
+  }
 }

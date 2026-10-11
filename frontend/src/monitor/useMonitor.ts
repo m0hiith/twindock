@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import type { AlertsUpdate, SafetyUpdate } from "../contract";
 
 export type Incident = AlertsUpdate["alerts"][number] & { response_s: number | null; resolution_s: number | null };
+export interface PowerSummary {
+  available: boolean; sim?: true; grid_ok: boolean | null; grid_kw: number | null; generator_kw: number | null; generator_state: string | null;
+  solar_kw: number; solar_note: string; demand_kw: number | null; other_kw: number | null; solar_share: number | null; peak_kw: number; peak_exceeded: boolean;
+  diesel_pct: number | null; units_today: number; production_kwh_today: number | null; kwh_per_unit: number | null; kwh_per_unit_note: string;
+  by_zone: { meter: string; zone_id: string; name: string; kw: number | null }[];
+}
 export interface MonitorData {
+  power: PowerSummary;
   energy: { kw_now: number | null; today_kwh: number | null; yesterday_kwh: number | null; counting_since_ms: number | null; source: "sim"; meters: string[] };
   incidents: Incident[];
   evacuation_last: { started_ms: number; ended_ms: number | null; reason: string; by: string; on_site: number } | null;

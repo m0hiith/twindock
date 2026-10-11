@@ -162,7 +162,8 @@
               "worker",
               "device",
               "gateway",
-              "line"
+              "line",
+              "site"
             ]
           },
           "severity": {

@@ -17,11 +17,11 @@ FW = {"gateway": "sim-1.0", "machine_monitor": "sim-2.3", "env_sensor": "sim-1.4
       "occupancy_sensor": "sim-1.2", "badge": "sim-3.0", "asset_tag": "sim-1.0", "power_meter": "sim-1.0",
       "light": "sim-1.0", "air_quality": "sim-1.3", "truck_telematics": "sim-1.0", "dock_bay": "sim-1.0",
       "conveyor_monitor": "sim-1.0", "compressor_monitor": "sim-1.0", "helmet_clip": "sim-1.0", "gas_detector": "sim-1.0",
-      "leak_sensor": "sim-1.0", "tank_level": "sim-1.0", "fire_panel": "sim-1.0"}
+      "leak_sensor": "sim-1.0", "tank_level": "sim-1.0", "fire_panel": "sim-1.0", "water_quality": "sim-1.0"}
 
 # Mains-powered devices report no battery; the rest start somewhere plausible.
 MAINS = {"machine_monitor", "air_quality", "power_meter", "light", "gateway", "dock_bay", "conveyor_monitor", "compressor_monitor",
-         "gas_detector", "fire_panel", "tank_level", "truck_telematics"}
+         "gas_detector", "fire_panel", "tank_level", "truck_telematics", "water_quality"}
 
 Payload = dict[str, Any]
 Out = list[tuple[str, Payload]]  # (channel, payload)
@@ -40,6 +40,7 @@ class Model:
     rssi: float = -60.0
     fault: str | None = None
     silent: bool = False  # stop publishing (lets the twin show the device going stale)
+    power_off: bool = False  # its zone has lost mains power (campus physics): same effect, different cause
     _due: dict[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -197,6 +198,7 @@ class MachineMonitor(Model):
     vib_offset: float = 0.0
     degrade_rate: float = 0.0  # mm/s per second while degrading
     surface_c: float = 30.0
+    air_factor: float = 1.0  # >1 when compressed air is short: every cycle takes longer (set by the campus physics)
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -241,7 +243,7 @@ class MachineMonitor(Model):
         self.vib_offset += self.degrade_rate * dt
         if self.state == "running" and t >= self.next_cycle:
             # Each cycle runs a little slower than ideal (micro-stops); a worn machine slows more.
-            took = self.cycle_s * self.rng.uniform(1.0, 1.12) * (1 + 0.05 * self.vib_offset)
+            took = self.cycle_s * self.rng.uniform(1.0, 1.12) * (1 + 0.05 * self.vib_offset) * self.air_factor
             self.next_cycle = t + took
             if self.rng.random() < self.reject_rate:
                 self.rejects += 1
@@ -291,6 +293,7 @@ class Badge(Model):
     pending: list[tuple[str, Payload]] = field(default_factory=list)
     last_buzz: str | None = None
     skip_checkin: bool = False  # demo: this worker "forgets" the lone-worker check-in
+    path: list[tuple[float, float]] = field(default_factory=list)  # waypoints still to walk before `goto`
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -308,6 +311,7 @@ class Badge(Model):
             self.goto = None
         elif action == "goto" and "x" in data and "z" in data:
             self.goto, self.still_until = (float(data["x"]), float(data["z"])), -1.0
+            self.path = [(float(a), float(b)) for a, b in data.get("path", [])]  # follow the walkways to the target
         elif action == "buzz":
             self.last_buzz = str(data.get("route", "alert"))  # the motor/buzzer pattern; nothing to publish
         elif action == "fall":
@@ -335,13 +339,15 @@ class Badge(Model):
             pts = None  # lying still: no walking
         elif self.goto is not None:
             pts = None
-            gx, gz = self.goto
+            gx, gz = self.path[0] if self.path else self.goto
             dx, dz = gx - self.x, gz - self.z
             dist = math.hypot(dx, dz)
             stepm = self.speed * 1.3 * dt  # people walk briskly to the muster point
             if dist > 0.5:
                 self.x += dx / dist * min(stepm, dist)
                 self.z += dz / dist * min(stepm, dist)
+            elif self.path:
+                self.path.pop(0)
         if pts and len(pts) > 1 and t >= self.pause_until:
             name, tx, tz, lane = pts[self.leg]
             _, px, pz, prev_lane = pts[self.leg - 1]
@@ -458,34 +464,45 @@ class ConveyorMonitor(Model):
 
 @dataclass
 class CompressorMonitor(Model):
-    """Screw compressor between 6.5 and 7.5 bar: loaded while pressure rises, unloaded while it falls."""
+    """Screw compressor between 6.5 and 7.5 bar: loaded while pressure rises, unloaded while it falls.
+    "leak" adds air demand, "fault" trips the machine (no air is made, pressure falls), "restore" clears both."""
     bar: float = 7.0
     loaded: bool = True
     hours: float = 1240.0
     leak: float = 0.0  # extra air demand (bar/s), set by the scenario
+    tripped: bool = False
 
     def command(self, action: str, t: float, ts_ms: int) -> None:
         if action == "leak":
             self.leak = 0.02
-        elif action == "clear":
-            self.leak = 0.0
+        elif action == "fault":
+            self.tripped = True
+            self._due.pop("fast", None)
+        elif action in ("clear", "restore"):
+            self.leak, self.tripped = 0.0, False
+            self._due.pop("fast", None)
 
     def step(self, t: float, dt: float, ts_ms: int) -> Out:
         super().step(t, dt, ts_ms)
-        rate = 0.05 if self.loaded else -0.03
-        self.bar += (rate - self.leak) * dt
-        if self.bar >= 7.5:
+        if self.tripped:
             self.loaded = False
-        elif self.bar <= 6.5 and self.leak < 0.04:
-            self.loaded = True
+            self.bar += (-0.05 - self.leak) * dt  # the plant keeps using air: about 1 bar every 20 s
+        else:
+            rate = 0.05 if self.loaded else -0.03
+            self.bar += (rate - self.leak) * dt
+            if self.bar >= 7.5:
+                self.loaded = False
+            elif self.bar <= 6.5 and self.leak < 0.04:
+                self.loaded = True
         self.bar = max(3.0, self.bar)
         self.hours += dt / 3600.0 if self.loaded else 0.0
         if self.every("fast", t, 2.0):
-            cur = (46.0 if self.loaded else 13.0) + self.rng.gauss(0, 0.6)
+            cur = (0.0 if self.tripped else 46.0 if self.loaded else 13.0) + self.rng.gauss(0, 0.6 if not self.tripped else 0.0)
             return [("pressure_bar", self.reading(ts_ms, round(self.bar + self.rng.gauss(0, 0.01), 2), "bar")),
-                    ("current_a", self.reading(ts_ms, round(cur, 1), "A")),
+                    ("current_a", self.reading(ts_ms, round(max(0.0, cur), 1), "A")),
                     ("run_hours", self.reading(ts_ms, round(self.hours, 2), "h")),
-                    ("dew_point_c", self.reading(ts_ms, round(-22.0 + self.rng.gauss(0, 0.3), 1), "°C"))]
+                    ("dew_point_c", self.reading(ts_ms, round(-22.0 + self.rng.gauss(0, 0.3), 1), "°C")),
+                    ("tripped", self.reading(ts_ms, self.tripped))]
         return []
 
 
@@ -583,21 +600,68 @@ class FirePanel(Model):
 
 @dataclass
 class PowerMeter(Model):
-    """DIN-rail meter on a feeder: power follows a base load plus a slow wave and noise."""
+    """DIN-rail meter on a feeder: power follows `load_kw` (set by the campus physics) or, alone, a base load plus a
+    slow wave and noise. On the substation incomer, "grid_failure" drops the voltage to 0 until "grid_restore"."""
     kwh: float = 0.0
+    load_kw: float | None = None  # set by the campus physics every step; None = standalone sim
+    grid_down: bool = False
 
     def __post_init__(self) -> None:
         super().__post_init__()
         self.base_kw = float(self.d.get("sim", {}).get("base_kw", 18.0))
         self.kwh = float(self.d.get("sim", {}).get("kwh", 5200.0))
 
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action == "grid_failure":
+            self.grid_down = True
+            self._due.pop("pw", None)
+        elif action == "grid_restore":
+            self.grid_down = False
+            self._due.pop("pw", None)
+
     def step(self, t: float, dt: float, ts_ms: int) -> Out:
         super().step(t, dt, ts_ms)
-        kw = max(0.0, self.base_kw * (1 + 0.15 * math.sin(t / 90.0)) + self.rng.gauss(0, 0.2) * (1 if self.base_kw else 0))
+        if self.load_kw is not None:
+            kw = max(0.0, self.load_kw + self.rng.gauss(0, 0.15) * (1 if self.load_kw else 0))
+        else:
+            kw = max(0.0, self.base_kw * (1 + 0.15 * math.sin(t / 90.0)) + self.rng.gauss(0, 0.2) * (1 if self.base_kw else 0))
         self.kwh += kw * dt / 3600.0
         if self.every("pw", t, 5.0):
+            volts = 0.0 if self.grid_down else 400.0 + self.rng.gauss(0, 1.2)
             return [("power_kw", self.reading(ts_ms, round(kw, 2), "kW")), ("energy_kwh", self.reading(ts_ms, round(self.kwh, 2), "kWh")),
-                    ("voltage_v", self.reading(ts_ms, round(400.0 + self.rng.gauss(0, 1.2), 1), "V"))]
+                    ("voltage_v", self.reading(ts_ms, round(volts, 1), "V"))]
+        return []
+
+
+@dataclass
+class WaterQuality(Model):
+    """pH and turbidity probes at an ETP inflow or outflow. Inflow is rough, outflow sits in its permit band;
+    "upset" pushes the outflow out of band until "clear"."""
+    ph: float = 7.2
+    ntu: float = 10.0
+    upset: bool = False
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.inflow = bool(self.d.get("sim", {}).get("inflow", False))
+        self.ph = 6.9 if self.inflow else 7.3
+        self.ntu = 180.0 if self.inflow else 12.0
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action in ("upset", "leak"):
+            self.upset = True
+        elif action in ("clear", "restore"):
+            self.upset = False
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        base_ph, base_ntu = (6.9, 180.0) if self.inflow else (7.3, 12.0)
+        if self.upset and not self.inflow:
+            base_ph, base_ntu = 9.4, 60.0
+        self.ph += (base_ph - self.ph) * min(1.0, dt / 20.0) + self.rng.gauss(0, 0.01)
+        self.ntu += (base_ntu - self.ntu) * min(1.0, dt / 20.0) + self.rng.gauss(0, 0.3 if not self.inflow else 2.0)
+        if self.every("wq", t, 10.0):
+            return [("ph", self.reading(ts_ms, round(self.ph, 2), "pH")), ("turbidity_ntu", self.reading(ts_ms, round(max(0.0, self.ntu), 1), "NTU"))]
         return []
 
 
@@ -622,8 +686,111 @@ MODELS: dict[str, type[Model]] = {"badge": Badge, "machine_monitor": MachineMoni
                                   "occupancy_sensor": Occupancy, "air_quality": AirQuality, "truck_telematics": TruckTelematics,
                                   "dock_bay": DockBay, "conveyor_monitor": ConveyorMonitor, "compressor_monitor": CompressorMonitor,
                                   "helmet_clip": HelmetClip, "gas_detector": GasDetector, "leak_sensor": LeakSensor,
-                                  "tank_level": TankLevel, "fire_panel": FirePanel, "power_meter": PowerMeter, "asset_tag": AssetTag}
+                                  "tank_level": TankLevel, "fire_panel": FirePanel, "power_meter": PowerMeter, "asset_tag": AssetTag,
+                                  "water_quality": WaterQuality}
 
 
 def make(d: dict[str, Any], rng: random.Random) -> Model:
     return MODELS.get(d["type"], Model)(d, rng)
+
+
+SOLAR_KWP = 360.0  # warehouse 110 + factory 160 + raw store 90 (layout.campus.solar)
+
+
+def sun_factor(hour: float) -> float:
+    """Same curve as the front end (scene/campus/shared.tsx sunFactor): 0 before 6:00 and after 18:00, a sine between."""
+    return 0.0 if hour <= 6 or hour >= 18 else math.sin(math.pi * (hour - 6) / 12)
+
+
+@dataclass
+class Physics:
+    """Campus-level coupling between simulated devices (utilities, F3). Pure Python so tests can drive it.
+
+    Power: feeder meters follow what is running (machines, compressor, EV chargers, the fire pump during a fire alarm);
+    the substation incomer meter reads the whole campus minus the solar output, 0 V on a grid failure. On a failure
+    the generator starts after `start_s`, picks up the critical zones, and everything on mains in the other zones is
+    off until the grid is back. Compressed air: machines slow when pressure drops below 6 bar.
+    """
+    models: dict[str, Model]
+    cfg: dict[str, Any]
+    hour: float = 12.0  # local hour of day, set by the simulator
+    gen_state: str = "off"  # off | starting | running | cooling
+    gen_since: float = 0.0
+    solar_kw: float = 0.0
+    demand_kw: float = 0.0
+
+    def _meter(self, mid: str) -> PowerMeter | None:
+        m = self.models.get(mid)
+        return m if isinstance(m, PowerMeter) else None
+
+    def zone_of(self, m: Model) -> str:
+        return str(m.d["zone_id"])
+
+    def grid_down(self) -> bool:
+        inc = self._meter(self.cfg["incomer"])
+        return bool(inc and inc.grid_down)
+
+    def step(self, t: float, dt: float) -> None:
+        cfg = self.cfg
+        critical = set(cfg["critical_zones"])
+        down = self.grid_down()
+        # generator state machine
+        if down and self.gen_state in ("off", "cooling"):
+            self.gen_state, self.gen_since = "starting", t
+        elif down and self.gen_state == "starting" and t - self.gen_since >= float(cfg["generator_start_s"]):
+            self.gen_state, self.gen_since = "running", t
+        elif not down and self.gen_state in ("starting", "running"):
+            self.gen_state, self.gen_since = "cooling", t
+        elif self.gen_state == "cooling" and t - self.gen_since >= 6.0:
+            self.gen_state = "off"
+        # which zones have mains power
+        for m in self.models.values():
+            z = self.zone_of(m)
+            powered = (not down) or (z in critical and self.gen_state == "running") or z in critical  # critical devices have battery back-up
+            m.power_off = not powered and m.d["type"] in MAINS
+        # air: machines slow when pressure is low
+        cp = next((m for m in self.models.values() if isinstance(m, CompressorMonitor)), None)
+        factor = 1.0 if cp is None or cp.bar >= 6.0 else min(2.2, 1.0 + (6.0 - cp.bar) * 0.45)
+        for m in self.models.values():
+            if isinstance(m, MachineMonitor):
+                m.air_factor = factor
+        # loads
+        loads: dict[str, float] = {}
+        for mid, zone in cfg["feeders"].items():
+            loads[mid] = self._feeder_kw(mid, zone)
+        other = float(cfg.get("other_load_kw", 40.0)) * (0.55 + 0.45 * max(0.0, math.sin(math.pi * (self.hour - 6) / 14)) if 6 < self.hour < 20 else 0.55)
+        self.solar_kw = 0.0 if down else SOLAR_KWP * 0.8 * sun_factor(self.hour)
+        total = sum(loads.values()) + other
+        critical_kw = sum(kw for mid, kw in loads.items() if cfg["feeders"][mid] in critical) + other * float(cfg.get("critical_share", 0.1))
+        self.demand_kw = total
+        for mid, kw in loads.items():
+            m = self._meter(mid)
+            if m is not None:
+                m.load_kw = 0.0 if (down and cfg["feeders"][mid] not in critical) else kw
+        inc = self._meter(cfg["incomer"])
+        if inc is not None:
+            inc.load_kw = 0.0 if down else max(0.0, total - self.solar_kw)
+        gen = self._meter(cfg["generator"])
+        if gen is not None:
+            gen.load_kw = critical_kw if self.gen_state == "running" else 0.0
+        tank = self.models.get(cfg["diesel_tank"])
+        if isinstance(tank, TankLevel) and gen is not None and gen.load_kw:
+            tank.level = max(0.0, tank.level - gen.load_kw * dt * float(cfg.get("diesel_pct_per_kwh", 0.35)) / 3600.0)
+            tank.pumping = False  # a day tank on a generator is not refilled by the water pump logic
+
+    def _feeder_kw(self, mid: str, zone: str) -> float:
+        ms = self.models.values()
+        if zone == "FAC01_PRODUCTION":
+            return 6.0 + sum(0.45 * (m.i_run if m.state == "running" else 0.0) for m in ms if isinstance(m, MachineMonitor)) \
+                + sum(0.25 * (7.5 if not m.jam else 13.5) for m in ms if isinstance(m, ConveyorMonitor))
+        if zone == "FAC01_COMPRESSOR":
+            cp = next((m for m in ms if isinstance(m, CompressorMonitor)), None)
+            return 1.0 + (0.55 * (0.0 if cp.tripped else 46.0 if cp.loaded else 13.0) if cp else 25.0)
+        if zone == "WH01_PARKING":
+            day = max(0.0, math.sin(math.pi * (self.hour - 7) / 11)) if 7 < self.hour < 18 else 0.1
+            return 2.0 + 12.0 * day
+        if zone == "FAC01_RAW":
+            return 5.0 + sum(4.0 for m in ms if isinstance(m, DockBay) and m.d["zone_id"] == zone and m.occupied)
+        if zone == "FAC01_FIREPUMP":
+            return 45.0 if any(isinstance(m, FirePanel) and m.alarm for m in ms) else 1.0
+        return float(self.cfg.get("default_feeder_kw", 5.0))

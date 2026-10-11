@@ -29,7 +29,7 @@ import paho.mqtt.client as mqtt
 from referencing import Registry, Resource
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sim_models import Model, make  # noqa: E402
+from sim_models import Model, Physics, make  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SITES = ROOT / "backend" / "world" / "sites.json"
@@ -68,6 +68,11 @@ class SiteSim:
         self.rng = random.Random(seed)
         devices = [self.with_routes(d) for d in devices]
         self.models: dict[str, Model] = {d["id"]: make(d, self.rng) for d in devices}
+        # Campus-level coupling (power, generator, compressed air) when the config describes it and its meters are simulated.
+        util = cfg.get("utilities")
+        self.physics = Physics(self.models, util) if util and util["incomer"] in self.models else None
+        self.hour = 12.0
+        self.local_hour = lambda: time.localtime().tm_hour + time.localtime().tm_min / 60.0
         self.v = load_validators()
         self.t = 0.0  # simulated seconds since start (advanced by step(dt), so tests run fast)
         self.client: mqtt.Client | None = None
@@ -140,9 +145,12 @@ class SiteSim:
         t = self.t
         ts_ms = int(t * 1000)
         self.couple()
+        if self.physics is not None:
+            self.physics.hour = self.local_hour()
+            self.physics.step(t, dt)
         for m in self.models.values():
             out = m.step(t, dt, ts_ms)
-            if m.silent:
+            if m.silent or m.power_off:
                 continue
             for channel, payload in out:
                 self.publish(m, channel, payload)

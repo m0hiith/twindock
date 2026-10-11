@@ -1,0 +1,1116 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "water_quality_node",
+    "name": "Water quality node",
+    "asset_type": "utility",
+    "status": "reference",
+    "radio": {
+      "protocol": "wifi",
+      "chip": "SiWG917M111MGTBA",
+      "reason": "Mains-powered in the ETP control cabinet; Wi-Fi reaches the utilities block and the probes need a steady supply and a fast ADC.",
+      "evidence": "silabs.com"
+    },
+    "power_source": {
+      "type": "mains",
+      "description": "24 V DC from the ETP control panel, stepped down to 3.3 V."
+    },
+    "mounting": "Board in the ETP cabinet; pH and turbidity probes in a flow cell on the inflow or outflow pipe.",
+    "purpose": "pH and turbidity of the effluent, at the plant inflow or its outflow.",
+    "captions": [
+      "Shows whether the treated water leaving the plant is inside its limits.",
+      "A pH or cloudiness reading outside the limits raises a warning."
+    ],
+    "publishes": [
+      {
+        "channel": "ph",
+        "unit": "pH",
+        "description": "pH (probe + interface board)"
+      },
+      {
+        "channel": "turbidity_ntu",
+        "unit": "NTU",
+        "description": "Turbidity (optical sensor)"
+      }
+    ],
+    "power_budget": {
+      "average_ma": 80,
+      "peak_ma": 200,
+      "supply_v": 24.0,
+      "assumptions": "SiWx917 connected (~60 mA), probe interface boards (~10 mA each at 5 V), ADC. Estimate."
+    }
+  },
+  "board": "BRD2605A",
+  "sdk": "reference design (not built)",
+  "buses": [
+    {
+      "id": "i2c",
+      "name": "I2C2 (ULP_I2C) via Qwiic and pads 15/16",
+      "kind": "i2c",
+      "controller": "I2C2",
+      "voltage_v": 3.3,
+      "evidence": "user-guide"
+    },
+    {
+      "id": "vmcu",
+      "name": "3.3 V (VMCU)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.3,
+      "evidence": "user-guide"
+    },
+    {
+      "id": "analog",
+      "name": "Probe outputs",
+      "kind": "analog",
+      "controller": null,
+      "voltage_v": null,
+      "evidence": "unverified"
+    },
+    {
+      "id": "v24",
+      "name": "24 V DC",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 24.0,
+      "evidence": "unverified"
+    }
+  ],
+  "parts": [
+    {
+      "id": "mcu",
+      "name": "SiWx917 dev kit (BRD2605A)",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Reads both probes through the ADC and reports over Wi-Fi.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "pad2",
+          "signal": "VMCU_IN",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 14.58,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 2 (VMCU)"
+        },
+        {
+          "name": "pad1",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 2.04,
+          "y_mm": 14.58,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 1 (GND)"
+        },
+        {
+          "name": "pad26",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 44.55,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 26 (GND)"
+        },
+        {
+          "name": "pad20",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 37.06,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 20 (3V3)"
+        },
+        {
+          "name": "pad16",
+          "signal": "SDA",
+          "gpio": "ULP_GPIO_6",
+          "x_mm": 27.66,
+          "y_mm": 32.06,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 16 (ULP_GPIO_6)"
+        },
+        {
+          "name": "pad15",
+          "signal": "SCL",
+          "gpio": "ULP_GPIO_7",
+          "x_mm": 2.04,
+          "y_mm": 32.06,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 15 (ULP_GPIO_7)"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.4,
+        "h_mm": 55.0,
+        "pcb_color": "black",
+        "dims_evidence": "datasheet",
+        "label": "SiWx917",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 0.3,
+            "y_mm": 3.5,
+            "w_mm": 4.4,
+            "h_mm": 7.4,
+            "rot": 90
+          },
+          {
+            "family": "antenna",
+            "variant": "chip",
+            "x_mm": 13.6,
+            "y_mm": 0.8,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "chip",
+            "variant": "qfn",
+            "label": "SiWx917",
+            "x_mm": 11.7,
+            "y_mm": 16.5,
+            "w_mm": 7.0,
+            "h_mm": 7.0
+          },
+          {
+            "family": "crystal",
+            "label": "40M",
+            "x_mm": 20.5,
+            "y_mm": 18.0,
+            "w_mm": 2.5,
+            "h_mm": 2.0
+          },
+          {
+            "family": "button",
+            "x_mm": 8.0,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "button",
+            "x_mm": 18.8,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "led",
+            "color": "#2BB673",
+            "x_mm": 6.2,
+            "y_mm": 46.8,
+            "w_mm": 1.6,
+            "h_mm": 0.8
+          },
+          {
+            "family": "connector",
+            "variant": "usb_c",
+            "x_mm": 10.7,
+            "y_mm": 47.4,
+            "w_mm": 9.0,
+            "h_mm": 7.3
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "SiWx917",
+            "x_mm": 16.5,
+            "y_mm": 5.2,
+            "w_mm": 6.944000000000001,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "BRD2605A",
+            "x_mm": 16.5,
+            "y_mm": 7.4,
+            "w_mm": 5.456,
+            "h_mm": 1.1
+          }
+        ]
+      }
+    },
+    {
+      "id": "buck",
+      "name": "Step-down regulator",
+      "part_number": "3.3 V step-down module (e.g. Pololu D24V10F3 class)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": "v24",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns the 24 V supply into the 3.3 V the board needs.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VIN",
+          "signal": "VIN",
+          "gpio": null,
+          "x_mm": 6.36,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 8.9,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "VOUT",
+          "signal": "VOUT",
+          "gpio": null,
+          "x_mm": 11.44,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 17.8,
+        "h_mm": 12.7,
+        "pcb_color": "green",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "BUCK",
+            "x_mm": 6.45,
+            "y_mm": 6.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "header_3",
+            "x_mm": 5.09,
+            "y_mm": 0.3,
+            "w_mm": 7.62,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 4.5,
+        "max_v": 36.0
+      }
+    },
+    {
+      "id": "adc",
+      "name": "16-bit ADC",
+      "part_number": "ADS1115 breakout",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "i2c",
+      "address": "0x48",
+      "supplied_from": "vmcu",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns the analog sensor voltages into numbers the board can read, much finer than the chip's own ADC.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VDD",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 10.19,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 12.73,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_mm": 15.27,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_mm": 17.81,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A0",
+          "signal": "AIN_PH",
+          "gpio": null,
+          "x_mm": 12.73,
+          "y_mm": 16.07,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A1",
+          "signal": "AIN_NTU",
+          "gpio": null,
+          "x_mm": 15.27,
+          "y_mm": 16.07,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 28.0,
+        "h_mm": 17.8,
+        "pcb_color": "blue",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 24.2,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "ADS1115",
+            "x_mm": 11.55,
+            "y_mm": 9.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "header_4",
+            "x_mm": 8.92,
+            "y_mm": 0.3,
+            "w_mm": 10.16,
+            "h_mm": 2.54
+          },
+          {
+            "family": "connector",
+            "variant": "header_2",
+            "x_mm": 11.46,
+            "y_mm": 14.8,
+            "w_mm": 5.08,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "address_evidence": "unverified",
+      "supply": {
+        "min_v": 2.0,
+        "max_v": 5.5
+      }
+    },
+    {
+      "id": "ph_board",
+      "name": "pH interface board",
+      "part_number": "Analog pH interface board (BNC input, 0-3 V output)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": "vmcu",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Amplifies the tiny signal from the pH probe into a voltage the ADC can read.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VCC",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 3.0,
+          "y_mm": 31.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 5.0,
+          "y_mm": 31.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "OUT",
+          "signal": "AIN_PH",
+          "gpio": null,
+          "x_mm": 7.0,
+          "y_mm": 31.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "BNC",
+          "signal": "PH_SIGNAL",
+          "gpio": null,
+          "x_mm": 41.6,
+          "y_mm": 6.0,
+          "side": "right",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 42.0,
+        "h_mm": 32.0,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "label": "pH",
+        "features": [
+          {
+            "family": "connector",
+            "variant": "jst_ph_3",
+            "x_mm": 2.0,
+            "y_mm": 24.0,
+            "w_mm": 6.0,
+            "h_mm": 6.0
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "pH BOARD",
+            "x_mm": 12.0,
+            "y_mm": 14.0,
+            "w_mm": 9.92,
+            "h_mm": 2.0
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 3.0,
+        "max_v": 5.5
+      }
+    },
+    {
+      "id": "ph_probe",
+      "name": "pH probe",
+      "part_number": "Industrial pH electrode, BNC",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "pH",
+      "forklift_use": "",
+      "caption": "The glass electrode that sits in the water.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "BNC",
+          "signal": "PH_SIGNAL",
+          "gpio": null,
+          "x_mm": 119.6,
+          "y_mm": 7.0,
+          "side": "right",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "probe",
+        "w_mm": 120.0,
+        "h_mm": 14.0,
+        "dims_evidence": "typical"
+      }
+    },
+    {
+      "id": "turbidity",
+      "name": "Turbidity sensor",
+      "part_number": "Optical turbidity sensor module (analog output)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": "vmcu",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Turbidity",
+      "forklift_use": "",
+      "caption": "Shines light through the water and measures how cloudy it is.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VCC",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 4.0,
+          "y_mm": 29.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 6.0,
+          "y_mm": 29.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "OUT",
+          "signal": "AIN_NTU",
+          "gpio": null,
+          "x_mm": 8.0,
+          "y_mm": 29.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 40.0,
+        "h_mm": 30.0,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "label": "NTU",
+        "features": [
+          {
+            "family": "sensor_window",
+            "variant": "light",
+            "x_mm": 28.0,
+            "y_mm": 8.0,
+            "w_mm": 8.0,
+            "h_mm": 8.0
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 3.0,
+        "max_v": 5.5
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "buck_vout_mcu_pad2",
+      "from": "buck.VOUT",
+      "to": "mcu.pad2",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "buck_gnd_mcu_pad1",
+      "from": "buck.GND",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_adc_vdd",
+      "from": "mcu.pad20",
+      "to": "adc.VDD",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad26_adc_gnd",
+      "from": "mcu.pad26",
+      "to": "adc.GND",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad16_adc_sda",
+      "from": "mcu.pad16",
+      "to": "adc.SDA",
+      "signal": "SDA",
+      "bus": "i2c",
+      "medium": "wire",
+      "wire_color": "blue",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad15_adc_scl",
+      "from": "mcu.pad15",
+      "to": "adc.SCL",
+      "signal": "SCL",
+      "bus": "i2c",
+      "medium": "wire",
+      "wire_color": "yellow",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_ph_board_vcc",
+      "from": "mcu.pad20",
+      "to": "ph_board.VCC",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad26_ph_board_gnd",
+      "from": "mcu.pad26",
+      "to": "ph_board.GND",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "ph_board_out_adc_a0",
+      "from": "ph_board.OUT",
+      "to": "adc.A0",
+      "signal": "AIN_PH",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "ph_probe_bnc_ph_board_bnc",
+      "from": "ph_probe.BNC",
+      "to": "ph_board.BNC",
+      "signal": "PH_SIGNAL",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "grey",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_turbidity_vcc",
+      "from": "mcu.pad20",
+      "to": "turbidity.VCC",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad26_turbidity_gnd",
+      "from": "mcu.pad26",
+      "to": "turbidity.GND",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "turbidity_out_adc_a1",
+      "from": "turbidity.OUT",
+      "to": "adc.A1",
+      "signal": "AIN_NTU",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    }
+  ],
+  "bom": [
+    {
+      "id": "mcu",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "manufacturer": "Silicon Labs",
+      "description": "SiWx917 Wi-Fi 6 + Bluetooth LE dev kit (SiWG917M111MGTBA SoC, Qwiic connector, 26 breakout pads).",
+      "quantity": 1,
+      "unit_cost_usd": 40.0,
+      "link": "https://www.silabs.com/development-tools/wireless/wi-fi/siwx917-dk2605a-wifi-6-bluetooth-le-soc-dev-kit",
+      "source": "silabs.com",
+      "covers": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "buck",
+      "part_number": "3.3 V step-down module (e.g. Pololu D24V10F3 class)",
+      "manufacturer": "unverified",
+      "description": "Switching regulator, 4.5-36 V in, 3.3 V out, about 1 A",
+      "quantity": 1,
+      "unit_cost_usd": 8.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "buck"
+      ]
+    },
+    {
+      "id": "adc",
+      "part_number": "ADS1115 breakout",
+      "manufacturer": "unverified",
+      "description": "TI ADS1115 4-channel 16-bit ADC breakout",
+      "quantity": 1,
+      "unit_cost_usd": 10.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "adc"
+      ]
+    },
+    {
+      "id": "ph_board",
+      "part_number": "Analog pH interface board (BNC input, 0-3 V output)",
+      "manufacturer": "unverified",
+      "description": "Analog pH interface board with BNC connector",
+      "quantity": 1,
+      "unit_cost_usd": 30.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "ph_board"
+      ]
+    },
+    {
+      "id": "ph_probe",
+      "part_number": "Industrial pH electrode, BNC",
+      "manufacturer": "unverified",
+      "description": "Industrial pH electrode with BNC connector and 1 m cable",
+      "quantity": 1,
+      "unit_cost_usd": 60.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "ph_probe"
+      ]
+    },
+    {
+      "id": "turbidity",
+      "part_number": "Optical turbidity sensor module (analog output)",
+      "manufacturer": "unverified",
+      "description": "Optical turbidity sensor with analog output",
+      "quantity": 1,
+      "unit_cost_usd": 20.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "turbidity"
+      ]
+    }
+  ],
+  "boot_sequence": [],
+  "open_questions": [
+    {
+      "id": "probe_cal",
+      "question": "pH probes need two-point calibration and turbidity sensors a reference; plan a calibration routine (not simulated here).",
+      "blocks": [
+        "ph_probe",
+        "turbidity"
+      ]
+    },
+    {
+      "id": "parts_tbc",
+      "question": "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.",
+      "blocks": [
+        "ph_board",
+        "ph_probe",
+        "turbidity",
+        "adc"
+      ]
+    }
+  ]
+}

@@ -31,6 +31,19 @@
     "route": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "path": {
+      "type": "array",
+      "maxItems": 80,
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "description": "goto only: walkway waypoints [x, z] to follow on the way to (x, z)."
     }
   }
 }

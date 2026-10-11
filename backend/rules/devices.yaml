@@ -116,3 +116,41 @@
   for_s: 10
   severity: warning
   message: "Air pressure {pressure_bar:.1f} bar, below 6 bar ({device_id})"
+
+# F3
+- id: compressor_fault
+  name: Compressor fault
+  plain: Raise a critical alert when the compressor monitor reports the compressor tripped.
+  subject: device
+  where:
+    - {field: type, op: eq, value: compressor_monitor}
+  when:
+    - {field: tripped, op: eq, value: true}
+  severity: critical
+  message: "Compressor tripped: air pressure will fall ({device_id})"
+
+- id: etp_outflow_ph
+  name: ETP outflow pH out of band
+  plain: Warn when the treated water's pH is outside 6.5 to 8.5 for 30 s (example limits for the demo; a real plant uses its permit).
+  subject: device
+  where:
+    - {field: type, op: eq, value: water_quality}
+    - {field: label, op: eq, value: ETP outflow quality}
+  when:
+    - {field: ph, op: outside, value: [6.5, 8.5]}
+  for_s: 30
+  severity: warning
+  message: "ETP outflow pH {ph:.1f}, outside 6.5-8.5 ({device_id})"
+
+- id: etp_outflow_turbidity
+  name: ETP outflow cloudy
+  plain: Warn when the treated water's turbidity is above 25 NTU for 30 s (example limit).
+  subject: device
+  where:
+    - {field: type, op: eq, value: water_quality}
+    - {field: label, op: eq, value: ETP outflow quality}
+  when:
+    - {field: turbidity_ntu, op: gt, value: 25}
+  for_s: 30
+  severity: warning
+  message: "ETP outflow turbidity {turbidity_ntu:.0f} NTU, above 25 NTU ({device_id})"

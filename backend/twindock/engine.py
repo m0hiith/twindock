@@ -8,6 +8,7 @@ inputs in and sends whatever is in self.out. That keeps every rule testable with
 from __future__ import annotations
 
 import json
+import math
 import os
 import random
 import time
@@ -22,6 +23,7 @@ from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
 from .devices import DeviceRegistry, load_sites, parse_site_topic
 from .production import Production
 from .rules import Rules, load_rules
+from .routing import PedGraph, evacuation_routes
 from .safety import Safety, Today, heat_index_c
 from .gateway import GatewayStore
 from .graph import Graph
@@ -86,6 +88,10 @@ class Engine:
         self._safety_last: dict[str, Any] | None = None
         self.rules = Rules(load_rules())
         self._rules_acc = 0.0
+        self.ped = PedGraph(layout)
+        self._routes: list[dict[str, Any]] = []
+        self._routes_key: tuple[Any, ...] | None = None
+        self._fire_evac = False
         self._energy: dict[str, dict[str, Any]] = {}
         self._energy_acc = 0.0
         self._gw_was_online = False
@@ -149,9 +155,11 @@ class Engine:
         fresh = {w.badge: self.devices.wire_device(w.badge, self.gw, now, self.ble)["status"] == "online"
                  for w in self.safety.workers.values()}
         forklifts = [(f.id, f.x, f.z, f.speed, f.heading) for f in self.world.of_kind("forklift")]
-        gas, heat = self._zone_hazards(now)
+        gas, heat, fire = self._zone_hazards(now)
+        self._fire_response(fire, now)
         for level, text, uid in self.safety.evaluate(now, forklifts, fresh, self.devices.zone_by_id, gas, heat):
             self.event(level, text, "safety", uid)
+        self._update_routes(gas | fire)
         self._badge_actions()
         warned = {w.near.forklift for w in self.safety.workers.values() if w.near}
         for f in self.world.of_kind("forklift"):
@@ -183,9 +191,11 @@ class Engine:
             self._safety_flush_acc = 0.0
             self._send_safety()
 
-    def _zone_hazards(self, now: int) -> tuple[set[str], dict[str, float]]:
-        """Zones with a gas detector in alarm, and the worst heat index per zone, from fresh SIM device readings."""
+    def _zone_hazards(self, now: int) -> tuple[set[str], dict[str, float], set[str]]:
+        """Zones with a gas detector in alarm, the worst heat index per zone, and zones whose fire panel bridge reports
+        an alarm, from fresh SIM device readings."""
         gas: set[str] = set()
+        fire: set[str] = set()
         heat: dict[str, float] = {}
         for did, st in self.devices.sim.items():
             d = self.devices.defs[did]
@@ -193,11 +203,44 @@ class Engine:
                 continue
             if d["type"] == "gas_detector" and st.readings.get("alarm") and st.readings["alarm"].value is True:
                 gas.add(d["zone_id"])
+            if d["type"] == "fire_panel" and st.readings.get("alarm") and st.readings["alarm"].value is True:
+                fire.add(d["zone_id"])
             t, h = st.readings.get("temperature"), st.readings.get("humidity")
             if d["type"] == "env_sensor" and t is not None and h is not None:
                 hi = heat_index_c(float(t.value), float(h.value))
                 heat[d["zone_id"]] = max(hi, heat.get(d["zone_id"], -99.0))
-        return gas, heat
+        return gas, heat, fire
+
+    def _fire_response(self, fire: set[str], now: int) -> None:
+        """A fire panel bridge reports an alarm: start the evacuation (advice to badges and screens). Nothing is closed,
+        locked or silenced: the certified fire system does that, we only read it. Ending it is a person's decision."""
+        if fire and not self._fire_evac and self.safety.evacuation is None:
+            zn = self.devices.zone_by_id.get(sorted(fire)[0], {}).get("name", "the campus")
+            self.safety.start_evacuation(now, f"fire alarm: {zn}", "Fire panel bridge")
+            self._fire_evac = True
+            self.event("warn", f"Fire panel alarm in {zn}: evacuation started (advice only; the fire system is the certified one)", "safety")
+        elif not fire:
+            self._fire_evac = False
+
+    def _update_routes(self, hazard_zones: set[str]) -> None:
+        """While an evacuation runs or a gas alarm is on: for every zone with people (and the hazard zones), the walking route to
+        the nearest muster point that is not beside the hazard."""
+        if self.safety.evacuation is None and not self.safety.gas_zones:
+            if self._routes:
+                self._routes, self._routes_key = [], None
+            return
+        zc = {z: n for z, n in self.safety.wire(self.clock())["zone_counts"].items() if n}
+        zones = sorted(set(zc) | hazard_zones | set(self.safety.gas_zones))
+        key = (tuple(zones), tuple(sorted(hazard_zones)))
+        if key == self._routes_key:
+            return
+        self._routes_key = key
+        hz = []
+        for z in hazard_zones | set(self.safety.gas_zones):
+            c = self._zone_centroid(z)
+            if c:
+                hz.append(c)
+        self._routes = evacuation_routes(self.ped, self.devices.zone_by_id, self.safety.muster_points, zones, hz)
 
     def _badge_actions(self) -> None:
         """Buzz / evacuate / resume commands for badges. Only simulated badges can be commanded; a real badge
@@ -209,7 +252,7 @@ class Engine:
             if action == "buzz" and extra.get("route") == "evacuate":
                 m = self._nearest_muster(badge)
                 if m is not None:
-                    self._site_command(badge, "goto", {"x": m["x"], "z": m["z"]})
+                    self._site_command(badge, "goto", {"x": m["x"], "z": m["z"], "path": self._walk_path(badge, m)})
                     continue
             if action == "resume":
                 self._site_command(badge, "route", {"route": "default"})
@@ -222,9 +265,27 @@ class Engine:
         pts = self.safety.muster_points
         if not pts:
             return None
+        hz = [c for c in (self._zone_centroid(z) for z in [*self.safety.gas_zones, *self._fire_zones()]) if c]
+        safe = [m for m in pts if all(math.dist((m["x"], m["z"]), h) >= 40.0 for h in hz)] or pts
         if w is None or w.x is None or w.z is None:
-            return pts[0]
-        return min(pts, key=lambda m: (m["x"] - w.x) ** 2 + (m["z"] - w.z) ** 2)  # type: ignore[operator]
+            return safe[0]
+        return min(safe, key=lambda m: (m["x"] - w.x) ** 2 + (m["z"] - w.z) ** 2)  # type: ignore[operator]
+
+    def _fire_zones(self) -> list[str]:
+        now = self.clock()
+        return [d["zone_id"] for did, st in self.devices.sim.items() if (d := self.devices.defs[did])["type"] == "fire_panel" and st.last_seen_ms is not None
+                and now - st.last_seen_ms <= 15_000 and st.readings.get("alarm") is not None and st.readings["alarm"].value is True]
+
+    def _walk_path(self, badge: str, muster: dict[str, Any]) -> list[list[float]]:
+        """Walkway waypoints from where the worker is to the muster point: people use walkways and marked crossings only."""
+        w = self.safety.workers.get(self._worker_of_badge.get(badge, ""))
+        if w is None or w.x is None or w.z is None or muster["node"] not in self.ped.nodes:
+            return []
+        start = self.ped.nearest(w.x, w.z)
+        dist, prev = self.ped.dijkstra(start)
+        if muster["node"] not in dist:
+            return []
+        return [[self.ped.nodes[n][0], self.ped.nodes[n][1]] for n in self.ped.path(prev, start, muster["node"])][:80]
 
     def _zone_centroid(self, zone_id: str | None) -> tuple[float, float] | None:
         z = self.devices.zone_by_id.get(zone_id or "")
@@ -260,6 +321,58 @@ class Engine:
             elif e["day"] != day:
                 e.update(yesterday=float(r.value) - e["start"], day=day, start=float(r.value))
 
+    # ------------------------------------------------------------------ campus power (F3)
+
+    @staticmethod
+    def _sun(now_ms: int) -> float:
+        lt = time.localtime(now_ms / 1000)
+        h = lt.tm_hour + lt.tm_min / 60
+        return 0.0 if h <= 6 or h >= 18 else math.sin(math.pi * (h - 6) / 12)
+
+    def power_summary(self) -> dict[str, Any]:
+        """kW by building from the feeder meters, the incomer (grid import), the generator, solar (computed from the
+        time of day and the design size, never measured) and what each unit made costs in energy."""
+        u = self.devices.cfg.get("utilities")
+        if not u:
+            return {"available": False}
+        now = self.clock()
+
+        def kw(mid: str) -> float | None:
+            st = self.devices.sim.get(mid)
+            r = st.readings.get("power_kw") if st else None
+            return float(r.value) if r is not None and st is not None and st.last_seen_ms is not None and now - st.last_seen_ms <= 15_000 else None
+
+        inc, gen = kw(u["incomer"]), kw(u["generator"])
+        ist = self.devices.sim.get(u["incomer"])
+        volts = ist.readings.get("voltage_v") if ist else None
+        grid_ok = None if volts is None or ist is None or ist.last_seen_ms is None or now - ist.last_seen_ms > 15_000 else float(volts.value) > 300
+        solar = sum(s["kwp"] for s in u["solar"]) * 0.8 * self._sun(now) if grid_ok else 0.0
+        zones = []
+        for mid, zid in u["feeders"].items():
+            v = kw(mid)
+            zones.append({"meter": mid, "zone_id": zid, "name": self.devices.zone_by_id.get(zid, {}).get("name", zid), "kw": v})
+        metered = sum(z["kw"] or 0.0 for z in zones)
+        demand = (inc or 0.0) + solar if grid_ok else (gen or 0.0)
+        tank = self.devices.sim.get("TL-02")
+        diesel = tank.readings.get("level_pct") if tank else None
+        prod_meter = next((m for m, z in u["feeders"].items() if z == "FAC01_PRODUCTION"), None)
+        e = self._energy.get(prod_meter or "")
+        st = self.devices.sim.get(prod_meter or "")
+        kwh_today = (float(st.readings["energy_kwh"].value) - e["start"]) if e and st and "energy_kwh" in st.readings else None
+        fin = self.production.machines.get(self.production.finished_by)
+        units = fin.good if fin else 0
+        gen_state = "running" if (gen or 0) > 1 else ("starting" if grid_ok is False else "off")
+        return {
+            "available": True, "sim": True, "grid_ok": grid_ok, "grid_kw": inc, "generator_kw": gen, "generator_state": gen_state if grid_ok is not None else None,
+            "solar_kw": round(solar, 1), "solar_note": "Computed from the time of day and the design size (360 kWp); not measured.",
+            "demand_kw": None if grid_ok is None else round(demand, 1), "by_zone": zones, "other_kw": None if inc is None else round(max(0.0, (inc + solar) - metered), 1),
+            "solar_share": None if not grid_ok or demand <= 0 else round(min(1.0, solar / demand), 3), "peak_kw": u["peak_kw"],
+            "peak_exceeded": bool(inc is not None and inc > u["peak_kw"]), "diesel_pct": None if diesel is None else float(diesel.value),
+            "units_today": units, "production_kwh_today": None if kwh_today is None else round(kwh_today, 2),
+            "kwh_per_unit": None if not kwh_today or units <= 0 else round(kwh_today / units, 3),
+            "kwh_per_unit_note": "Production feeder energy since the backend started, divided by units made in the same time.",
+        }
+
     def monitor_summary(self) -> dict[str, Any]:
         now = self.clock()
         kw = today = None
@@ -275,7 +388,7 @@ class Engine:
             if e["yesterday"] is not None:
                 yesterday = (yesterday or 0.0) + e["yesterday"]
             since = e["since_ms"] if since is None else min(since, e["since_ms"])
-        return {"energy": {"kw_now": None if kw is None else round(kw, 2), "today_kwh": None if today is None else round(today, 2),
+        return {"power": self.power_summary(), "energy": {"kw_now": None if kw is None else round(kw, 2), "today_kwh": None if today is None else round(today, 2),
                            "yesterday_kwh": None if yesterday is None else round(yesterday, 1), "counting_since_ms": since,
                            "source": "sim", "meters": sorted(self._energy)},
                 "incidents": self.rules.incidents(now),
@@ -342,7 +455,19 @@ class Engine:
         out = self.world.graph.nodes.get(self.production.outbound_node)
         line = [{"id": "FAC-01 line", "pallets_waiting": self.production.pallets_waiting, "site_id": "FAC-01",
                  "x": out.x if out else None, "z": out.z if out else None}]
-        return {"machine": machines, "worker": workers, "device": devices, "gateway": gateway, "line": line}
+        p = self.power_summary()
+        inc_dev = self.devices.defs.get((self.devices.cfg.get("utilities") or {}).get("incomer", ""), {})
+        site: list[dict[str, Any]] = []
+        if p.get("available"):
+            lost = 0
+            if p["grid_ok"] is False:  # mains devices that stopped reporting while the grid is down (critical zones keep their power)
+                lost = sum(1 for d in self.devices.wire(self.gw, now, self.ble) if d["source"] == "sim" and d["protocol"] == "wifi" and d["status"] in ("stale", "offline")
+                           and d["zone_id"] not in self.devices.cfg["utilities"]["critical_zones"])
+            site.append({"id": "campus", "device_id": inc_dev.get("id"), "grid_ok": p["grid_ok"], "generator_state": p["generator_state"],
+                         "generator_kw": p["generator_kw"], "grid_kw": p["grid_kw"], "peak_kw": p["peak_kw"],
+                         "peak_exceeded": True if p["peak_exceeded"] else None, "diesel_pct": p["diesel_pct"], "lost_power_devices": lost or None,
+                         "site_id": inc_dev.get("site_id", "FAC-01"), "x": inc_dev.get("x"), "z": inc_dev.get("z")})
+        return {"machine": machines, "worker": workers, "device": devices, "gateway": gateway, "line": line, "site": site}
 
     def _tick_rules(self, dt: float) -> None:
         self._energy_acc += dt
@@ -374,7 +499,7 @@ class Engine:
             self._send_alerts()
 
     def _send_safety(self, to: str | None = None) -> None:
-        w = self.safety.wire(self.clock())
+        w = {**self.safety.wire(self.clock()), "routes": self._routes}
         if to is None and w == self._safety_last:
             return
         if to is None:
@@ -984,8 +1109,21 @@ class Engine:
         elif m.beat == "stale":
             self._site_command("AQ-01", "silence", {"on": True})
             text = "Demo: AQ-01 stops reporting (it goes stale after 15 s, offline after 60 s)"
+        elif m.beat == "grid_failure":
+            self._site_command("PM-04", "grid_failure")
+            text = "Demo: grid failure at the substation incomer; the generator starts and critical zones stay on (simulation)"
+        elif m.beat == "gas_leak":
+            self._site_command("GD-04", "leak")
+            text = "Demo: gas leak in the hazardous materials store (simulation)"
+        elif m.beat == "fire_alarm":
+            self._site_command("FP-01", "alarm")
+            text = "Demo: the warehouse fire panel bridge reports an alarm (simulation)"
+        elif m.beat == "compressor_fault":
+            self._site_command("CP-01", "fault")
+            text = "Demo: the compressor trips, air pressure will fall (simulation)"
         elif m.beat == "reset":
             self.reset()
+            self._fire_evac = True  # the panel is still in alarm for a moment: don't start a new evacuation until it has cleared
             self.safety.today = Today()
             now = self.clock()
             self.safety.end_evacuation(now)
@@ -995,7 +1133,9 @@ class Engine:
                 for dev, action, extra in (("MM-01", "restore", None), ("MM-02", "restore", None),
                                            ("BG-02", "route", {"route": "default"}),
                                            ("BG-04", "route", {"route": "default"}),
-                                           ("DR-01", "door_close", None), ("AQ-01", "silence", {"on": False})):
+                                           ("DR-01", "door_close", None), ("AQ-01", "silence", {"on": False}),
+                                           ("PM-04", "grid_restore", None), ("GD-04", "clear", None), ("FP-01", "reset", None),
+                                           ("CP-01", "restore", None)):
                     self._site_command(dev, action, extra)
             text = "Demo reset: seed world, simulator back to normal"
         self._ack(client_id, m.cmd_id, "scenario_command", True)

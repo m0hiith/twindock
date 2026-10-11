@@ -6,6 +6,7 @@ import { FleetPage } from "./pages/FleetPage";
 import { RulesPage } from "./pages/RulesPage";
 import { TwinPage } from "./pages/TwinPage";
 import { PartsGallery } from "./pages/PartsGallery";
+import { EnergyPage } from "./pages/EnergyPage";
 import { MonitorPage } from "./pages/MonitorPage";
 import { MePage } from "./pages/MePage";
 import { KitsPage } from "./pages/KitsPage";
@@ -44,6 +45,7 @@ export default function App() {
   if (path.startsWith("/wiring")) return <WiringPage />;
   if (path.startsWith("/kits")) return <KitsPage />;
   if (path.startsWith("/monitor")) return <MonitorPage />;
+  if (path.startsWith("/energy")) return <EnergyPage />;
   if (path.startsWith("/me")) return <MePage />;
   if (path.startsWith("/parts")) return <PartsGallery />;
   if (path !== "/twin") history.replaceState(null, "", "/twin" + location.search);

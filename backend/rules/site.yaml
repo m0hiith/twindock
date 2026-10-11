@@ -1,0 +1,39 @@
+# Campus-wide conditions (F3). Facts for the one "campus" subject: grid_ok, generator_state, generator_kw, grid_kw, peak_kw,
+# peak_exceeded, diesel_pct, lost_power_devices, plus the incomer device's id and position.
+- id: grid_failure
+  name: Grid failure
+  plain: Raise a critical alert when the substation incomer reads no voltage. The generator starts and keeps the critical zones (fire pump house, hazardous store, substation, generator, admin) on; mains devices elsewhere go quiet until the grid is back.
+  subject: site
+  when:
+    - {field: grid_ok, op: eq, value: false}
+  severity: critical
+  message: "Grid failure: the campus is on {generator_state} generator; critical zones stay on"
+
+- id: devices_without_power
+  name: Devices without power
+  plain: Warn when mains-powered devices outside the critical zones stop reporting while the grid is down.
+  subject: site
+  when:
+    - {field: lost_power_devices, op: gt, value: 0}
+  for_s: 20
+  severity: warning
+  message: "{lost_power_devices} mains-powered devices lost power during the grid failure"
+
+- id: low_diesel
+  name: Low diesel
+  plain: Warn when the generator's day tank is below 25 %.
+  subject: site
+  when:
+    - {field: diesel_pct, op: lt, value: 25}
+  severity: warning
+  message: "Diesel day tank at {diesel_pct:.0f} %"
+
+- id: peak_demand
+  name: Peak demand
+  plain: Warn when the grid import stays above the peak limit (160 kW) for 30 s.
+  subject: site
+  when:
+    - {field: peak_exceeded, op: eq, value: true}
+  for_s: 30
+  severity: warning
+  message: "Grid import {grid_kw:.0f} kW is above the {peak_kw:.0f} kW peak limit"

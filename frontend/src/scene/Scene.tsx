@@ -22,6 +22,7 @@ import { AlertPulses } from "./AlertPulses";
 import { BatchA } from "./campus/BatchA";
 import { BatchB } from "./campus/BatchB";
 import { BatchC } from "./campus/BatchC";
+import { EvacRoutes } from "./campus/EvacRoutes";
 import { Hydrants, MusterPoints } from "./campus/CampusSite";
 import { GreenBelt, Hotspots, PerimeterFence, Walkways } from "./campus/CampusSite";
 
@@ -92,6 +93,7 @@ export function Scene({ alertPulses = false }: { alertPulses?: boolean }) {
       <BatchC layout={layout} />
       <Hydrants layout={layout} />
       <MusterPoints layout={layout} />
+      <EvacRoutes />
       <GroundLabels layout={layout} />
       <Chargers layout={layout} />
       <GateBarrier layout={layout} />

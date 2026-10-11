@@ -161,8 +161,8 @@ function Strip({ data }: { data: MonitorData | null }) {
         <Sub>{k.docksInUse} of {k.docksUsable} docks busy · {k.trucksDocked} docked</Sub>
       </Tile>
       <Tile title="Energy" badge={<SimBadge />}>
-        <Big>{e?.kw_now == null ? "—" : e.kw_now.toFixed(1)} <span className="text-[13px] font-normal text-ink-2">kW now</span></Big>
-        <Sub>Today {e?.today_kwh == null ? "—" : `${e.today_kwh.toFixed(1)} kWh`} · yesterday {e?.yesterday_kwh == null ? "no data yet" : `${e.yesterday_kwh.toFixed(0)} kWh`}</Sub>
+        <Big>{data?.power?.demand_kw == null ? "—" : data.power.demand_kw.toFixed(0)} <span className="text-[13px] font-normal text-ink-2">kW demand</span></Big>
+        <Sub>{data?.power?.grid_ok === false ? `GRID FAILURE · generator ${data.power.generator_kw?.toFixed(0) ?? "—"} kW` : `Solar ${data?.power?.solar_kw.toFixed(0) ?? "—"} kW (computed)`} · today {e?.today_kwh == null ? "—" : `${e.today_kwh.toFixed(0)} kWh`} · yesterday {e?.yesterday_kwh == null ? "no data yet" : `${e.yesterday_kwh.toFixed(0)} kWh`}</Sub>
       </Tile>
       <Tile title="Air quality" badge={<SimBadge />}>
         {air ? (<><Big>{air.co2 === undefined ? "" : Math.round(Number(air.co2))} <span className="text-[13px] font-normal text-ink-2">ppm CO₂</span></Big>

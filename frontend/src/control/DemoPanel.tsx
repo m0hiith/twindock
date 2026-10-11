@@ -23,6 +23,18 @@ const SITE_BEATS: { beat: Exclude<Beat, "reset">; title: string; watch: string }
     watch: "AQ-01 goes stale after 15 s and offline after 60 s: /fleet shows it under Needs attention." },
 ];
 
+// Campus emergencies (F3). Each runs end to end: simulated devices, rules, alerts, the monitoring centre (/monitor), the evacuation advice.
+const CAMPUS_BEATS: { beat: Exclude<Beat, "reset">; title: string; watch: string }[] = [
+  { beat: "grid_failure", title: "Grid failure",
+    watch: "The substation incomer loses the grid: critical alert, the generator starts and the critical zones stay on; mains devices elsewhere go quiet. Solar stops (no islanding). Watch /energy." },
+  { beat: "gas_leak", title: "Gas leak in the hazardous store",
+    watch: "CO rises past the alarm level: critical alert, badges in the store and next to it are told to evacuate, and /monitor shows the route to a muster point away from the leak." },
+  { beat: "fire_alarm", title: "Fire alarm in the warehouse",
+    watch: "The fire panel bridge (read only) reports an alarm: critical alert, an evacuation starts with a live headcount, routes to the nearest muster points appear, the fire pump runs. Nothing is closed or locked." },
+  { beat: "compressor_fault", title: "Compressor fault",
+    watch: "The compressor trips: critical alert, air pressure falls below 6 bar (second alert) and the machines' cycle times grow." },
+];
+
 function RunButton({ beat, label, primary = false }: { beat: Beat; label: string; primary?: boolean }) {
   const [state, setState] = useState<"idle" | "busy" | "done" | string>("idle");
   const run = async () => {
@@ -75,8 +87,19 @@ export function DemoPanel() {
         </div>
       ))}
 
+      <div className="flex items-center gap-2 px-1 pt-1"><span className="font-semibold">3. Campus emergencies</span><SimBadge /></div>
+      {CAMPUS_BEATS.map((b, i) => (
+        <div key={b.beat} className="card flex items-start gap-3 p-3">
+          <div className="min-w-0 flex-1">
+            <div className="font-medium">{String.fromCharCode(97 + i)}. {b.title}</div>
+            <div className="mt-0.5 text-[12px] text-ink-2">{b.watch}</div>
+          </div>
+          <RunButton beat={b.beat} label="Run" />
+        </div>
+      ))}
+
       <div className="card flex flex-col gap-1 p-3">
-        <div className="font-medium">3. Fleet and planning</div>
+        <div className="font-medium">4. Fleet and planning</div>
         <div className="text-[12px] text-ink-2">Open /fleet: GW-01 (LIVE) on top, AQ-01 under Needs attention. /plan (S8) is not built yet.</div>
       </div>
 

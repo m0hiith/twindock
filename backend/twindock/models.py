@@ -113,7 +113,7 @@ class SetAutoMode(Strict):
 class ScenarioCommand(Strict):
     type: Literal["scenario_command"]
     cmd_id: str
-    beat: Literal["degrade", "near_miss", "visitor", "cold_door", "stale", "reset"]
+    beat: Literal["degrade", "near_miss", "visitor", "cold_door", "stale", "reset", "grid_failure", "gas_leak", "fire_alarm", "compressor_fault"]
 
 
 class AckAlert(Strict):
@@ -275,6 +275,7 @@ class SafetyUpdate(Strict):
     ppe_reminders: int
     breaks_due: int
     privacy: dict[str, Any]
+    routes: list[dict[str, Any]]
 
 
 class DeviceUpdate(Strict):

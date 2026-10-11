@@ -21,7 +21,7 @@ from typing import Any
 import yaml
 
 RULES_DIR = Path(__file__).resolve().parents[1] / "rules"
-SUBJECTS = ("machine", "worker", "device", "gateway", "line")
+SUBJECTS = ("machine", "worker", "device", "gateway", "line", "site")
 SEVERITIES = ("info", "warning", "critical")
 OPS = ("eq", "ne", "gt", "gte", "lt", "lte", "in", "outside", "present")
 KEEP_RESOLVED = 30  # recently resolved alerts kept for the panels

@@ -23,7 +23,8 @@ export type DeviceType =
   | "gas_detector"
   | "leak_sensor"
   | "tank_level"
-  | "fire_panel";
+  | "fire_panel"
+  | "water_quality";
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "protocol".
@@ -131,7 +132,10 @@ export type ZoneKind =
   | "storage"
   | "utilities"
   | "workshop"
-  | "yard";
+  | "yard"
+  | "medical"
+  | "pump_house"
+  | "raw_store";
 /**
  * [x, z] in metres
  *
@@ -346,7 +350,7 @@ export interface GatewayStatus {
   replay?: boolean;
 }
 /**
- * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness).
+ * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); goto, buzz, fall, still, cancel, sos, checkin, skip_checkin (badges, demo); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness).
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "site_cmd".
@@ -461,7 +465,7 @@ export interface AlertsUpdate {
      * The rule in plain language, for the rules page.
      */
     plain: string;
-    subject: "machine" | "worker" | "device" | "gateway" | "line";
+    subject: "machine" | "worker" | "device" | "gateway" | "line" | "site";
     severity: "info" | "warning" | "critical";
     for_s: number;
     enabled: boolean;
@@ -541,7 +545,8 @@ export interface CommandAck {
     | "set_auto_mode"
     | "machine_command"
     | "ack_alert"
-    | "scenario_command";
+    | "scenario_command"
+    | "safety_command";
   ok: boolean;
   /**
    * Short human reason when ok is false.
@@ -952,9 +957,18 @@ export interface SafetyUpdate {
     location: "alerts_only" | "always";
     retention_days: number;
   };
+  /**
+   * While an evacuation runs or a gas alarm is on: per zone with people (and the hazard zones), the walking route to the nearest muster point that is not next to the hazard. Advice only.
+   */
+  routes: {
+    zone_id: string;
+    muster_id: string;
+    length_m: number;
+    points: [number, number][];
+  }[];
 }
 /**
- * Demo runner on /control (SITE_PROMPTS.md S10): trigger one simulated beat on cue, or reset the demo. Beats only drive the simulator (twin/<site>/<device>/cmd/*) and the movement engine; never the real board.
+ * Demo runner on /control (SITE_PROMPTS.md S10): trigger one simulated beat on cue, or reset the demo. Beats only drive the simulator (twin/<site>/<device>/cmd/*) and the movement engine; never the real board. Campus emergencies (F3): grid_failure (substation incomer loses the grid, generator starts), gas_leak (hazardous store), fire_alarm (warehouse fire panel bridge), compressor_fault (compressor trips, air pressure falls).
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "scenario_command".
@@ -962,7 +976,17 @@ export interface SafetyUpdate {
 export interface ScenarioCommand {
   type: "scenario_command";
   cmd_id: CmdId;
-  beat: "degrade" | "near_miss" | "visitor" | "cold_door" | "stale" | "reset";
+  beat:
+    | "degrade"
+    | "near_miss"
+    | "visitor"
+    | "cold_door"
+    | "stale"
+    | "reset"
+    | "grid_failure"
+    | "gas_leak"
+    | "fire_alarm"
+    | "compressor_fault";
 }
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
