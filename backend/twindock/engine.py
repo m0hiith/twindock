@@ -22,12 +22,12 @@ from .contract import CLIENT_TYPES, first_error, mqtt_validator, validator
 from .devices import DeviceRegistry, load_sites, parse_site_topic
 from .production import Production
 from .rules import Rules, load_rules
-from .safety import Safety, Today
+from .safety import Safety, Today, heat_index_c
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
-from .models import (AckAlert, ScenarioCommand, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
+from .models import (AckAlert, SafetyCommand, ScenarioCommand, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
                      SelectUnit, SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
 from .world import Entity, World
@@ -75,7 +75,12 @@ class Engine:
         self._prod_last: dict[str, Any] | None = None
         self._site_cmd_counter = 0
         self.devices.layout_nodes = {n.id: (n.x, n.z) for n in layout.nodes}
-        self.safety = Safety.build(self.devices.cfg["safety"], self.devices.cfg.get("workers", []))
+        cfg = self.devices.cfg
+        self.safety = Safety.build(cfg["safety"], cfg.get("workers", []), privacy=cfg.get("privacy"), sites=cfg["sites"],
+                                   muster_points=cfg.get("muster_points"))
+        self._worker_of_badge = {w["badge"]: w["id"] for w in cfg.get("workers", [])}
+        self._worker_of_device = {d["id"]: d["attached_to"] for d in cfg["devices"]
+                                  if d.get("attached_to") in {w["id"] for w in cfg.get("workers", [])}}
         self._safety_acc = 0.0
         self._safety_flush_acc = 0.0
         self._safety_last: dict[str, Any] | None = None
@@ -141,27 +146,98 @@ class Engine:
         now = self.clock()
         fresh = {w.badge: self.devices.wire_device(w.badge, self.gw, now, self.ble)["status"] == "online"
                  for w in self.safety.workers.values()}
-        forklifts = [(f.id, f.x, f.z, f.speed) for f in self.world.of_kind("forklift")]
-        for level, text, uid in self.safety.evaluate(now, forklifts, fresh, self.devices.zone_by_id):
+        forklifts = [(f.id, f.x, f.z, f.speed, f.heading) for f in self.world.of_kind("forklift")]
+        gas, heat = self._zone_hazards(now)
+        for level, text, uid in self.safety.evaluate(now, forklifts, fresh, self.devices.zone_by_id, gas, heat):
             self.event(level, text, "safety", uid)
+        self._badge_actions()
+        warned = {w.near.forklift for w in self.safety.workers.values() if w.near}
+        for f in self.world.of_kind("forklift"):
+            # The forklift flashes its beacon while a pedestrian is too close (shown on its 3D model).
+            if f.id in warned:
+                f.meta["pedestrian_warning"] = True
+            else:
+                f.meta.pop("pedestrian_warning", None)
         for w in self.safety.workers.values():
             e = self.world.entities.get(w.id)
             if e is None:
                 continue
             if not w.fresh or w.x is None or w.z is None:
-                e.state, e.meta["task"] = "no_data", "No data from badge"
+                e.state, e.meta["task"] = "no_data", ("Off shift / not tracked" if w.shift_start_ms is None else "No data from badge")
                 continue
             e.x, e.z, e.heading = w.x, w.z, w.heading
             e.state = "walking" if w.moving else "working"
             zone = self.devices.zone_by_id.get(w.zone_id or "")
             where = zone["name"] if zone else "outside the zones"
-            e.meta["task"] = (f"Near moving {w.near.forklift} ({w.near.distance_m:.1f} m)" if w.near else
+            e.meta["task"] = ("SOS" if w.sos else f"Man down ({where})" if w.man_down else
+                              "Possible fall: waiting for the worker to cancel" if w.prealert else
+                              f"Evacuate ({w.evacuate})" if w.evacuate else
+                              f"Near moving {w.near.forklift} ({w.near.distance_m:.1f} m)" if w.near else
                               f"In restricted {where}" if w.restricted else
+                              f"Check-in overdue · {where}" if w.lone_level else
                               f"{'Walking' if w.moving else 'Working'} · {where}")
         self._safety_flush_acc += SAFETY_EVAL_S
         if self._safety_flush_acc >= SAFETY_FLUSH_S:
             self._safety_flush_acc = 0.0
             self._send_safety()
+
+    def _zone_hazards(self, now: int) -> tuple[set[str], dict[str, float]]:
+        """Zones with a gas detector in alarm, and the worst heat index per zone, from fresh SIM device readings."""
+        gas: set[str] = set()
+        heat: dict[str, float] = {}
+        for did, st in self.devices.sim.items():
+            d = self.devices.defs[did]
+            if st.last_seen_ms is None or now - st.last_seen_ms > 15_000:
+                continue
+            if d["type"] == "gas_detector" and st.readings.get("alarm") and st.readings["alarm"].value is True:
+                gas.add(d["zone_id"])
+            t, h = st.readings.get("temperature"), st.readings.get("humidity")
+            if d["type"] == "env_sensor" and t is not None and h is not None:
+                hi = heat_index_c(float(t.value), float(h.value))
+                heat[d["zone_id"]] = max(hi, heat.get(d["zone_id"], -99.0))
+        return gas, heat
+
+    def _badge_actions(self) -> None:
+        """Buzz / evacuate / resume commands for badges. Only simulated badges can be commanded; a real badge
+        would get the same action over its own radio, which doesn't exist yet."""
+        for badge, action, extra in self.safety.take_badge_actions():
+            d = self.devices.defs.get(badge)
+            if d is None or d["source"] != "sim" or not self.mqtt_connected:
+                continue
+            if action == "buzz" and extra.get("route") == "evacuate":
+                m = self._nearest_muster(badge)
+                if m is not None:
+                    self._site_command(badge, "goto", {"x": m["x"], "z": m["z"]})
+                    continue
+            if action == "resume":
+                self._site_command(badge, "route", {"route": "default"})
+            else:
+                self._site_command(badge, action, extra)
+
+    def _nearest_muster(self, badge: str) -> dict[str, Any] | None:
+        wid = self._worker_of_badge.get(badge)
+        w = self.safety.workers.get(wid or "")
+        pts = self.safety.muster_points
+        if not pts:
+            return None
+        if w is None or w.x is None or w.z is None:
+            return pts[0]
+        return min(pts, key=lambda m: (m["x"] - w.x) ** 2 + (m["z"] - w.z) ** 2)  # type: ignore[operator]
+
+    def _zone_centroid(self, zone_id: str | None) -> tuple[float, float] | None:
+        z = self.devices.zone_by_id.get(zone_id or "")
+        if z is None:
+            return None
+        pts = z["polygon"]
+        return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+
+    def _hide_worker(self, wid: str) -> tuple[float, float] | None | bool:
+        """Privacy: None when the worker's location may be shown; else the zone centroid to show instead
+        (False when they are not in any zone)."""
+        w = self.safety.workers.get(wid)
+        if w is None or self.safety.location_visible(w):
+            return None
+        return self._zone_centroid(w.zone_id) or False
 
     # ------------------------------------------------------------------ rules and alerts (S6)
 
@@ -180,15 +256,26 @@ class Engine:
                              "x": e.x if e else None, "z": e.z if e else None})
         workers = []
         for w in self.safety.workers.values():
-            if not w.fresh:
+            # SOS and man-down stay facts even if the badge goes quiet: that is exactly when help is needed.
+            if not w.fresh and not (w.sos or w.man_down or w.prealert or w.evacuate):
                 continue
             zn = self.devices.zone_by_id.get(w.restricted or "")
+            here = self.devices.zone_by_id.get(w.zone_id or w.last_zone_id or "")
+            aider = self.safety.nearest_first_aider(w)
             workers.append({"id": w.id, "unit_id": w.id, "role_text": w.role.replace("_", " "),
                             "near_level": w.near.level if w.near else None,
                             "near_forklift": w.near.forklift if w.near else None,
                             "distance_m": w.near.distance_m if w.near else None,
+                            "reversing_text": " (reversing)" if w.near and w.near.reversing else "",
                             "restricted_zone": w.restricted, "restricted_zone_name": zn["name"] if zn else None,
-                            "site_id": "FAC-01", "x": w.x, "z": w.z})
+                            "zone_name": here["name"] if here else "an unknown zone",
+                            "prealert": w.prealert.kind if w.prealert else None,
+                            "prealert_left_s": max(0.0, (w.prealert.deadline_ms - now) / 1000) if w.prealert else None,
+                            "man_down": w.man_down, "man_down_reason": {"fall": "fall not cancelled", "no_motion": "no movement"}.get(w.man_down or ""),
+                            "sos": True if w.sos else None,
+                            "first_aider_text": f"{aider[0]} ({aider[1]:.0f} m)" if aider else "none on site",
+                            "zone_overtime_min": w.zone_overtime_min, "lone_level": w.lone_level, "evacuate": w.evacuate,
+                            "site_id": here["site_id"] if here else "FAC-01", "x": w.x, "z": w.z})
         devices = []
         for d in self.devices.wire(self.gw, now, self.ble):
             if d["source"] != "sim":
@@ -200,6 +287,8 @@ class Engine:
             if d["status"] in ("online", "fault"):  # a stale reading is not a current condition
                 for ch, r in d["readings"].items():
                     f.setdefault(ch, r["value"])
+                if isinstance(f.get("temperature"), (int, float)) and isinstance(f.get("humidity"), (int, float)):
+                    f["heat_index"] = round(heat_index_c(float(f["temperature"]), float(f["humidity"])), 1)
             devices.append(f)
         g = self.layout.gateway
         gateway = [{"id": g.id, "unit_id": g.id, "device_id": g.id, "online": self.gw.online,
@@ -235,7 +324,7 @@ class Engine:
             self._send_alerts()
 
     def _send_safety(self, to: str | None = None) -> None:
-        w = self.safety.wire()
+        w = self.safety.wire(self.clock())
         if to is None and w == self._safety_last:
             return
         if to is None:
@@ -316,13 +405,38 @@ class Engine:
         self._send(GatewayUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), gateway=self.gw.wire(), raw=raw))
 
     def _all_units(self) -> list[Any]:
-        return [self.world.to_unit(e) for e in self.world.entities.values()]
+        out = []
+        for e in self.world.entities.values():
+            u = self.world.to_unit(e)
+            if e.kind == "worker" and e.state != "no_data":
+                hide = self._hide_worker(e.id)
+                if hide is not None:
+                    # Zone counts only: the worker is shown in their zone, not at their position.
+                    cx, cz = hide if hide else (u.x, u.z)
+                    zone = self.devices.zone_by_id.get(self.safety.workers[e.id].zone_id or "")
+                    u = u.model_copy(update={"x": round(cx, 1), "z": round(cz, 1), "heading_rad": 0.0, "state": "private",
+                                             "task": f"In {zone['name']}" if zone else "On site"})
+            out.append(u)
+        return out
+
+    def _masked_devices(self, devices: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Badge positions follow the same privacy rule as the workers wearing them."""
+        out = []
+        for d in devices:
+            wid = self._worker_of_badge.get(d["id"])
+            hide = self._hide_worker(wid) if (wid and d["source"] == "sim") else None
+            if hide is not None:
+                d = {**d, "readings": {k: v for k, v in d["readings"].items() if k != "position"}}
+                if hide:
+                    d["x"], d["z"] = round(hide[0], 1), round(hide[1], 1)
+            out.append(d)
+        return out
 
     def snapshot(self) -> WorldSnapshot:
         units = self._all_units()
         self._last_wire = {u.id: u.model_dump(mode="json") for u in units}
         now = self.clock()
-        devices = self.devices.wire(self.gw, now, self.ble)
+        devices = self._masked_devices(self.devices.wire(self.gw, now, self.ble))
         self._dev_last = {d["id"]: d for d in devices}
         return WorldSnapshot(seq=self._next_seq(), server_ts_ms=now, layout_version=self.layout.version,
                              auto_mode=self.auto_mode, selected_unit_id=self.selected, units=units,
@@ -331,7 +445,7 @@ class Engine:
     def _flush_devices(self) -> None:
         now = self.clock()
         changed = []
-        for d in self.devices.wire(self.gw, now, self.ble):
+        for d in self._masked_devices(self.devices.wire(self.gw, now, self.ble)):
             if self._dev_last.get(d["id"]) != d:
                 self._dev_last[d["id"]] = d
                 changed.append(d)
@@ -592,6 +706,13 @@ class Engine:
             st = self.devices.sim.get(changed)
             if wk and st and st.x is not None and st.z is not None:
                 self.safety.set_position(wk.id, st.x, st.z, self.devices.zone_at(st.x, st.z, parsed[0]), now)
+        if changed and parsed and parsed[2] in ("fall", "sos", "cancel", "checkin") and changed in self._worker_of_badge:
+            r = self.devices.sim[changed].readings.get(parsed[2])
+            if r is not None and r.received_ms == now:
+                self.safety.on_badge(self._worker_of_badge[changed], parsed[2], r.value, now)
+        if changed and parsed and parsed[2] == "worn" and changed in self._worker_of_device:
+            r = self.devices.sim[changed].readings.get("worn")
+            self.safety.set_helmet(self._worker_of_device[changed], bool(r.value) if r is not None else None)
         if changed and parsed and changed in self.production.by_device:
             r = self.devices.sim[changed].readings.get(parsed[2])
             if r is not None and r.received_ms == now:
@@ -718,6 +839,8 @@ class Engine:
             self._scenario(client_id, msg)
         elif isinstance(msg, AckAlert):
             self._ack_alert(client_id, msg)
+        elif isinstance(msg, SafetyCommand):
+            self._safety_command(client_id, msg)
         elif isinstance(msg, MachineCommand):
             self._machine_command(client_id, msg)
         elif isinstance(msg, SetAutoMode):
@@ -742,6 +865,39 @@ class Engine:
         text = {"degrade": "slowly rising vibration injected (simulation)", "restore": "vibration restored (simulation)",
                 "maintenance": "maintenance started (simulation)"}[m.action]
         self.event("info", f"{pm.id} {pm.label.lower()}: {text}", client_id, pm.id)
+
+    def _safety_command(self, client_id: str, m: SafetyCommand) -> None:
+        now = self.clock()
+        by = (m.by or "").strip() or client_id
+        reason: str | None = None
+        if m.action == "start_evacuation":
+            reason = self.safety.start_evacuation(now, (m.reason or "").strip() or "evacuation drill", by)
+            text = f"Evacuation started by {by}: {(m.reason or '').strip() or 'evacuation drill'}"
+        elif m.action == "end_evacuation":
+            hc = self.safety.headcount()
+            reason = self.safety.end_evacuation(now)
+            text = f"Evacuation ended by {by}" + (f" ({hc['accounted']} of {hc['on_site']} accounted for)" if hc else "")
+        else:
+            w = self.safety.workers.get(m.worker_id or "")
+            if w is None:
+                return self._ack(client_id, m.cmd_id, "safety_command", False, f"Unknown worker {m.worker_id}")
+            if m.action == "clear_incident":
+                reason = self.safety.clear_incident(w.id, now)
+                text = f"{w.id}: incident closed by {by}"
+            else:
+                # Demo: drive the worker's SIMULATED badge. Never possible for a real badge.
+                if self.devices.defs[w.badge]["source"] != "sim":
+                    return self._ack(client_id, m.cmd_id, "safety_command", False, f"{w.badge} is not a simulated badge")
+                if not self.mqtt_connected:
+                    return self._ack(client_id, m.cmd_id, "safety_command", False, "Not connected to the MQTT broker")
+                act = m.action.removeprefix("sim_")
+                self._site_command(w.badge, act, {"seconds": 120} if act == "still" else None)
+                text = f"Demo: {w.id}'s badge simulates {'a fall' if act == 'fall' else act.replace('_', ' ')} (simulation)"
+        self._ack(client_id, m.cmd_id, "safety_command", reason is None, reason)
+        if reason is None:
+            self.event("warn" if m.action == "start_evacuation" else "info", text, client_id, m.worker_id)
+            self._badge_actions()
+            self._send_safety()
 
     # ------------------------------------------------------------------ demo scenario runner (S10)
 
@@ -781,6 +937,10 @@ class Engine:
         elif m.beat == "reset":
             self.reset()
             self.safety.today = Today()
+            now = self.clock()
+            self.safety.end_evacuation(now)
+            for wk in self.safety.workers.values():
+                self.safety.clear_incident(wk.id, now)
             if self.mqtt_connected:
                 for dev, action, extra in (("MM-01", "restore", None), ("MM-02", "restore", None),
                                            ("BG-02", "route", {"route": "default"}),

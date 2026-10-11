@@ -667,7 +667,10 @@ def worker_badge():
                     "Zone location, falls and man-down, SOS, and buzz/beep/flash alerts for the wearer.",
                     ["Lets a worker call for help with one long press.", "Notices a fall or someone lying still, and asks before raising the alarm.",
                      "Buzzes the wearer when a forklift gets too close or a zone must be evacuated."],
-                    [("position", "m", "Zone position from gateway RSSI (computed by the site, not by the badge)")],
+                    [("position", "m", "Zone position from gateway RSSI (computed by the site, not by the badge)"),
+                     ("fall", None, "Free fall followed by an impact (IMU)"), ("sos", None, "SOS button held for 2 s"),
+                     ("cancel", None, "Worker cancelled a fall / no-movement pre-alert on the badge"),
+                     ("checkin", None, "Lone-worker check-in (double press)")],
                     budget=(0.9, 90, 3.7, "BLE advertising 1 Hz (~15 µA), IMU in low-power motion detection (~10 µA), SHT45 every 30 s (<1 µA), alerts a few seconds a day (motor ~70 mA). Estimate."),
                     life=(14, "300 mAh LiPo at ~0.9 mA average including a handful of alerts per shift; worn 10 h a day. Estimate, not measured."),
                     ), "xg27"))

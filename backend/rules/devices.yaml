@@ -48,3 +48,71 @@
     - {field: status, op: eq, value: fault}
   severity: warning
   message: "{device_id} reports a fault: {fault}"
+
+# K2/K3 kit devices
+- id: gas_alarm
+  name: Gas alarm
+  plain: Raise a critical alert when a gas detector reaches its alarm level. Badges in the zone and next to it are told to evacuate. TwinDock adds to, never replaces, the certified gas system.
+  subject: device
+  where:
+    - {field: type, op: eq, value: gas_detector}
+  when:
+    - {field: alarm, op: eq, value: true}
+  severity: critical
+  message: "Gas alarm in {zone_name}: CO {co_ppm:.0f} ppm ({device_id})"
+
+- id: fire_alarm
+  name: Fire alarm (from the fire panel)
+  plain: Raise a critical alert when the fire panel bridge reads the panel's alarm contact. TwinDock only reads the certified panel; evacuation follows the site's procedure.
+  subject: device
+  where:
+    - {field: type, op: eq, value: fire_panel}
+  when:
+    - {field: alarm, op: eq, value: true}
+  severity: critical
+  message: "Fire panel alarm reported by {label} ({device_id})"
+
+- id: heat_stress
+  name: Heat stress
+  plain: Advise rest breaks when the heat index in a zone reaches 32 °C (from the zone's temperature and humidity). Badges in the zone get a rest reminder; no worker is named.
+  subject: device
+  when:
+    - {field: heat_index, op: gte, value: 32}
+  for_s: 60
+  severity: info
+  message: "Heat index {heat_index:.0f} °C in {zone_name}: rest breaks advised ({device_id})"
+
+- id: water_leak
+  name: Water leak
+  plain: Warn when a leak probe detects liquid on the floor.
+  subject: device
+  where:
+    - {field: type, op: eq, value: leak_sensor}
+  when:
+    - {field: wet, op: eq, value: true}
+  severity: warning
+  message: "Liquid on the floor in {zone_name} ({device_id})"
+
+- id: conveyor_jam
+  name: Conveyor jam
+  plain: Warn when the conveyor monitor reports a jam for more than 5 s.
+  subject: device
+  where:
+    - {field: type, op: eq, value: conveyor_monitor}
+  when:
+    - {field: jam, op: eq, value: true}
+  for_s: 5
+  severity: warning
+  message: "Conveyor jam ({device_id})"
+
+- id: low_air_pressure
+  name: Low air pressure
+  plain: Warn when the compressed-air pressure stays below 6 bar for 10 s.
+  subject: device
+  where:
+    - {field: type, op: eq, value: compressor_monitor}
+  when:
+    - {field: pressure_bar, op: lt, value: 6.0}
+  for_s: 10
+  severity: warning
+  message: "Air pressure {pressure_bar:.1f} bar, below 6 bar ({device_id})"

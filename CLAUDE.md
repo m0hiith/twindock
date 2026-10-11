@@ -85,7 +85,7 @@ for `pick`), `select_unit` (a unit or a device id), `led_command`, `set_auto_mod
 
 Site twin additions (see `shared/schema.md`): server → client `device_update`,
 `production_update`, `safety_update`, `alerts_update` (and `sites` + `devices` in `world_snapshot`);
-client → server `machine_command`, `ack_alert`, `scenario_command`. MQTT: simulated devices on
+client → server `machine_command`, `ack_alert`, `scenario_command`, `safety_command` (evacuation, close SOS/man-down, simulated-badge demo actions). MQTT: simulated devices on
 `twin/<site>/<device>/<channel>` (`mqtt/site_hello|status|reading.json`, `source` always `"sim"`),
 simulator commands on `twin/<site>/<device>/cmd/<action>` (`mqtt/site_cmd.json`).
 

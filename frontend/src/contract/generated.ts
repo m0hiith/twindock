@@ -115,7 +115,23 @@ export type Source = "device" | "manual" | "auto" | "sim";
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "zone_kind".
  */
-export type ZoneKind = "storage" | "docks" | "production" | "cold_room" | "office" | "yard";
+export type ZoneKind =
+  | "canteen"
+  | "cold_room"
+  | "docks"
+  | "etp"
+  | "gate"
+  | "green"
+  | "hazmat"
+  | "lab"
+  | "muster"
+  | "office"
+  | "parking"
+  | "production"
+  | "storage"
+  | "utilities"
+  | "workshop"
+  | "yard";
 /**
  * [x, z] in metres
  *
@@ -207,6 +223,7 @@ export interface TwinDockContract {
   machine_command?: MachineCommand;
   move_unit?: MoveUnit;
   production_update?: ProductionUpdate;
+  safety_command?: SafetyCommand;
   safety_update?: SafetyUpdate;
   scenario_command?: ScenarioCommand;
   select_unit?: SelectUnit;
@@ -807,7 +824,29 @@ export interface ProductionUpdate {
   };
 }
 /**
- * Worker safety from badge positions: proximity to moving forklifts, restricted zones, today's counters. Workers are identified by id and role only (no names on the wire). On connect and at most 2 Hz.
+ * Worker safety actions from the monitoring page (K3/K4): start or end an evacuation, close a worker's SOS or man-down once someone has reached them. The sim_* actions drive a SIMULATED badge through tools/site_sim.py (demo only; never a real device).
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "safety_command".
+ */
+export interface SafetyCommand {
+  type: "safety_command";
+  cmd_id: CmdId;
+  action:
+    | "start_evacuation"
+    | "end_evacuation"
+    | "clear_incident"
+    | "sim_fall"
+    | "sim_cancel"
+    | "sim_sos"
+    | "sim_checkin"
+    | "sim_still";
+  worker_id?: UnitId;
+  reason?: string;
+  by?: string;
+}
+/**
+ * Worker safety from badges: proximity (with direction), restricted zones and time limits, falls/man-down, SOS, lone-worker check-ins, gas evacuation and evacuation headcount, today's counters. Workers are identified by id and role only (no names). Position and zone are only sent while that worker has an active safety condition or an evacuation is running (location_shown); otherwise screens get zone counts. On connect and at most 2 Hz.
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "safety_update".
@@ -828,12 +867,29 @@ export interface SafetyUpdate {
      */
     fresh: boolean;
     data_ms: number | null;
-    near: null | {
-      forklift: UnitId;
+    near: {
+      forklift: string;
       distance_m: number;
       level: "warning" | "critical";
-    };
+      reversing?: boolean;
+    } | null;
     restricted_zone: ZoneId | null;
+    prealert: {
+      kind: "fall" | "no_motion";
+      deadline_ms: number;
+    } | null;
+    man_down: ("fall" | "no_motion") | null;
+    sos_ms: number | null;
+    evacuate: string | null;
+    lone: ("warning" | "critical") | null;
+    zone_overtime_min: number | null;
+    first_aider: boolean;
+    nearest_first_aider: {
+      id: string;
+      distance_m: number;
+    } | null;
+    mustered: string | null;
+    location_shown: boolean;
   }[];
   /**
    * Workers with a fresh badge per zone id.
@@ -851,10 +907,50 @@ export interface SafetyUpdate {
       forklift: UnitId;
       at_ms: number;
     };
+    falls: number;
+    falls_cancelled: number;
+    sos: number;
+    last_fall_ms: number | null;
+    last_sos_ms: number | null;
   };
   config: {
     warn_m: number;
     crit_m: number;
+  };
+  evacuation: {
+    active: true;
+    started_ms: number;
+    reason: string;
+    by: string;
+    on_site: number;
+    accounted: number;
+    by_muster: {
+      [k: string]: number | undefined;
+    };
+    unaccounted: {
+      id: string;
+      role: string;
+      last_zone_id: string | null;
+      last_seen_ms: number | null;
+    }[];
+  } | null;
+  on_site: number;
+  in_hazardous: number;
+  gas_zones: string[];
+  heat_zones: {
+    [k: string]: number | undefined;
+  };
+  /**
+   * Badges currently reminded about missing PPE. A count only: who it is is never sent or stored.
+   */
+  ppe_reminders: number;
+  /**
+   * How many workers are due a break. Who is only served to the worker and the supervisor.
+   */
+  breaks_due: number;
+  privacy: {
+    location: "alerts_only" | "always";
+    retention_days: number;
   };
 }
 /**
@@ -1033,6 +1129,23 @@ export interface Zone {
    * If present, only these worker roles may enter (S3).
    */
   restricted_roles?: string[];
+  /**
+   * Hazard level for worker safety (K3).
+   */
+  hazard?: "low" | "medium" | "high";
+  /**
+   * PPE required in the zone. Only the helmet can be sensed (helmet clip); missing PPE is a reminder on the badge, never a record.
+   */
+  ppe?: ("helmet" | "vest" | "hearing" | "glasses" | "gloves" | "respirator" | "safety_shoes")[];
+  /**
+   * Maximum continuous stay (hot or gas-risk zones).
+   */
+  time_limit_min?: number;
+  /**
+   * Someone alone here must check in every checkin_min minutes.
+   */
+  lone_worker?: boolean;
+  checkin_min?: number;
 }
 /**
  * One device kit: the parts, pins, wires and bill of materials for one kind of asset. FL-01's sensor pack (status "built") is the only kit on real hardware; every other kit is a reference design (status "reference"): real, buyable parts with a correct wiring plan whose data is simulated. Firmware pins (tools/gen_pins.py), the /wiring/:kit_id page and docs/hardware_sheet.pdf are generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is "unverified".

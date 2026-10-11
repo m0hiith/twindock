@@ -32,7 +32,8 @@ function Worker({ id }: { id: string }) {
   const alert = useWorld((s) => {
     const w = s.safety?.workers.find((x) => x.id === id);
     if (!w) return null;
-    if (w.restricted_zone || w.near?.level === "critical") return "critical" as const;
+    if (w.restricted_zone || w.near?.level === "critical" || w.man_down || w.sos_ms || w.lone === "critical") return "critical" as const;
+    if (w.prealert || w.evacuate || w.lone) return "warning" as const;
     return w.near ? ("warning" as const) : null;
   });
   if (state === "no_data") return null; // no fresh badge position: don't draw a guess

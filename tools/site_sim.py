@@ -15,6 +15,7 @@ twin shows the devices going stale, then offline.
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import random
 import signal
@@ -115,10 +116,12 @@ class SiteSim:
             m.silent = bool(data.get("on", True))
         elif action == "door_open" and hasattr(m, "force_open"):
             m.force_open(t, float(data.get("seconds", 90)))  # type: ignore[attr-defined]
-        elif action in ("route", "find_me") and hasattr(m, "command"):
-            m.command(action, t, int(t * 1000), data)  # type: ignore[attr-defined]
         elif hasattr(m, "command"):
-            m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]
+            # Models whose command() takes the payload (badges, asset tags) get it; the others only the action.
+            if len(inspect.signature(m.command).parameters) >= 4:  # type: ignore[attr-defined]
+                m.command(action, t, int(t * 1000), data)  # type: ignore[attr-defined]
+            else:
+                m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]
         print(f"[sim] {m.id}: {action} ({data.get('cmd_id')})")
 
     def hellos(self) -> None:

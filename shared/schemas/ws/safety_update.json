@@ -2,17 +2,25 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "twindock/ws/safety_update.json",
   "title": "safety_update (server -> client)",
-  "description": "Worker safety from badge positions: proximity to moving forklifts, restricted zones, today's counters. Workers are identified by id and role only (no names on the wire). On connect and at most 2 Hz.",
+  "description": "Worker safety from badges: proximity (with direction), restricted zones and time limits, falls/man-down, SOS, lone-worker check-ins, gas evacuation and evacuation headcount, today's counters. Workers are identified by id and role only (no names). Position and zone are only sent while that worker has an active safety condition or an evacuation is running (location_shown); otherwise screens get zone counts. On connect and at most 2 Hz.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "type",
+    "breaks_due",
+    "config",
+    "evacuation",
+    "gas_zones",
+    "heat_zones",
+    "in_hazardous",
+    "on_site",
+    "ppe_reminders",
+    "privacy",
     "seq",
     "server_ts_ms",
-    "workers",
-    "zone_counts",
     "today",
-    "config"
+    "type",
+    "workers",
+    "zone_counts"
   ],
   "properties": {
     "type": {
@@ -31,16 +39,26 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "id",
-          "role",
           "badge_id",
-          "zone_id",
+          "data_ms",
+          "evacuate",
+          "first_aider",
+          "fresh",
+          "id",
+          "location_shown",
+          "lone",
+          "man_down",
+          "mustered",
+          "near",
+          "nearest_first_aider",
+          "prealert",
+          "restricted_zone",
+          "role",
+          "sos_ms",
           "x",
           "z",
-          "fresh",
-          "data_ms",
-          "near",
-          "restricted_zone"
+          "zone_id",
+          "zone_overtime_min"
         ],
         "properties": {
           "id": {
@@ -99,9 +117,6 @@
           "near": {
             "anyOf": [
               {
-                "type": "null"
-              },
-              {
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
@@ -111,7 +126,7 @@
                 ],
                 "properties": {
                   "forklift": {
-                    "$ref": "defs.json#/$defs/unit_id"
+                    "type": "string"
                   },
                   "distance_m": {
                     "type": "number"
@@ -121,8 +136,14 @@
                       "warning",
                       "critical"
                     ]
+                  },
+                  "reversing": {
+                    "type": "boolean"
                   }
                 }
+              },
+              {
+                "type": "null"
               }
             ]
           },
@@ -135,6 +156,127 @@
                 "type": "null"
               }
             ]
+          },
+          "prealert": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "deadline_ms"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "fall",
+                      "no_motion"
+                    ]
+                  },
+                  "deadline_ms": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "man_down": {
+            "anyOf": [
+              {
+                "enum": [
+                  "fall",
+                  "no_motion"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sos_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evacuate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lone": {
+            "anyOf": [
+              {
+                "enum": [
+                  "warning",
+                  "critical"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "zone_overtime_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "first_aider": {
+            "type": "boolean"
+          },
+          "nearest_first_aider": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "distance_m"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "distance_m": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mustered": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location_shown": {
+            "type": "boolean"
           }
         }
       }
@@ -150,11 +292,16 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "warnings",
-        "criticals",
-        "restricted",
+        "closest",
         "closest_m",
-        "closest"
+        "criticals",
+        "falls",
+        "falls_cancelled",
+        "last_fall_ms",
+        "last_sos_ms",
+        "restricted",
+        "sos",
+        "warnings"
       ],
       "properties": {
         "warnings": {
@@ -202,6 +349,38 @@
               }
             }
           ]
+        },
+        "falls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "falls_cancelled": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_fall_ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_sos_ms": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -217,6 +396,143 @@
           "type": "number"
         },
         "crit_m": {
+          "type": "number"
+        }
+      }
+    },
+    "evacuation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "active",
+            "started_ms",
+            "reason",
+            "by",
+            "on_site",
+            "accounted",
+            "by_muster",
+            "unaccounted"
+          ],
+          "properties": {
+            "active": {
+              "const": true
+            },
+            "started_ms": {
+              "type": "integer"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "by": {
+              "type": "string"
+            },
+            "on_site": {
+              "type": "integer"
+            },
+            "accounted": {
+              "type": "integer"
+            },
+            "by_muster": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "unaccounted": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "role",
+                  "last_zone_id",
+                  "last_seen_ms"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "last_zone_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "last_seen_ms": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "on_site": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "in_hazardous": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gas_zones": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "heat_zones": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "ppe_reminders": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Badges currently reminded about missing PPE. A count only: who it is is never sent or stored."
+    },
+    "breaks_due": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many workers are due a break. Who is only served to the worker and the supervisor."
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location",
+        "retention_days"
+      ],
+      "properties": {
+        "location": {
+          "enum": [
+            "alerts_only",
+            "always"
+          ]
+        },
+        "retention_days": {
           "type": "number"
         }
       }

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/safety_command.json",
+  "title": "safety_command (client -> server)",
+  "description": "Worker safety actions from the monitoring page (K3/K4): start or end an evacuation, close a worker's SOS or man-down once someone has reached them. The sim_* actions drive a SIMULATED badge through tools/site_sim.py (demo only; never a real device).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "cmd_id",
+    "action"
+  ],
+  "properties": {
+    "type": {
+      "const": "safety_command"
+    },
+    "cmd_id": {
+      "$ref": "defs.json#/$defs/cmd_id"
+    },
+    "action": {
+      "enum": [
+        "start_evacuation",
+        "end_evacuation",
+        "clear_incident",
+        "sim_fall",
+        "sim_cancel",
+        "sim_sos",
+        "sim_checkin",
+        "sim_still"
+      ]
+    },
+    "worker_id": {
+      "$ref": "defs.json#/$defs/unit_id"
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "by": {
+      "type": "string",
+      "maxLength": 40
+    }
+  }
+}

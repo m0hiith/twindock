@@ -518,11 +518,21 @@
     },
     "zone_kind": {
       "enum": [
-        "storage",
-        "docks",
-        "production",
+        "canteen",
         "cold_room",
+        "docks",
+        "etp",
+        "gate",
+        "green",
+        "hazmat",
+        "lab",
+        "muster",
         "office",
+        "parking",
+        "production",
+        "storage",
+        "utilities",
+        "workshop",
         "yard"
       ]
     },
@@ -571,6 +581,42 @@
             "type": "string"
           },
           "description": "If present, only these worker roles may enter (S3)."
+        },
+        "hazard": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "description": "Hazard level for worker safety (K3)."
+        },
+        "ppe": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "helmet",
+              "vest",
+              "hearing",
+              "glasses",
+              "gloves",
+              "respirator",
+              "safety_shoes"
+            ]
+          },
+          "description": "PPE required in the zone. Only the helmet can be sensed (helmet clip); missing PPE is a reminder on the badge, never a record."
+        },
+        "time_limit_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum continuous stay (hot or gas-risk zones)."
+        },
+        "lone_worker": {
+          "type": "boolean",
+          "description": "Someone alone here must check in every checkin_min minutes."
+        },
+        "checkin_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
         }
       }
     },

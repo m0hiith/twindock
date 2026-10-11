@@ -26,3 +26,78 @@
     - {field: restricted_zone, op: present}
   severity: critical
   message: "{unit_id} ({role_text}) entered restricted {restricted_zone_name}"
+
+# K3. More facts per worker: zone_name, reversing_text, prealert (fall | no_motion), prealert_left_s, man_down,
+# man_down_reason, sos, first_aider_text, zone_overtime_min, lone_level, evacuate. SOS, man-down and evacuation
+# facts stay even when the badge goes quiet.
+- id: fall_prealert
+  name: Possible fall
+  plain: When a badge reports a fall (free fall then impact), warn and give the worker 30 s to cancel on the badge before it becomes man down.
+  subject: worker
+  when:
+    - {field: prealert, op: eq, value: fall}
+  severity: warning
+  message: "Possible fall: {unit_id} ({role_text}) in {zone_name}; waiting {prealert_left_s:.0f} s for them to cancel"
+
+- id: no_motion_prealert
+  name: No movement
+  plain: When a badge has not moved for 90 s, warn and give the worker 30 s to cancel before it becomes man down.
+  subject: worker
+  when:
+    - {field: prealert, op: eq, value: no_motion}
+  severity: warning
+  message: "No movement from {unit_id} ({role_text}) in {zone_name}; waiting {prealert_left_s:.0f} s for them to cancel"
+
+- id: man_down
+  name: Man down
+  plain: Raise a critical alert with location when a fall or no-movement pre-alert is not cancelled in time. It stays open until someone closes it on the monitoring page.
+  subject: worker
+  when:
+    - {field: man_down, op: present}
+  severity: critical
+  message: "Man down: {unit_id} ({role_text}) in {zone_name}, {man_down_reason}. Nearest first-aider: {first_aider_text}"
+
+- id: sos
+  name: SOS
+  plain: Raise a critical alert with location and the nearest first-aider when a worker holds the SOS button. It stays open until someone closes it on the monitoring page.
+  subject: worker
+  when:
+    - {field: sos, op: eq, value: true}
+  severity: critical
+  message: "SOS from {unit_id} ({role_text}) in {zone_name}. Nearest first-aider: {first_aider_text}"
+
+- id: zone_time_limit
+  name: Zone time limit exceeded
+  plain: Warn when a worker stays in a hot or gas-risk zone longer than its time limit.
+  subject: worker
+  when:
+    - {field: zone_overtime_min, op: present}
+  severity: warning
+  message: "{unit_id} ({role_text}) is over the time limit in {zone_name}"
+
+- id: lone_worker_overdue
+  name: Lone-worker check-in overdue
+  plain: Warn when a worker alone in a lone-worker zone misses a check-in on the badge.
+  subject: worker
+  when:
+    - {field: lone_level, op: eq, value: warning}
+  severity: warning
+  message: "Check-in overdue: {unit_id} ({role_text}) alone in {zone_name}"
+
+- id: lone_worker_escalated
+  name: Lone-worker check-in missed
+  plain: Escalate to critical when the check-in is still missing two minutes later.
+  subject: worker
+  when:
+    - {field: lone_level, op: eq, value: critical}
+  severity: critical
+  message: "No check-in from {unit_id} ({role_text}) alone in {zone_name}: send someone"
+
+- id: evacuate_worker
+  name: Worker must evacuate
+  plain: Raise a critical alert for every worker who has to leave (gas alarm in or next to their zone, or an evacuation) until they reach a muster point or the area is clear.
+  subject: worker
+  when:
+    - {field: evacuate, op: present}
+  severity: critical
+  message: "{unit_id} ({role_text}) must evacuate: {evacuate}"

@@ -27,6 +27,22 @@
         "channel": "position",
         "unit": "m",
         "description": "Zone position from gateway RSSI (computed by the site, not by the badge)"
+      },
+      {
+        "channel": "fall",
+        "description": "Free fall followed by an impact (IMU)"
+      },
+      {
+        "channel": "sos",
+        "description": "SOS button held for 2 s"
+      },
+      {
+        "channel": "cancel",
+        "description": "Worker cancelled a fall / no-movement pre-alert on the badge"
+      },
+      {
+        "channel": "checkin",
+        "description": "Lone-worker check-in (double press)"
       }
     ],
     "power_budget": {

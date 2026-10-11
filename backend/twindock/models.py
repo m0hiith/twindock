@@ -123,6 +123,15 @@ class AckAlert(Strict):
     by: str
 
 
+class SafetyCommand(Strict):
+    type: Literal["safety_command"]
+    cmd_id: str
+    action: Literal["start_evacuation", "end_evacuation", "clear_incident", "sim_fall", "sim_cancel", "sim_sos", "sim_checkin", "sim_still"]
+    worker_id: str | None = None
+    reason: str | None = None
+    by: str | None = None
+
+
 class MachineCommand(Strict):
     type: Literal["machine_command"]
     cmd_id: str
@@ -131,7 +140,7 @@ class MachineCommand(Strict):
 
 
 ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand, AckAlert,
-                                ScenarioCommand],
+                                ScenarioCommand, SafetyCommand],
                           Field(discriminator="type")]
 
 
@@ -258,6 +267,14 @@ class SafetyUpdate(Strict):
     zone_counts: dict[str, int]
     today: dict[str, Any]
     config: dict[str, Any]
+    evacuation: dict[str, Any] | None
+    on_site: int
+    in_hazardous: int
+    gas_zones: list[str]
+    heat_zones: dict[str, float]
+    ppe_reminders: int
+    breaks_due: int
+    privacy: dict[str, Any]
 
 
 class DeviceUpdate(Strict):
@@ -313,7 +330,7 @@ class CommandAck(Strict):
     type: Literal["command_ack"] = "command_ack"
     cmd_id: str
     command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert",
-                     "scenario_command"]
+                     "scenario_command", "safety_command"]
     ok: bool
     reason: str | None = None
     path: list[str] | None = None

@@ -18,7 +18,24 @@ function Wheel({ x, z, d }: { x: number; z: number; d: number }) {
   return <Cyl size={[d, 0.24, d]} at={[x, d / 2, z]} color={model.tyre} axis="z" />;
 }
 
-export function ForkliftModel({ id, state, carrying, hovered = false }: { id: string; state: string | undefined; carrying: boolean; hovered?: boolean }) {
+/** Amber beacon on the overhead guard: flashes while a pedestrian is too close (safety rule, K3). */
+function Beacon() {
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    if (!mat.current) return;
+    const on = Math.floor(clock.elapsedTime * 4) % 2 === 0;
+    mat.current.emissiveIntensity = on ? 2.4 : 0.1;
+    mat.current.color.set(on ? "#FFB020" : "#7A5A10");
+  });
+  return (
+    <mesh position={[-0.3, 2.14, 0]}>
+      <cylinderGeometry args={[0.1, 0.12, 0.16, 12]} />
+      <meshStandardMaterial ref={mat} color="#FFB020" emissive="#FFB020" emissiveIntensity={2} />
+    </mesh>
+  );
+}
+
+export function ForkliftModel({ id, state, carrying, hovered = false, beacon = false }: { id: string; state: string | undefined; carrying: boolean; hovered?: boolean; beacon?: boolean }) {
   const forks = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     const g = forks.current;
@@ -30,6 +47,7 @@ export function ForkliftModel({ id, state, carrying, hovered = false }: { id: st
   const body = model.forkliftBody;
   return (
     <group>
+      {beacon && <Beacon />}
       <Baked outline={hovered}>
       {/* chassis and counterweight */}
       <Box size={[1.45, 0.55, 1.1]} at={[-0.27, 0.18, 0]} color={body} />

@@ -101,6 +101,25 @@ def wiring() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@app.get("/api/safety/me/{worker_id}")
+def safety_me(worker_id: str) -> dict[str, Any]:
+    """A worker's own data: shift hours, breaks and their own incidents (K3 privacy: workers can see their data).
+    There is no sign-in in the demo, so this is the worker's link, not a protected page."""
+    e = state.engine
+    d = e.safety.personal(worker_id, e.clock())
+    if d is None:
+        raise HTTPException(status_code=404, detail=f"No worker {worker_id}")
+    return d
+
+
+@app.get("/api/safety/shift")
+def safety_shift() -> dict[str, Any]:
+    """Shift and break overview for the supervisor (hours on shift, breaks due)."""
+    e = state.engine
+    now = e.clock()
+    return {"workers": [e.safety.personal(w, now) for w in e.safety.workers], "retention_days": e.safety.privacy.get("retention_days", 30)}
+
+
 @app.get("/api/kits")
 def kits() -> list[dict[str, Any]]:
     """One summary per device kit (hardware/kits/*.json) with the devices built from it, for /kits and the picker."""

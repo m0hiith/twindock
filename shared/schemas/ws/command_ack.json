@@ -26,7 +26,8 @@
         "set_auto_mode",
         "machine_command",
         "ack_alert",
-        "scenario_command"
+        "scenario_command",
+        "safety_command"
       ]
     },
     "ok": {

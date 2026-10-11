@@ -43,7 +43,8 @@ function Mover({ id, children }: { id: string; children: (hovered: boolean) => R
 
 function Forklift({ id }: { id: string }) {
   const [state, carrying] = useWorld(useShallow((s) => [s.units[id]?.state, Boolean(s.units[id]?.carrying)]));
-  return <Mover id={id}>{(h) => <ForkliftModel id={id} state={state} carrying={carrying} hovered={h} />}</Mover>;
+  const beacon = useWorld((s) => s.units[id]?.meta?.pedestrian_warning === true);
+  return <Mover id={id}>{(h) => <ForkliftModel id={id} state={state} carrying={carrying} hovered={h} beacon={beacon} />}</Mover>;
 }
 
 function Truck({ id }: { id: string }) {

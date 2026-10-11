@@ -1,10 +1,10 @@
 export type * from "./generated";
 import type {
-  AckAlert, AlertsUpdate, ScenarioCommand, BleTracks, CommandAck, DeviceUpdate, Event, GatewayUpdate, LedCommand, MachineCommand, MoveUnit, ProductionUpdate, SafetyUpdate,
+  AckAlert, AlertsUpdate, SafetyCommand, ScenarioCommand, BleTracks, CommandAck, DeviceUpdate, Event, GatewayUpdate, LedCommand, MachineCommand, MoveUnit, ProductionUpdate, SafetyUpdate,
   SelectionChanged, SelectUnit, SetAutoMode, UnitUpdate, WorldSnapshot,
 } from "./generated";
 
 export type ServerMessage =
   WorldSnapshot | UnitUpdate | GatewayUpdate | SelectionChanged | CommandAck | Event | BleTracks | DeviceUpdate
   | ProductionUpdate | SafetyUpdate | AlertsUpdate;
-export type ClientMessage = MoveUnit | SelectUnit | LedCommand | SetAutoMode | MachineCommand | AckAlert | ScenarioCommand;
+export type ClientMessage = MoveUnit | SelectUnit | LedCommand | SetAutoMode | MachineCommand | AckAlert | ScenarioCommand | SafetyCommand;

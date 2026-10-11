@@ -48,6 +48,11 @@
               0,
               28
             ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest",
+            "safety_shoes"
           ]
         },
         {
@@ -72,6 +77,11 @@
               2,
               40
             ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest",
+            "safety_shoes"
           ]
         },
         {
@@ -96,6 +106,11 @@
               -4,
               52
             ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest",
+            "safety_shoes"
           ]
         },
         {
@@ -120,7 +135,8 @@
               47,
               9
             ]
-          ]
+          ],
+          "hazard": "low"
         }
       ]
     },
@@ -175,6 +191,11 @@
               88,
               26
             ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "safety_shoes",
+            "vest"
           ]
         },
         {
@@ -204,6 +225,12 @@
             "press_operator",
             "maintenance",
             "supervisor"
+          ],
+          "hazard": "high",
+          "ppe": [
+            "helmet",
+            "hearing",
+            "safety_shoes"
           ]
         },
         {
@@ -232,7 +259,14 @@
           "restricted_roles": [
             "logistics",
             "supervisor"
-          ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "gloves"
+          ],
+          "time_limit_min": 20,
+          "lone_worker": true,
+          "checkin_min": 10
         },
         {
           "id": "FAC01_DOCKS",
@@ -256,6 +290,11 @@
               104,
               36
             ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest",
+            "safety_shoes"
           ]
         },
         {
@@ -280,7 +319,8 @@
               88,
               40
             ]
-          ]
+          ],
+          "hazard": "low"
         }
       ]
     }
@@ -488,7 +528,11 @@
       "x": 122,
       "z": 12.2,
       "capabilities": [
-        "position"
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
       ],
       "label": "Badge of WK-01",
       "source": "sim",
@@ -507,7 +551,11 @@
       "x": 96,
       "z": 29,
       "capabilities": [
-        "position"
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
       ],
       "label": "Badge of WK-02",
       "source": "sim",
@@ -526,7 +574,11 @@
       "x": 102,
       "z": 12,
       "capabilities": [
-        "position"
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
       ],
       "label": "Badge of WK-03",
       "source": "sim",
@@ -545,7 +597,11 @@
       "x": 96,
       "z": 29,
       "capabilities": [
-        "position"
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
       ],
       "label": "Badge of WK-04",
       "source": "sim",
@@ -848,7 +904,8 @@
           "WALK_EAST",
           "FAC_AISLE_2"
         ]
-      }
+      },
+      "first_aider": true
     },
     {
       "id": "WK-02",
@@ -898,7 +955,8 @@
           "WALK_DOCK_DOOR",
           "FAC_AISLE_1"
         ]
-      }
+      },
+      "first_aider": true
     },
     {
       "id": "WK-04",
@@ -926,11 +984,48 @@
     }
   ],
   "safety": {
-    "_doc": "Proximity rule (backend/twindock/safety.py): a badge near a MOVING forklift. Warning below warn_m, critical below crit_m; cleared above warn_m + clear_margin_m.",
+    "_doc": "Proximity rule (backend/twindock/safety.py): a badge near a MOVING forklift. Warning below warn_m, critical below crit_m; cleared above warn_m + clear_margin_m. K3 (backend/twindock/safety.py): direction factors, fall/man-down, heat index, adjacency for gas evacuation, lone-worker check-ins, shift and break settings.",
     "warn_m": 3.0,
     "crit_m": 1.5,
     "clear_margin_m": 0.5,
     "moving_mps": 0.2,
-    "walk_speed_mps": 1.3
-  }
+    "walk_speed_mps": 1.3,
+    "ahead_factor": 1.3,
+    "reverse_factor": 2.0,
+    "fall_cancel_s": 30,
+    "man_down_still_s": 90,
+    "heat_index_c": 32,
+    "heat_buzz_min": 20,
+    "adjacent_m": 6,
+    "lone_checkin_min": 10,
+    "lone_escalate_min": 2,
+    "checkout_after_min": 30,
+    "break_after_h": 4,
+    "break_min": 15,
+    "break_zone_kinds": [
+      "office",
+      "canteen"
+    ]
+  },
+  "privacy": {
+    "_doc": "K3 privacy by design: worker positions only on screens during an active safety condition or an evacuation (location 'alerts_only'); incident history kept retention_days; no tracking off site or off shift.",
+    "location": "alerts_only",
+    "retention_days": 30
+  },
+  "muster_points": [
+    {
+      "id": "MP-1",
+      "name": "Muster point 1 (warehouse car park)",
+      "x": 58.0,
+      "z": 56.0,
+      "radius_m": 6.0
+    },
+    {
+      "id": "MP-2",
+      "name": "Muster point 2 (factory forecourt)",
+      "x": 96.0,
+      "z": 44.0,
+      "radius_m": 6.0
+    }
+  ]
 }

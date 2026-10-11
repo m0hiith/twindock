@@ -286,6 +286,10 @@ class Badge(Model):
     z: float = 0.0
     pause_until: float = 0.0
     next_route: str | None = None
+    goto: tuple[float, float] | None = None  # evacuation: walk straight to the muster point and wait there
+    still_until: float = -1.0  # lying still (simulated fall / man-down)
+    pending: list[tuple[str, Payload]] = field(default_factory=list)
+    last_buzz: str | None = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -297,12 +301,44 @@ class Badge(Model):
         self.leg = 1 % len(pts)
 
     def command(self, action: str, t: float, ts_ms: int, data: Payload | None = None) -> None:
-        if action == "route" and data and data.get("route") in self.routes:
+        data = data or {}
+        if action == "route" and data.get("route") in self.routes:
             self.next_route = str(data["route"])
+            self.goto = None
+        elif action == "goto" and "x" in data and "z" in data:
+            self.goto, self.still_until = (float(data["x"]), float(data["z"])), -1.0
+        elif action == "buzz":
+            self.last_buzz = str(data.get("route", "alert"))  # the motor/buzzer pattern; nothing to publish
+        elif action == "fall":
+            # Free fall then impact, then the worker lies still until they cancel (or someone helps).
+            self.pending.append(("fall", self.reading(ts_ms, True)))
+            self.still_until = t + 3600.0
+        elif action == "still":
+            self.still_until = t + float(data.get("seconds", 120))
+        elif action == "cancel":
+            self.pending.append(("cancel", self.reading(ts_ms, True)))
+            self.still_until = -1.0
+        elif action == "sos":
+            self.pending.append(("sos", self.reading(ts_ms, True)))
+        elif action == "checkin":
+            self.pending.append(("checkin", self.reading(ts_ms, True)))
 
     def step(self, t: float, dt: float, ts_ms: int) -> Out:
         super().step(t, dt, ts_ms)
+        out: Out = self.pending
+        self.pending = []
         pts = self.routes.get(self.route_name)
+        if t < self.still_until:
+            pts = None  # lying still: no walking
+        elif self.goto is not None:
+            pts = None
+            gx, gz = self.goto
+            dx, dz = gx - self.x, gz - self.z
+            dist = math.hypot(dx, dz)
+            stepm = self.speed * 1.3 * dt  # people walk briskly to the muster point
+            if dist > 0.5:
+                self.x += dx / dist * min(stepm, dist)
+                self.z += dz / dist * min(stepm, dist)
         if pts and len(pts) > 1 and t >= self.pause_until:
             name, tx, tz, lane = pts[self.leg]
             _, px, pz, prev_lane = pts[self.leg - 1]
@@ -329,8 +365,8 @@ class Badge(Model):
                 self.x += dx / dist * stepm
                 self.z += dz / dist * stepm
         if self.every("pos", t, 1.0):
-            return [("position", self.reading(ts_ms, [round(self.x, 2), round(self.z, 2)], "m"))]
-        return []
+            out.append(("position", self.reading(ts_ms, [round(self.x, 2), round(self.z, 2)], "m")))
+        return out
 
 
 @dataclass

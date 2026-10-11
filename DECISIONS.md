@@ -111,3 +111,14 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - Machine monitors now also report `temperature_c` (bearing thermocouple in the kit), modelled from motor current.
 - Validation: analog nodes (`AIN_*`) and 1-Wire lines may connect several parts to one pin; any other signal on one pin twice is still an error.
 - Tree layout: each part is placed under the pins it connects to on the rows above, which removed most wire crossings on the bigger kits.
+
+## Factory extension: K3 worker safety
+- All rules live in `backend/twindock/safety.py` and run on the same inputs for simulated and real badges (`set_position`, `on_badge`, `set_helmet`); alerts still come only from `backend/rules/safety.yaml` (8 new rules) and `devices.yaml` (gas, fire panel, heat, leak, conveyor jam, air pressure).
+- Direction: a forklift's direction of travel comes from its recent movement; a worker within 60° of it gets a radius ×1.3, ×2 when the forklift reverses (heading opposite to movement). The forklift flashes an amber beacon (3D model) and the badge is told to buzz.
+- Fall: pre-alert, 30 s to cancel on the badge, then critical man-down with location and the nearest first-aider (a worker marked `first_aider` with a fresh badge). No movement for 90 s is the same path; walking again clears a no-movement man-down. SOS and man-down stay open until closed on the monitoring page, even if the badge goes quiet.
+- Gas: a gas detector in alarm (fresh reading) evacuates its zone and any zone whose bounding box is within 6 m. A real gas detection system must come first; the node only adds information (the kit says so).
+- Heat: NOAA heat index per zone from env nodes; zones at or above 32 °C buzz rest reminders every 20 min, naming nobody.
+- PPE: only the helmet can be sensed (helmet clip). Missing: a buzz at most every 10 min, a count on the wire, nothing stored, no worker id.
+- Evacuation: workers on shift at the start are the headcount; arrival is a position within 6 m of a muster point; simulated badges walk to the nearest one (`goto`). Muster points MP-1/MP-2 are placeholders until F1 places real ones.
+- Privacy: location is shown only for an active condition or evacuation (`privacy.location: alerts_only`, `always` possible); otherwise workers are drawn at their zone centre and the badge position reading is withheld from device updates. Off-site positions are dropped. Shift/breaks are served per worker (`/api/safety/me/<id>`) and to the supervisor; the broadcast has only counts. Retention 30 days, configurable in `sites.json`. The demo has no sign-in, so `/me/<id>` is the worker's link, not a protected page.
+- Zones got `hazard`, `ppe`, `time_limit_min`, `lone_worker` for the existing press, cold room, production and dock zones; F1 sets them for the campus.

@@ -146,3 +146,19 @@ dew_point_c), `helmet_clip` (worn, impact_g), `gas_detector` (co_ppm, o2_pct, al
 (wet), `tank_level` (level_pct, pump_on), `fire_panel` (alarm, trouble); `power_meter` (power_kw,
 energy_kwh, voltage_v) and `asset_tag` (find_me) now have simulator models. Simulator commands:
 `jam`, `leak`/`clear`, `alarm`/`reset`, `find_me` (see `mqtt/site_cmd.json`). All `source: "sim"`.
+
+### Worker safety (FACTORY_PROMPTS.md K3)
+
+`safety_update` now also carries per worker: `prealert` (fall / no_motion, with the cancel deadline), `man_down`,
+`sos_ms`, `evacuate`, `lone`, `zone_overtime_min`, `first_aider`, `nearest_first_aider`, `mustered`, `location_shown`,
+and overall `evacuation` (headcount: on site, accounted, by muster point, unaccounted with last known zone), `on_site`,
+`in_hazardous`, `gas_zones`, `heat_zones`, `ppe_reminders`, `breaks_due`, `privacy`.
+`safety_command` (client → server): `start_evacuation`, `end_evacuation`, `clear_incident`, and demo actions
+`sim_fall|sim_cancel|sim_sos|sim_checkin|sim_still` that drive a SIMULATED badge only.
+Badge messages (sim badges, same path for a real one): channels `fall`, `sos`, `cancel`, `checkin`.
+Zones may carry `hazard`, `ppe`, `time_limit_min`, `lone_worker`, `checkin_min`. `GET /api/safety/me/<worker>` is the
+worker's own data; `GET /api/safety/shift` the supervisor's shift overview. Hours and break details are never broadcast.
+Privacy: positions appear on screens only while that worker has an active safety condition or an evacuation runs
+(otherwise the worker is drawn at their zone and the badge's `position` reading is withheld); nothing is tracked
+off site (outside every site's bounds) or off shift (no data for 30 min ends the shift); PPE reminders are never
+recorded or tied to an id; incident history is deleted after `privacy.retention_days`.
