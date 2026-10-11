@@ -227,6 +227,7 @@ export interface TwinDockContract {
   event?: Event;
   gateway_update?: GatewayUpdate;
   led_command?: LedCommand;
+  logistics_update?: LogisticsUpdate;
   machine_command?: MachineCommand;
   move_unit?: MoveUnit;
   production_update?: ProductionUpdate;
@@ -811,6 +812,72 @@ export interface LedCommand {
   cmd_id: CmdId;
   led: string;
   on: boolean;
+}
+/**
+ * Logistics (backend/twindock/logistics.py): KPIs computed from the logistics event log (dock-to-stock, truck turnaround, on-time dispatch, arrivals on schedule, forklift utilisation), each truck's stage (offsite, gate, weighbridge, queue, dock, paperwork, departing), finished-goods orders, recent weighbridge tickets, inventory by SKU group and place, the raw material reorder position, and forklift batteries in Ah. Simulated (auto mode); minutes are simulation minutes at real-world scale (the warehouse's PACE already taken out). On connect and at most every 2 s.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "logistics_update".
+ */
+export interface LogisticsUpdate {
+  type: "logistics_update";
+  seq: number;
+  server_ts_ms: number;
+  kpis: {
+    dock_to_stock_min: number | null;
+    turnaround_min: number | null;
+    on_time_dispatch: number | null;
+    orders_shipped: number;
+    orders_open: number;
+    arrivals_on_schedule: number | null;
+    forklift_utilisation: number | null;
+  };
+  trucks: {
+    id: string;
+    stage: "offsite" | "gate" | "weighbridge" | "queue" | "dock" | "paperwork" | "departing";
+    state: string;
+    pallets: number;
+    eta_min: number | null;
+    gross_in_kg: number | null;
+    gross_out_kg: number | null;
+  }[];
+  inventory: {
+    [k: string]:
+      | {
+          [k: string]: number | undefined;
+        }
+      | undefined;
+  };
+  orders: {
+    id: string;
+    pallets: number;
+    shipped: number;
+    due_in_min: number;
+    done: boolean;
+    on_time: boolean | null;
+  }[];
+  tickets: {
+    truck: string;
+    direction: "in" | "out";
+    gross_kg: number;
+    tare_kg: number;
+    pallets: number;
+    wall_ms: number;
+  }[];
+  raw: {
+    position: number;
+    reorder_point: number;
+    on_order: boolean;
+  };
+  batteries: {
+    id: string;
+    pct: number;
+    ah_used: number;
+    ah_charged: number;
+    charging: boolean;
+    reason: ("low" | "opportunity") | null;
+  }[];
+  pace: number;
 }
 /**
  * Simulation control for a FAC-01 machine (the 'degrade' demo control on /control). Forwarded to tools/site_sim.py on twin/<site>/<device>/cmd/<action>; never to the real board.

@@ -21,7 +21,7 @@ production:
     startup_min: {value: 10.0, unit: min, source: "typical industry value: start-of-shift checks and first-off approval take 10-15 min"}
     handover_min: {value: 10.0, unit: min, source: "typical industry value: end-of-shift cleaning and hand-over notes"}
   material:
-    blanks_per_raw_pallet: {value: 240, unit: blanks, source: "assumption: one raw pallet of steel blanks (~2 t at ~8 kg each)"}
+    blanks_per_raw_pallet: {value: 240, unit: blanks, source: "assumption: one raw pallet of steel blanks (~1 t at ~4 kg each; logistics.pallets.kg)"}
     initial_kit_blanks: {value: 480, unit: blanks, source: "assumption: two pallets' worth kitted at the presses when the simulation starts"}
     buffer_capacity: {value: 12, unit: parts, source: "typical industry value: a short accumulation conveyor between press and packer holds 10-20 parts"}
   failures:

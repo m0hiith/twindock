@@ -34,8 +34,9 @@ from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_M
 from .models import (AckAlert, SafetyCommand, ScenarioCommand, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
                      SelectUnit, SetAutoMode, SetSimSpeed, SimClockMsg, Timed, UnitUpdate, WarmStart, WorldSnapshot,
-                     ControlDecision, ControlUpdate)
+                     ControlDecision, ControlUpdate, LogisticsUpdate)
 from .control import ControlLoop
+from .logistics import Logistics
 from .world import Entity, World
 
 TOPIC_PREFIX = "twin/gateway/"
@@ -47,6 +48,7 @@ SAFETY_EVAL_S = 0.25     # proximity check 4x a second: a forklift at demo pace 
 SAFETY_FLUSH_S = 0.5     # safety_update at most 2 Hz
 RULES_EVAL_S = 0.5       # rules 2x a second: fast enough for 1.5 m proximity at demo pace, cheap
 RULES_EVAL_FF_S = 2.0    # during the warm start nobody watches; alerts still raise and resolve, just less often
+LOGISTICS_FLUSH_S = 2.0  # logistics_update at most every 2 s (KPIs, trucks' stages, weighbridge tickets)
 SIM_CLOCK_FLUSH_S = 5.0  # sim_clock every 5 s (and on change), so a screen's clock never drifts far at x20
 SEVERITY_LEVEL = {"info": "info", "warning": "warn", "critical": "error"}
 
@@ -138,8 +140,39 @@ class Engine:
         self._seed_site_units()
         self._seed_workers()
         self.control = ControlLoop(self)
+        self._new_logistics()
+        self._log_acc = 0.0
 
     # ------------------------------------------------------------------ site twin units (FAC-01)
+
+    def _hour(self) -> float:
+        lt = time.localtime(self.clock() / 1000)
+        return lt.tm_hour + lt.tm_min / 60 + lt.tm_sec / 3600
+
+    def _new_logistics(self) -> None:
+        self.logistics = Logistics(self.world, random.Random(self.rng.random()), self._hour)
+        self.world.logistics = self.logistics
+
+    def _tick_logistics(self, dt: float) -> None:
+        """Truck schedules, gate and weighbridge, orders, reorders and opportunity charging run with auto mode; the
+        KPIs and inventory are always reported."""
+        lg = self.logistics
+        if self.auto_mode:
+            from sim.models.production import shift_phase  # the plant's shift calendar (backend/sim/params)
+            lg.tick(dt, shift_phase(lg.p, self._hour())[1])
+        else:
+            lg._consume_log()
+            self.world.opportunity = False
+        for n in lg.notes:
+            self.event("info", n, "logistics")
+        lg.notes.clear()
+        self._log_acc += dt
+        if lg.dirty and self._log_acc >= LOGISTICS_FLUSH_S:
+            self._log_acc, lg.dirty = 0.0, False
+            self._send_logistics()
+
+    def _send_logistics(self, to: str | None = None) -> None:
+        self._send(LogisticsUpdate(seq=self._next_seq(), server_ts_ms=self.clock(), **self.logistics.wire()), to)
 
     def _line(self) -> dict[str, Any]:
         return dict((self.layout.model_extra or {}).get("production_line") or {"machines": []})
@@ -812,6 +845,7 @@ class Engine:
         self._send(self.snapshot(), client_id)  # always the first message on a connection
         self._send_sim_clock(client_id)
         self._send_control(client_id)
+        self._send_logistics(client_id)
         self._send_ble_tracks(client_id)
         self._send_production(client_id)
         self._send_safety(client_id)
@@ -834,6 +868,7 @@ class Engine:
         self._raw_fed.clear()
         self._raw_used = 0
         self.control = ControlLoop(self)
+        self._new_logistics()
         self._send(self.snapshot())
         self.event("info", "World reset to the seed layout")
         self._sync_rule_leds()
@@ -890,6 +925,7 @@ class Engine:
         self._tick_production(dt)
         self._tick_safety(dt)
         self._tick_rules(dt)
+        self._tick_logistics(dt)
         self.control.tick(dt)
         if self.control.c.dirty:
             self.control.c.dirty = False

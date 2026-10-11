@@ -1,7 +1,7 @@
 import math
 
 from conftest import Harness
-from twindock.world import BATTERY_FLOOR_PCT, SPEED
+from twindock.world import SPEED, logistics_params
 
 
 def move(h: Harness, unit: str, target: str, action: str = "goto", **kw: object) -> dict:
@@ -95,11 +95,13 @@ def test_charger_holds_one_forklift(h: Harness) -> None:
     assert h.world.entities["FL-01"].action == "charge"
 
 
-def test_battery_never_drops_below_floor_in_15_minutes(h: Harness) -> None:
+def test_battery_drain_is_physical_over_15_minutes(h: Harness) -> None:
+    """15 min of nonstop driving uses a few percent of a 400 Ah battery (rolling resistance + standby), and the
+    amp-hour books balance: what was drawn is exactly what the state of charge lost."""
     w = h.world  # drive the world directly: 15 simulated minutes of nonstop driving
     fl = w.entities["FL-01"]
+    start = fl.battery or 0.0
     targets = ["DOCK_3", "CHARGER_C2", "ZONE_A", "RACK_B4"]  # passing through, never charging
-    lowest = 100.0
     for i in range(int(15 * 60 / 0.1)):
         if not fl.moving:
             assert w.command("FL-01", targets[i % 4], "goto").ok
@@ -107,9 +109,10 @@ def test_battery_never_drops_below_floor_in_15_minutes(h: Harness) -> None:
         w.tick(0.1)
         if fl.state == "charging":
             fl.state, fl.action = "idle", None
-        lowest = min(lowest, fl.battery or 0)
-    assert lowest >= BATTERY_FLOOR_PCT
-    assert lowest == BATTERY_FLOOR_PCT  # it really did drain down to the floor
+    used_pct = start - (fl.battery or 0.0)
+    assert 0.5 < used_pct < 5.0, used_pct
+    cap = logistics_params().f("logistics.forklift.capacity_ah")
+    assert abs((fl.ah_used - fl.ah_charged) - used_pct / 100 * cap) < 1e-6  # drawn − charged = what the SOC lost
 
 
 def test_device_units_reject_manual_moves(h: Harness) -> None:

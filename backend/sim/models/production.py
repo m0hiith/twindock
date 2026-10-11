@@ -19,6 +19,26 @@ from ..core import Model
 
 # ====================================================================== shift calendar
 
+def shift_phase(p: Any, h: float) -> tuple[str, str]:
+    """(shift, phase) at local hour h from the calendar in params: setup, production, break, handover or closed."""
+    for sh in p.v("production.shifts.calendar"):
+        start, end = float(sh["start_h"]), float(sh["end_h"])
+        span = (end - start) % 24
+        since = (h - start) % 24
+        if since >= span:
+            continue
+        name = str(sh["name"])
+        if since * 60 < p.f("production.shifts.startup_min"):
+            return name, "setup"
+        if (span - since) * 60 <= p.f("production.shifts.handover_min"):
+            return name, "handover"
+        for a, b in sh["breaks"]:
+            if (h - a) % 24 < (b - a) % 24:
+                return name, "break"
+        return name, "production"
+    return "none", "closed"
+
+
 class Shifts(Model):
     key = "shifts"
     title = "Shift calendar"
@@ -31,23 +51,7 @@ class Shifts(Model):
     params_prefix = ("production.shifts",)
 
     def phase(self, h: float) -> tuple[str, str]:
-        p = self.core.p
-        for sh in p.v("production.shifts.calendar"):
-            start, end = float(sh["start_h"]), float(sh["end_h"])
-            span = (end - start) % 24
-            since = (h - start) % 24
-            if since >= span:
-                continue
-            name = str(sh["name"])
-            if since * 60 < p.f("production.shifts.startup_min"):
-                return name, "setup"
-            if (span - since) * 60 <= p.f("production.shifts.handover_min"):
-                return name, "handover"
-            for a, b in sh["breaks"]:
-                if (h - a) % 24 < (b - a) % 24:
-                    return name, "break"
-            return name, "production"
-        return "none", "closed"
+        return shift_phase(self.core.p, h)
 
     def step(self, dt: float) -> None:
         name, ph = self.phase(self.core.hour_of_day())

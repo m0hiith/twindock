@@ -1,5 +1,5 @@
-// KPI numbers, computed only from the server's unit list. There is no delivery schedule in the
-// world model, so "on-time delivery" can't be computed honestly; dock utilisation stands in.
+// KPI numbers, computed only from the server's unit list. On-time dispatch comes from the server's logistics
+// event log (logistics_update, R3) once an order has shipped; until then dock utilisation stands in.
 import type { Unit } from "../contract";
 
 export interface KpiCounts {

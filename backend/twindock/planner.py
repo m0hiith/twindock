@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 
-from .world import Entity, Step, World
+from .world import Entity, Step, World, logistics_params
 
 RECEIVING_ZONE = "ZONE_A"
 STAGING_ZONE = "ZONE_B"
@@ -23,7 +23,6 @@ FACTORY_OUT = "FAC_OUT"       # FAC-01 line output: finished pallets wait here f
 RAW_STOCK = "RAW_STOCK"       # raw material store: delivered pallets wait here for the raw forklift
 FACTORY_IN = "FAC_IN"         # the line's inbound spot: the presses use its pallets up (engine._raw_material)
 RAW_CHARGERS = {"RAW_CHARGER"}
-CHARGE_BELOW_PCT = 25.0
 TRUCK_DEPART_AT = 4          # an outbound truck leaves once it has this many pallets
 TRUCK_DEPART_IDLE_S = 8.0    # ...and nothing has been loaded for this long
 TRUCK_RETURN_S = 20.0        # a gone truck comes back after this long off site
@@ -121,7 +120,11 @@ def suggest_raw_forklift(world: World, f: Entity, rng: random.Random | None = No
 def suggest_forklift(world: World, f: Entity, rng: random.Random | None = None) -> list[Step]:
     assert f.battery is not None
     raw = f.meta.get("area") == "raw"
-    if f.battery < CHARGE_BELOW_PCT and f.state != "charging":
+    p = logistics_params()
+    low = f.battery < p.f("logistics.forklift.charge_below_pct")
+    # Opportunity charging: in a shift break a forklift below its top-up level charges while nobody needs it.
+    top_up = world.opportunity and not f.carrying and f.battery < p.f("logistics.forklift.opportunity_below_pct")
+    if (low or top_up) and f.state != "charging":
         chargers = [c.node for c in world.layout.chargers
                     if (c.node in RAW_CHARGERS) == raw and not world.charger_taken_by(c.node, f.id)]
         if chargers:
@@ -149,6 +152,11 @@ def suggest_forklift(world: World, f: Entity, rng: random.Random | None = None) 
             sources = [STAGING_ZONE] if _unclaimed(world, world.pallets_at(STAGING_ZONE), f) else []
             sources += _nearest(world, f, [n.id for n in world.graph.nodes.values()
                                            if n.type == "rack_slot" and _unclaimed(world, world.pallets_at(n.id), f)], rng)
+            lg = getattr(world, "logistics", None)
+            if lg is not None and lg.fg_wanted() > 0:
+                # Customer orders are for finished goods: pick their pallets first.
+                fg = [n for n in sources if any(p.id.startswith("FG-") and p.claimed_by in (None, f.id) for p in world.pallets_at(n))]
+                sources = fg + [n for n in sources if n not in fg]
             if sources:
                 return [Step(sources[0], "pick"), Step(t.docked_at, "load")]
         return []
@@ -229,6 +237,7 @@ def auto_step(world: World, rng: random.Random) -> list[str]:
             target = rng.choice(spots)
             if world.command(f.id, target, "goto", source="auto").ok:
                 notes.append(f"{f.id}: no work, moving to {world.node_label(target)}")
+    lg = getattr(world, "logistics", None)  # schedules, gate, weighbridge and paperwork (logistics.py), when the engine runs it
     for t in world.of_kind("truck"):
         if t.source == "device" or t.moving or t.state == "loading" or rng.random() > AUTO_TRUCK_P:
             continue
@@ -236,27 +245,28 @@ def auto_step(world: World, rng: random.Random) -> list[str]:
         idle = now - t.idle_since
         area = str(t.meta.get("area", "warehouse"))
         docks = [d for d in world.layout.docks if d.area == area]
+        busy_dock = t.docked_at is not None and any(f.target == t.docked_at for f in world.of_kind("forklift"))
         if area == "raw":
-            # The supplier's truck: unloaded at a raw dock, leaves empty, returns with a new load.
-            if t.docked_at and not t.cargo and idle >= TRUCK_DEPART_IDLE_S:
-                if not any(f.target == t.docked_at for f in world.of_kind("forklift")) and world.command(t.id, world.layout.gate_node, "depart", source="auto").ok:
-                    notes.append(f"{t.id} leaves the raw material store empty")
-                continue
-            if (t.state == "gone" and idle >= TRUCK_RETURN_S) or (t.state == "arriving" and idle >= TRUCK_WAITING_S):
-                if t.state == "gone" and not t.cargo:
-                    made = world.load_raw_cargo(t.id, int(t.capacity or 4))
-                    t.inbound = True
-                    notes.append(f"{t.id} returns with {len(made)} raw material pallets")
-                for d in rng.sample(docks, len(docks)):
-                    if world.command(t.id, d.node, "dock", source="auto").ok:
-                        notes.append(f"{t.id} assigned to {d.label}")
-                        break
+            want_out = t.docked_at is not None and not t.cargo and idle >= TRUCK_DEPART_IDLE_S
+        else:
+            want_out = t.docked_at is not None and not t.inbound and len(t.cargo) >= TRUCK_DEPART_AT and idle >= TRUCK_DEPART_IDLE_S
+        if want_out and not busy_dock:
+            if lg is not None and not lg.request_departure(t):
+                continue  # paperwork first
+            if world.command(t.id, world.layout.gate_node, "depart", source="auto").ok:
+                if lg is not None:
+                    lg.departed(t)
+                notes.append(f"{t.id} leaves the raw material store empty" if area == "raw" else f"{t.id} departs with {len(t.cargo)} pallets")
             continue
-        if t.docked_at and not t.inbound and len(t.cargo) >= TRUCK_DEPART_AT and idle >= TRUCK_DEPART_IDLE_S:
-            if not any(f.target == t.docked_at for f in world.of_kind("forklift")):
-                if world.command(t.id, world.layout.gate_node, "depart", source="auto").ok:
-                    notes.append(f"{t.id} departs with {len(t.cargo)} pallets")
-        elif (t.state == "gone" and idle >= TRUCK_RETURN_S) or (t.state == "arriving" and idle >= TRUCK_WAITING_S):
+        if lg is not None:
+            ready = t.state == "arriving" and lg.ready_for_dock(t)
+        else:
+            ready = (t.state == "gone" and idle >= TRUCK_RETURN_S) or (t.state == "arriving" and idle >= TRUCK_WAITING_S)
+            if ready and area == "raw" and t.state == "gone" and not t.cargo:
+                made = world.load_raw_cargo(t.id, int(t.capacity or 4))
+                t.inbound = True
+                notes.append(f"{t.id} returns with {len(made)} raw material pallets")
+        if ready:
             for d in rng.sample(docks, len(docks)):
                 if world.command(t.id, d.node, "dock", source="auto").ok:
                     notes.append(f"{t.id} assigned to {d.label}")

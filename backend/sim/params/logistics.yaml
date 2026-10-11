@@ -1,0 +1,52 @@
+# Logistics (backend/twindock/logistics.py and world.py, the twin's auto mode): truck schedules, gate and weighbridge,
+# forklift batteries, inventory and orders. Handling times are divided by the warehouse's PACE like every other
+# handling time (world.py), so the warehouse stays in proportion at demo pace.
+logistics:
+  _doc: Trucks run to an hourly schedule with a random delay; raw material is ordered at a reorder point; finished goods ship against orders.
+  schedule:
+    trucks:
+      value:
+        TR-01: {period_h: 2, offset_min: 20}
+        TR-02: {period_h: 2, offset_min: 80}
+      unit: h, min
+      source: "assumption: each box truck runs a two-hour loop to the regional DC; their slots alternate hourly"
+    delay_min: {dist: lognormal, median: 6, sigma_log: 0.8, unit: min, source: "typical industry value: road freight arrives a few minutes late on average with a long tail (lognormal)"}
+    on_time_window_min: {value: 15, unit: min, source: "typical industry value: a dock appointment counts as on time within ±15 min"}
+  gate:
+    checkin_min: {dist: lognormal, median: 3, sigma_log: 0.4, unit: min, source: "typical industry value: gate check-in (paperwork, seal check) takes 2-5 min"}
+    weighbridge_min: {dist: lognormal, median: 1.5, sigma_log: 0.3, unit: min, source: "typical industry value: a static weighbridge ticket takes 1-2 min"}
+    paperwork_min: {dist: lognormal, median: 6, sigma_log: 0.4, unit: min, source: "typical industry value: delivery notes and sign-off after loading take 5-10 min"}
+  raw:
+    truck: {value: TR-03, unit: "-", source: "assumption: the supplier's truck for raw material"}
+    reorder_point_pallets: {value: 3, unit: pallets, source: "assumption: covers the presses for about the supplier's lead time at ~2 pallets an hour"}
+    lead_time_min: {dist: lognormal, median: 45, sigma_log: 0.3, unit: min, source: "assumption: the supplier is local; 30-60 min from the call-off"}
+  orders:
+    interarrival_min: {dist: exponential, mean: 50, unit: min, source: "assumption: customer orders for finished goods arrive about once an hour (Poisson)"}
+    pallets: {dist: uniform, low: 1, high: 3.999, unit: pallets, source: "assumption: an order is 1-3 pallets of finished cartons"}
+    due_h: {value: 4.0, unit: h, source: "typical industry value: same-shift dispatch promise for stocked goods"}
+  pallets:
+    _doc: Gross pallet weights by SKU group (load + 25 kg wooden pallet).
+    kg:
+      value: {"SKU-": 455, "RM-": 985, "FG-": 175}
+      unit: kg
+      source: "assumption: SKU- warehouse goods ~430 kg (48 cases of water); RM- 240 steel blanks of ~4 kg; FG- 6 cartons of ~25 kg"
+  trucks:
+    tare_kg:
+      value: {TR-01: 5200, TR-02: 5400, TR-03: 6100}
+      unit: kg
+      source: "typical industry value: a 7.5-12 t box truck weighs 4.5-6.5 t empty"
+  forklift:
+    voltage_v: {value: 48.0, unit: V, source: "datasheet: 1.6 t electric counterbalance trucks run on 48 V traction batteries"}
+    capacity_ah: {value: 400.0, unit: Ah, source: "datasheet: 48 V 400-560 Ah traction batteries are typical for 1.6 t counterbalance trucks"}
+    mass_kg: {value: 3000.0, unit: kg, source: "datasheet: service weight of a 1.6 t electric counterbalance truck with battery ~2.8-3.2 t"}
+    rolling_resistance: {value: 0.015, unit: "1", source: "typical industry value: solid tyres on sealed concrete, c_rr 0.01-0.02"}
+    drive_efficiency: {value: 0.8, unit: "1", source: "typical industry value: AC traction drive, battery to wheel"}
+    lift_height_m: {value: 1.8, unit: m, source: "assumption: average lift to rack levels and truck beds"}
+    mast_kg: {value: 350.0, unit: kg, source: "typical industry value: forks, carriage and inner mast lifted with every load"}
+    hydraulic_efficiency: {value: 0.5, unit: "1", source: "typical industry value: pump, motor and valves of a forklift lift circuit"}
+    standby_w: {value: 300.0, unit: W, source: "typical industry value: controller, lights, beacon and power steering idle"}
+    charger_a: {value: 80.0, unit: A, source: "datasheet: a 48 V / 80 A charger (0.2 C for 400 Ah)"}
+    cv_from_soc: {value: 0.8, unit: "1", source: "typical industry value: chargers switch from constant current to constant voltage near 80 % state of charge"}
+    full_soc: {value: 0.98, unit: "1", source: "assumption: the charger stops at 98 %"}
+    charge_below_pct: {value: 30.0, unit: "%", source: "typical industry value: send a forklift to charge below ~30 % to protect the battery"}
+    opportunity_below_pct: {value: 75.0, unit: "%", source: "typical industry value: opportunity-charge in breaks when below ~75 % (lithium-ion or opportunity-rated lead-acid)"}

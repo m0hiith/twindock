@@ -7,8 +7,10 @@ a clock. The engine (engine.py) owns a World and turns its changes into WebSocke
 from __future__ import annotations
 
 import math
+from functools import lru_cache
 import os
 from dataclasses import dataclass, field
+from typing import Any
 
 from . import traffic
 from .graph import Graph
@@ -33,12 +35,9 @@ CREEP_SPEED = 0.3 * PACE           # m/s floor so braking never stalls just shor
 
 PICK_S = 3.0 / PACE                # fork handling time for pick and drop
 LOAD_S = 4.0 / PACE                # driving into the trailer, setting down, backing out
-# Demo time scale: battery moves ~20x faster than a real shift so it visibly changes in a demo.
-# Nonstop driving drains ~10 %/min, so drain stops at a floor: no forklift can be stranded at
-# 0% mid-demo, however long it runs. Auto mode sends forklifts to charge below 25%.
-CHARGE_PCT_PER_S = 1.5      # real: about an hour for a full charge
-DRAIN_PCT_PER_M = 0.08
-BATTERY_FLOOR_PCT = 15.0
+# Forklift batteries are amp-hours (backend/sim/params/logistics.yaml forklift.*): drive energy from rolling
+# resistance and the load, lift energy per pick, drop and load, standby draw, and a constant-current then
+# constant-voltage charge. Time-based terms (standby, charging) are scaled by PACE like everything else here.
 FORK_OFFSET_M = 1.1         # carried pallet sits this far ahead of the forklift centre
 
 BAY1_DOCK_NODE = "DOCK_1"   # LED0 rule: on while a truck is docked at Bay 1
@@ -81,7 +80,10 @@ class Entity:
     idle_since: float = 0.0
     plan: list[Step] = field(default_factory=list)
     # forklifts
-    battery: float | None = None
+    battery: float | None = None                    # state of charge, % (from the Ah bookkeeping below)
+    ah_used: float = 0.0                            # drawn from the battery (drive, lift, standby)
+    ah_charged: float = 0.0                         # put back by chargers
+    charge_reason: str | None = None                # low | opportunity
     carrying: str | None = None
     # trucks
     docked_at: str | None = None
@@ -125,6 +127,39 @@ def _fail(reason: str) -> MoveResult:
     return MoveResult(False, reason)
 
 
+@lru_cache(maxsize=1)
+def logistics_params() -> Any:
+    from sim import Params  # the simulation's parameter set (backend/sim/params): forklifts, pallets, schedules
+    return Params.load()
+
+
+def pallet_kg(p: "Entity | None") -> float:
+    """Gross weight of a pallet from its SKU group (params logistics.pallets.kg)."""
+    if p is None:
+        return 0.0
+    kg = logistics_params().v("logistics.pallets.kg")
+    sku = str(p.meta.get("sku") or p.id)
+    for prefix, w in kg.items():
+        if sku.startswith(prefix) or p.id.startswith(prefix):
+            return float(w)
+    return float(kg["SKU-"])
+
+
+def drive_ah(metres: float, load_kg: float) -> float:
+    """Ah to roll the forklift and its load this far: F = c_rr × m × g, E = F × d / η, Ah = E / (V × 3600)."""
+    p = logistics_params()
+    m = p.f("logistics.forklift.mass_kg") + load_kg
+    energy_j = p.f("logistics.forklift.rolling_resistance") * m * 9.81 * metres / p.f("logistics.forklift.drive_efficiency")
+    return energy_j / (p.f("logistics.forklift.voltage_v") * 3600)
+
+
+def lift_ah(load_kg: float) -> float:
+    """Ah for one lift: (load + mast) × g × h / η_hydraulic."""
+    p = logistics_params()
+    energy_j = (load_kg + p.f("logistics.forklift.mast_kg")) * 9.81 * p.f("logistics.forklift.lift_height_m") / p.f("logistics.forklift.hydraulic_efficiency")
+    return energy_j / (p.f("logistics.forklift.voltage_v") * 3600)
+
+
 class World:
     def __init__(self, layout: Layout, graph: Graph) -> None:
         self.layout = layout
@@ -136,6 +171,9 @@ class World:
         self.conflicts = traffic.build_conflicts(graph, [(ln.a, ln.b, list(ln.kinds)) for ln in layout.lanes])
         self.events: list[tuple[str, str, str | None]] = []  # (level, text, unit_id), drained by the engine
         self.removed: list[str] = []  # unit ids that left the world (delivered pallets), drained by the engine
+        self.log: list[tuple[str, dict[str, Any]]] = []  # logistics facts (docked, picked, dropped, loaded, departed), drained by logistics.py
+        self.opportunity = False  # a shift break: forklifts may top up their batteries (logistics.py sets it)
+        self.logistics: Any = None  # logistics.Logistics when the engine runs schedules (auto mode); None in bare tests
         self.entities: dict[str, Entity] = {}
         self.time = 0.0
         self.gateway_state = "waiting"
@@ -431,11 +469,33 @@ class World:
                 if u.action_left <= 0:
                     self._finish_action(u)
             elif u.state == "charging":
-                assert u.battery is not None
-                u.battery = min(100.0, u.battery + CHARGE_PCT_PER_S * dt)
-                if u.battery >= 100.0:
-                    u.state, u.action, u.idle_since = "idle", None, self.time
+                self._charge(u, dt)
+            if u.kind == "forklift" and u.state != "charging":
+                self._use_ah(u, logistics_params().f("logistics.forklift.standby_w") * dt * PACE / 3600
+                             / logistics_params().f("logistics.forklift.voltage_v"))
         self._update_derived()
+
+    def _use_ah(self, u: Entity, ah: float) -> None:
+        if u.battery is None or ah <= 0:
+            return
+        cap = logistics_params().f("logistics.forklift.capacity_ah")
+        ah = min(ah, u.battery / 100 * cap)  # a flat battery gives nothing more
+        u.ah_used += ah
+        u.battery = max(0.0, u.battery - 100 * ah / cap)
+
+    def _charge(self, u: Entity, dt: float) -> None:
+        """CC/CV charge: full charger current below the CV threshold, tapering linearly to zero at full."""
+        assert u.battery is not None
+        p = logistics_params()
+        cap, soc = p.f("logistics.forklift.capacity_ah"), u.battery / 100
+        full, cv = p.f("logistics.forklift.full_soc"), p.f("logistics.forklift.cv_from_soc")
+        amps = p.f("logistics.forklift.charger_a") * (1.0 if soc < cv else max(0.0, (full - soc) / (full - cv)))
+        ah = min(amps * dt * PACE / 3600, max(0.0, (full - soc) * cap))
+        u.ah_charged += ah
+        u.battery = min(100.0, u.battery + 100 * ah / cap)
+        done = u.battery / 100 >= full - 1e-6
+        if done or (u.charge_reason == "opportunity" and not self.opportunity):
+            u.state, u.action, u.idle_since, u.charge_reason = "idle", None, self.time, None
 
     def _drive(self, u: Entity, dt: float) -> None:
         g = self.graph
@@ -478,8 +538,8 @@ class World:
                 u.z += ddz / d * move
                 moved += move
                 move = 0.0
-        if u.kind == "forklift" and u.battery is not None:
-            u.battery = max(min(u.battery, BATTERY_FLOOR_PCT), u.battery - DRAIN_PCT_PER_M * moved)
+        if u.kind == "forklift" and u.battery is not None and moved > 0:
+            self._use_ah(u, drive_ah(moved, pallet_kg(self.entities.get(u.carrying or ""))))
         if not u.path:
             u.speed = 0.0
             u.node = u.prev_node
@@ -493,6 +553,7 @@ class World:
             if a == "dock" and u.node in self.dock_by_bay:
                 u.state, u.docked_at = "docked", self.dock_by_bay[u.node].node
                 u.heading = math.pi / 2  # parked square to the door, cab facing the yard
+                self.log.append(("truck_docked", {"truck": u.id, "dock": u.docked_at, "t": self.time, "pallets": list(u.cargo or [])}))
             elif a == "depart":
                 u.state = "gone"
                 # Off site. It comes back on the inbound side of the road (ROAD_IN), so a returning or
@@ -512,6 +573,7 @@ class World:
                     self.events.append(("info", f"{u.id} delivered {len(delivered)} finished pallet"
                                         f"{'s' if len(delivered) > 1 else ''} from FAC-01", u.id))
                 u.inbound = bool(u.cargo)
+                self.log.append(("truck_gone", {"truck": u.id, "t": self.time, "delivered": delivered}))
             u.action, u.target, u.idle_since = None, None, self.time
             return
 
@@ -538,6 +600,7 @@ class World:
             self._abort(u, f"{u.id}: no truck with room at {self.node_label(u.node)}, still holding {u.carrying}")
         elif a == "charge":
             u.state = "charging"
+            u.charge_reason = "opportunity" if self.opportunity and (u.battery or 0) >= logistics_params().f("logistics.forklift.charge_below_pct") else "low"
             return
         else:
             u.action, u.target = None, None
@@ -557,19 +620,25 @@ class World:
         a = u.action
         if a == "pick":
             p = self.entities[u.action_pallet or ""]
+            from_truck = None
             if p.holder is not None:  # unloading from a truck
                 truck = self.entities[p.holder]
                 assert truck.cargo is not None
                 truck.cargo.remove(p.id)
+                from_truck = truck.id
                 if not truck.cargo:
                     truck.inbound = False
+            self.log.append(("pallet_picked", {"pallet": p.id, "forklift": u.id, "node": u.node, "truck": from_truck, "t": self.time}))
             p.holder, p.node, p.spot, p.claimed_by = u.id, None, None, None
             u.carrying = p.id
+            self._use_ah(u, lift_ah(pallet_kg(p)))
         elif a == "drop" and u.carrying:
             node = self.graph.nodes[u.node or ""]
             used = {q.spot for q in self.pallets_at(node.id)}
             p = self.entities[u.carrying]
             p.holder, p.node, p.spot = None, node.id, next(i for i in range(len(node.spots)) if i not in used)
+            self.log.append(("pallet_dropped", {"pallet": p.id, "forklift": u.id, "node": node.id, "node_type": node.type, "t": self.time}))
+            self._use_ah(u, lift_ah(pallet_kg(p)))
             u.carrying = None
         elif a == "load" and u.carrying:
             truck = self.truck_at_dock(u.node or "")
@@ -578,6 +647,8 @@ class World:
                 truck.cargo.append(p.id)
                 p.holder = truck.id
                 u.carrying = None
+                self.log.append(("pallet_loaded", {"pallet": p.id, "forklift": u.id, "truck": truck.id, "t": self.time}))
+                self._use_ah(u, lift_ah(pallet_kg(p)))
             else:
                 self.events.append(("warn", f"{u.id}: truck left before {p.id} was loaded", u.id))
         u.action, u.target, u.action_pallet = None, None, None

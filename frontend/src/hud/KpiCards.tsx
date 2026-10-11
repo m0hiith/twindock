@@ -38,6 +38,7 @@ function Kpi({ icon, label, value, suffix, delta, since, context }: {
 
 export function KpiCards() {
   const units = useWorld((s) => s.units);
+  const logistics = useWorld((s) => s.logistics);
   const baseline = useWorld((s) => s.baseline);
   // Units change at 20 Hz; the counts only depend on states, so this is cheap.
   const c = useMemo(() => kpiCounts(units), [units]);
@@ -50,8 +51,14 @@ export function KpiCards() {
         context={`${c.stockInRacks} in racks · ${c.stockStaged} staged · ${c.stock - c.stockInRacks - c.stockStaged} on forklifts`} />
       <Kpi icon="truck" label="Trucks on site" value={c.trucksOnSite} delta={b ? c.trucksOnSite - b.trucksOnSite : null} since={since}
         context={`${c.trucksDocked} docked · ${c.trucksOnSite - c.trucksDocked} in the yard`} />
-      <Kpi icon="dock" label="Docks in use" value={dockPct} suffix="%" delta={b ? c.docksInUse - b.docksInUse : null} since={since}
-        context={`${c.docksInUse} of ${c.docksUsable} bays${c.docksMaintenance ? ` · ${c.docksMaintenance} in maintenance` : ""}`} />
+      {logistics?.kpis.on_time_dispatch != null ? (
+        // On-time dispatch from the logistics event log: orders shipped by their due time (simulated orders, R3).
+        <Kpi icon="dock" label="On-time dispatch" value={Math.round(logistics.kpis.on_time_dispatch * 100)} suffix="%" delta={null} since={since}
+          context={`${logistics.kpis.orders_shipped} orders shipped · ${logistics.kpis.orders_open} open · ${dockPct}% of docks in use`} />
+      ) : (
+        <Kpi icon="dock" label="Docks in use" value={dockPct} suffix="%" delta={b ? c.docksInUse - b.docksInUse : null} since={since}
+          context={`${c.docksInUse} of ${c.docksUsable} bays${c.docksMaintenance ? ` · ${c.docksMaintenance} in maintenance` : ""}`} />
+      )}
     </div>
   );
 }

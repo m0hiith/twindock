@@ -377,6 +377,20 @@ class ControlUpdate(Strict):
     leak_measured_ms: int | None
 
 
+class LogisticsUpdate(Strict):
+    type: Literal["logistics_update"] = "logistics_update"
+    seq: int
+    server_ts_ms: int
+    kpis: dict[str, Any]
+    trucks: list[dict[str, Any]]
+    inventory: dict[str, dict[str, int]]
+    orders: list[dict[str, Any]]
+    tickets: list[dict[str, Any]]
+    raw: dict[str, Any]
+    batteries: list[dict[str, Any]]
+    pace: float
+
+
 class WarmStart(Strict):
     sim_s: float
     wall_s: float

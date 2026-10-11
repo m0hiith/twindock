@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/logistics_update.json",
+  "title": "logistics_update (server -> client)",
+  "description": "Logistics (backend/twindock/logistics.py): KPIs computed from the logistics event log (dock-to-stock, truck turnaround, on-time dispatch, arrivals on schedule, forklift utilisation), each truck's stage (offsite, gate, weighbridge, queue, dock, paperwork, departing), finished-goods orders, recent weighbridge tickets, inventory by SKU group and place, the raw material reorder position, and forklift batteries in Ah. Simulated (auto mode); minutes are simulation minutes at real-world scale (the warehouse's PACE already taken out). On connect and at most every 2 s.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "server_ts_ms", "kpis", "trucks", "inventory", "orders", "tickets", "raw", "batteries", "pace"],
+  "properties": {
+    "type": { "const": "logistics_update" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "server_ts_ms": { "type": "integer" },
+    "kpis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dock_to_stock_min", "turnaround_min", "on_time_dispatch", "orders_shipped", "orders_open", "arrivals_on_schedule", "forklift_utilisation"],
+      "properties": {
+        "dock_to_stock_min": { "type": ["number", "null"] },
+        "turnaround_min": { "type": ["number", "null"] },
+        "on_time_dispatch": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "orders_shipped": { "type": "integer", "minimum": 0 },
+        "orders_open": { "type": "integer", "minimum": 0 },
+        "arrivals_on_schedule": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "forklift_utilisation": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    },
+    "trucks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "stage", "state", "pallets", "eta_min", "gross_in_kg", "gross_out_kg"],
+        "properties": {
+          "id": { "type": "string" },
+          "stage": { "enum": ["offsite", "gate", "weighbridge", "queue", "dock", "paperwork", "departing"] },
+          "state": { "type": "string" },
+          "pallets": { "type": "integer", "minimum": 0 },
+          "eta_min": { "type": ["number", "null"] },
+          "gross_in_kg": { "type": ["number", "null"] },
+          "gross_out_kg": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+    },
+    "orders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pallets", "shipped", "due_in_min", "done", "on_time"],
+        "properties": {
+          "id": { "type": "string" },
+          "pallets": { "type": "integer", "minimum": 1 },
+          "shipped": { "type": "integer", "minimum": 0 },
+          "due_in_min": { "type": "number" },
+          "done": { "type": "boolean" },
+          "on_time": { "type": ["boolean", "null"] }
+        }
+      }
+    },
+    "tickets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["truck", "direction", "gross_kg", "tare_kg", "pallets", "wall_ms"],
+        "properties": {
+          "truck": { "type": "string" },
+          "direction": { "enum": ["in", "out"] },
+          "gross_kg": { "type": "number", "minimum": 0 },
+          "tare_kg": { "type": "number", "minimum": 0 },
+          "pallets": { "type": "integer", "minimum": 0 },
+          "wall_ms": { "type": "integer" }
+        }
+      }
+    },
+    "raw": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "reorder_point", "on_order"],
+      "properties": {
+        "position": { "type": "integer", "minimum": 0 },
+        "reorder_point": { "type": "integer", "minimum": 0 },
+        "on_order": { "type": "boolean" }
+      }
+    },
+    "batteries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pct", "ah_used", "ah_charged", "charging", "reason"],
+        "properties": {
+          "id": { "type": "string" },
+          "pct": { "type": "number", "minimum": 0, "maximum": 100 },
+          "ah_used": { "type": "number", "minimum": 0 },
+          "ah_charged": { "type": "number", "minimum": 0 },
+          "charging": { "type": "boolean" },
+          "reason": { "anyOf": [{ "enum": ["low", "opportunity"] }, { "type": "null" }] }
+        }
+      }
+    },
+    "pace": { "type": "number", "exclusiveMinimum": 0 }
+  }
+}
