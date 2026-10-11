@@ -20,6 +20,9 @@ import { ProductionLine } from "./ProductionLine";
 import { Workers } from "./Workers";
 import { AlertPulses } from "./AlertPulses";
 import { BatchA } from "./campus/BatchA";
+import { BatchB } from "./campus/BatchB";
+import { BatchC } from "./campus/BatchC";
+import { Hydrants, MusterPoints } from "./campus/CampusSite";
 import { GreenBelt, Hotspots, PerimeterFence, Walkways } from "./campus/CampusSite";
 
 function DrawCalls() {
@@ -85,6 +88,10 @@ export function Scene({ alertPulses = false }: { alertPulses?: boolean }) {
       <PerimeterFence layout={layout} />
       <Hotspots layout={layout} />
       <BatchA layout={layout} />
+      <BatchB layout={layout} />
+      <BatchC layout={layout} />
+      <Hydrants layout={layout} />
+      <MusterPoints layout={layout} />
       <GroundLabels layout={layout} />
       <Chargers layout={layout} />
       <GateBarrier layout={layout} />

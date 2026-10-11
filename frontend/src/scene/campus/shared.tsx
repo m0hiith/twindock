@@ -195,3 +195,49 @@ export function useBuilding(id: string, layout: Layout): CampusBuilding | undefi
   return useMemo(() => layout.campus?.buildings.find((b) => b.id === id), [id, layout]);
 }
 
+
+/** An open yard with a low bund wall (substation, generator, ETP, hazmat): picking, signage and a gap at its door. */
+export function Yard({ b, layout, wall = 0.9, c = palette.concrete, floor = "#D8D8D4", sign, signBg, children }: {
+  b: { id: string; x: number; z: number; w: number; d: number; door: string; name?: string; h?: number }; layout: Layout; wall?: number; c?: string; floor?: string;
+  sign?: string; signBg?: string; children?: ReactNode;
+}) {
+  const pick = usePick(b.id);
+  const selected = useView((s) => s.building === b.id);
+  const cb = { ...b, kind: "yard", name: b.name ?? b.id, h: b.h ?? 3, zone: "" } as CampusBuilding;
+  const gap = doorGap(cb, layout);
+  const gaps = gap ? [gap] : [];
+  const g = (w: WallName) => gaps.filter((x) => x.wall === w);
+  const segsN = wallSegs(b.x, b.x + b.w, g("north")), segsS = wallSegs(b.x, b.x + b.w, g("south"));
+  const segsW = wallSegs(b.z, b.z + b.d, g("west")), segsE = wallSegs(b.z, b.z + b.d, g("east"));
+  return (
+    <group {...pick}>
+      <Box size={[b.w, 0.05, b.d]} at={[b.x + b.w / 2, 0, b.z + b.d / 2]} color={floor} shadow={false} />
+      <Baked>
+        {segsN.map((s) => <Box key={`n${s.from}`} size={[s.to - s.from, wall, 0.3]} at={[(s.from + s.to) / 2, 0, b.z]} color={c} />)}
+        {segsS.map((s) => <Box key={`s${s.from}`} size={[s.to - s.from, wall, 0.3]} at={[(s.from + s.to) / 2, 0, b.z + b.d]} color={c} />)}
+        {segsW.map((s) => <Box key={`w${s.from}`} size={[0.3, wall, s.to - s.from]} at={[b.x, 0, (s.from + s.to) / 2]} color={c} />)}
+        {segsE.map((s) => <Box key={`e${s.from}`} size={[0.3, wall, s.to - s.from]} at={[b.x + b.w, 0, (s.from + s.to) / 2]} color={c} />)}
+      </Baked>
+      {sign && <Sign b={cb} text={sign} gap={gap} y={wall + 0.9} width={Math.max(3.6, sign.length * 0.4)} bg={signBg} />}
+      {children}
+      {selected && <SelectionBrackets b={cb} />}
+    </group>
+  );
+}
+
+const waterShell = new THREE.MeshStandardMaterial({ color: "#E8ECEE", roughness: 0.5, transparent: true, opacity: 0.55, depthWrite: false });
+
+/** Vertical tank with its fill level (0..1, null = no data: drawn empty and greyed). */
+export function Tank({ x, z, r, h, level, shell = "#D9DDDF", fill = "#8FA9A8", cap = true }: { x: number; z: number; r: number; h: number; level: number | null; shell?: string; fill?: string; cap?: boolean }) {
+  const l = level === null ? 0 : Math.max(0.02, Math.min(1, level));
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, h / 2, 0]} scale={[r * 2, h, r * 2]} castShadow>
+        <cylinderGeometry args={[0.5, 0.5, 1, 28]} />
+        <primitive object={level === null ? mat(shell) : waterShell} attach="material" />
+      </mesh>
+      {level !== null && <mesh position={[0, (h * l) / 2, 0]} scale={[r * 1.92, h * l, r * 1.92]}><cylinderGeometry args={[0.5, 0.5, 1, 28]} /><primitive object={mat(fill)} attach="material" /></mesh>}
+      {cap && <mesh position={[0, h + 0.1, 0]} scale={[r * 2.05, 0.2, r * 2.05]} castShadow><cylinderGeometry args={[0.5, 0.5, 1, 28]} /><primitive object={mat(shell)} attach="material" /></mesh>}
+    </group>
+  );
+}

@@ -10,6 +10,8 @@ import { cameraState, ELEVATION } from "./camera";
 import { dragState } from "./dragState";
 
 const DIST = 200;
+/** Metres across the screen at 1x for each site (the warehouse and yard; the factory and the whole east side of the campus). */
+const SITE_VIEW: Record<string, [number, number]> = { "WH-01": [78, 52], "FAC-01": [140, 90] };
 
 /** Middle of every site's bounds, for the overview camera. */
 function campusCentre(sites: { bounds: { x: [number, number]; z: [number, number] } }[]): [number, number] | undefined {
@@ -101,7 +103,8 @@ export function CameraRig({ layout }: { layout: Layout }) {
 
     zoomShown.current += (THREE.MathUtils.clamp(zoom, ZOOM_MIN, ZOOM_MAX) - zoomShown.current) * k;
     // 1x = the warehouse and yard fill the view (~78 m across the diagonal).
-    const fit = overview ? Math.min(size.width / 250, size.height / 135) : Math.min(size.width / 78, size.height / 52);
+    const [vw, vh] = overview ? [250, 135] : (SITE_VIEW[siteId] ?? [78, 52]);
+    const fit = Math.min(size.width / vw, size.height / vh);
     const ppm = fit * zoomShown.current;
     if (Math.abs(cam.zoom - ppm) > 1e-4) {
       cam.zoom = ppm;

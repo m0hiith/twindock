@@ -121,11 +121,11 @@ const BOXES = 9;
 const boxGeo = new THREE.BoxGeometry(0.6, 0.45, 0.6);
 const boxMat = new THREE.MeshStandardMaterial({ color: color.box, roughness: 0.9 });
 
-function Conveyor({ line }: { line: Line }) {
-  const { from, to, width } = line.conveyor;
+function Conveyor({ conv, machines }: { conv: Line["conveyor"]; machines: Line["machines"] }) {
+  const { from, to, width } = conv;
   const len = Math.abs(to[0] - from[0]);
   const cx = (from[0] + to[0]) / 2, z = from[1];
-  const running = useWorld((s) => line.machines.some((m) => s.units[m.id]?.state === "running"));
+  const running = useWorld((s) => machines.some((m) => s.units[m.id]?.state === "running"));
   const mat = useMemo(() => {
     const t = beltTex.clone();
     t.needsUpdate = true;
@@ -169,15 +169,22 @@ export function ProductionLine({ layout }: { layout: Layout }) {
   const line = layout.production_line;
   const out = layout.nodes.find((n) => n.id === line?.outbound_node);
   if (!line) return null;
-  const press = line.machines.find((m) => m.kind === "press");
-  const packer = line.machines.find((m) => m.kind === "packer");
+  const l1 = line.machines.filter((m) => (m.line ?? 1) === 1);
+  const l2 = line.machines.filter((m) => m.line === 2);
+  const press = l1.find((m) => m.kind === "press");
+  const packer = l1.find((m) => m.kind === "packer");
+  const press2 = l2.find((m) => m.kind === "press");
+  const packer2 = l2.find((m) => m.kind === "packer");
   const spots = out?.spots ?? [];
   const xs = spots.map((p) => p[0]), zs = spots.map((p) => p[1]);
   return (
     <group>
-      <Conveyor line={line} />
+      <Conveyor conv={line.conveyor} machines={l1} />
       {press && <Press m={press} />}
       {packer && <Packer m={packer} />}
+      {line.conveyor2 && l2.length > 0 && <Conveyor conv={line.conveyor2} machines={l2} />}
+      {press2 && <Press m={press2} />}
+      {packer2 && <Packer m={packer2} />}
       <Baked>
         <group position={[line.qc.x, 0, line.qc.z + 2.2]}>
           <Box size={[2.4, 0.9, 1.1]} at={[0, 0, 0]} color={model.metal} />
