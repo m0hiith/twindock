@@ -255,6 +255,9 @@ class MachineMonitor(Model):
         return out
 
 
+WALKWAY_OFFSET_M = 1.7  # walkway beside a forklift aisle (outside a passing forklift's path, inside its 3 m warning radius)
+
+
 @dataclass
 class Badge(Model):
     """A worker's BLE badge. The worker walks a named route (layout node coordinates, looped) at
@@ -269,10 +272,11 @@ class Badge(Model):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.routes: dict[str, list[tuple[str, float, float]]] = self.d.get("_routes", {})
+        # (node id, x, z, on a forklift lane)
+        self.routes: dict[str, list[tuple[str, float, float, bool]]] = self.d.get("_routes", {})
         self.speed = float(self.d.get("_walk_speed", 1.3))
-        pts = self.routes.get(self.route_name) or [("", float(self.d["x"]), float(self.d["z"]))]
-        _, self.x, self.z = pts[0]
+        pts = self.routes.get(self.route_name) or [("", float(self.d["x"]), float(self.d["z"]), False)]
+        _, self.x, self.z, _ = pts[0]
         self.leg = 1 % len(pts)
 
     def command(self, action: str, t: float, ts_ms: int, data: Payload | None = None) -> None:
@@ -283,7 +287,13 @@ class Badge(Model):
         super().step(t, dt, ts_ms)
         pts = self.routes.get(self.route_name)
         if pts and len(pts) > 1 and t >= self.pause_until:
-            name, tx, tz = pts[self.leg]
+            name, tx, tz, lane = pts[self.leg]
+            _, px, pz, prev_lane = pts[self.leg - 1]
+            if lane and prev_lane:
+                # Along a forklift aisle people use the walkway beside it, not the lane itself.
+                lx, lz = tx - px, tz - pz
+                ll = math.hypot(lx, lz) or 1.0
+                tx, tz = tx - lz / ll * WALKWAY_OFFSET_M, tz + lx / ll * WALKWAY_OFFSET_M
             dx, dz = tx - self.x, tz - self.z
             dist = math.hypot(dx, dz)
             stepm = self.speed * dt
@@ -294,7 +304,7 @@ class Badge(Model):
                 if self.next_route:
                     self.route_name, self.next_route = self.next_route, None
                     pts = self.routes[self.route_name]
-                    near = min(range(len(pts)), key=lambda i: math.hypot(pts[i][1] - self.x, pts[i][2] - self.z))
+                    near = min(range(len(pts)), key=lambda i: math.hypot(pts[i][1] - self.x, pts[i][2] - self.z))  # noqa: B023
                     self.leg = (near + 1) % len(pts)
                 else:
                     self.leg = (self.leg + 1) % len(pts)

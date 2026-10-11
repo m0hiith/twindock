@@ -10,6 +10,7 @@ import math
 import os
 from dataclasses import dataclass, field
 
+from . import traffic
 from .graph import Graph
 from .models import Action, Layout, Node, PlanStep, Source, Unit
 
@@ -41,6 +42,7 @@ BATTERY_FLOOR_PCT = 15.0
 FORK_OFFSET_M = 1.1         # carried pallet sits this far ahead of the forklift centre
 
 BAY1_DOCK_NODE = "DOCK_1"   # LED0 rule: on while a truck is docked at Bay 1
+ROAD_IN = "ROAD_IN"         # where off-site trucks wait and come back in (westbound side of the road)
 FINISHED_PREFIX = "FG-"     # finished-goods pallets made by the FAC-01 line; delivered when their truck departs
 
 
@@ -91,6 +93,13 @@ class Entity:
     claimed_by: str | None = None
     # docks
     fixed_state: str | None = None                  # "maintenance" from the seed
+    # traffic (traffic.py): path nodes reserved ahead, and who this vehicle is waiting for
+    granted: int = 0
+    blocked_by: str | None = None
+    blocked_since: float | None = None
+    resume: tuple[str, str, str | None] | None = None  # task to pick up again after making way (traffic.py)
+    resume_after: float = 0.0
+    made_way_for: dict[str, str | None] = field(default_factory=dict)  # vehicle -> where it was stuck
 
     @property
     def moving(self) -> bool:
@@ -122,6 +131,8 @@ class World:
         self.dock_by_node = {d.node: d for d in layout.docks}
         self.dock_by_bay = {d.bay_node: d for d in layout.docks}
         self.charger_by_node = {c.node: c for c in layout.chargers}
+        # Which nodes and lanes vehicles can't share (traffic.py); built once from the geometry.
+        self.conflicts = traffic.build_conflicts(graph, [(ln.a, ln.b, list(ln.kinds)) for ln in layout.lanes])
         self.events: list[tuple[str, str, str | None]] = []  # (level, text, unit_id), drained by the engine
         self.removed: list[str] = []  # unit ids that left the world (delivered pallets), drained by the engine
         self.entities: dict[str, Entity] = {}
@@ -384,7 +395,10 @@ class World:
         if u.node is not None:
             u.prev_node = u.node
             u.path = r.path[1:]
+            u.granted = 0  # leaves its node only once traffic grants the first lane
         else:
+            # Mid-lane: the new route starts at the node it is already driving to (still granted).
+            u.granted = 1 if u.granted > 0 and u.path and r.path and r.path[0] == u.path[0] else 0
             u.path = list(r.path)
         if u.path:
             u.node = None
@@ -402,8 +416,12 @@ class World:
 
     def tick(self, dt: float) -> None:
         self.time += dt
+        hold = traffic.step(self, dt, ACCEL, PACE, SPEED)  # nobody drives into another unit or a person
         for u in list(self.entities.values()):  # a departing truck can deliver (remove) pallets mid-loop
             if u.kind not in ("forklift", "truck"):
+                continue
+            if u.id in hold:
+                u.speed = 0.0
                 continue
             if u.path:
                 self._drive(u, dt)
@@ -420,6 +438,9 @@ class World:
 
     def _drive(self, u: Entity, dt: float) -> None:
         g = self.graph
+        if u.granted <= 0:
+            u.speed = 0.0  # waiting at its node for traffic (traffic.py)
+            return
         nxt = g.nodes[u.path[0]]
         reverse = u.prev_node is not None and g.is_reverse(u.prev_node, nxt.id)
         dx, dz = nxt.x - u.x, nxt.z - u.z
@@ -434,13 +455,14 @@ class World:
         vmax = TRUCK_REVERSE_SPEED if reverse else SPEED[u.kind]
         if abs(err) > TURN_SLOW_ANGLE:
             vmax = min(vmax, TURN_SLOW_SPEED)
-        remaining = math.hypot(dx, dz) + g.path_length(u.path)
+        # Brake for the last granted node: beyond it the way isn't reserved yet.
+        remaining = math.hypot(dx, dz) + g.path_length(u.path[:u.granted])
         vmax = max(CREEP_SPEED, min(vmax, math.sqrt(2 * ACCEL * remaining)))
         u.speed = min(vmax, u.speed + ACCEL * dt) if u.speed < vmax else vmax
 
         move = u.speed * dt
         moved = 0.0
-        while move > 1e-9 and u.path:
+        while move > 1e-9 and u.path and u.granted > 0:
             n = g.nodes[u.path[0]]
             ddx, ddz = n.x - u.x, n.z - u.z
             d = math.hypot(ddx, ddz)
@@ -449,6 +471,7 @@ class World:
                 move -= d
                 moved += d
                 u.prev_node = u.path.pop(0)
+                u.granted -= 1
             else:
                 u.x += ddx / d * move
                 u.z += ddz / d * move
@@ -460,6 +483,8 @@ class World:
             u.speed = 0.0
             u.node = u.prev_node
             self._arrive(u)
+        elif u.granted <= 0:
+            u.speed = 0.0  # reached the last reserved node: wait there for the next grant
 
     def _arrive(self, u: Entity) -> None:
         a = u.action
@@ -469,6 +494,11 @@ class World:
                 u.heading = math.pi / 2  # parked square to the door, cab facing the yard
             elif a == "depart":
                 u.state = "gone"
+                # Off site. It comes back on the inbound side of the road (ROAD_IN), so a returning or
+                # waiting truck never stands on the exit lane that departing trucks use.
+                back = self.graph.nodes.get(ROAD_IN)
+                if back is not None:
+                    u.x, u.z, u.heading, u.node, u.prev_node = back.x, back.z, math.pi, back.id, back.id
                 assert u.cargo is not None
                 # Finished goods from the factory (FG-..) are delivered and leave the world; any other
                 # cargo comes back with the truck and is unloaded (the warehouse's closed loop).
@@ -613,6 +643,14 @@ class World:
         return pid
 
     def task_text(self, u: Entity) -> str:
+        if u.blocked_by and u.path:
+            b = self.entities.get(u.blocked_by)
+            if b is not None and b.kind == "worker":
+                return f"Stopped for a pedestrian ({b.id})"
+            return f"Waiting for {u.blocked_by} to clear the way"
+        return self._task_text(u)
+
+    def _task_text(self, u: Entity) -> str:
         nl = self.node_label
         if u.kind == "forklift":
             p = u.carrying or u.action_pallet

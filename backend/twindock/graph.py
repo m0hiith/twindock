@@ -48,11 +48,15 @@ class Graph:
         lane = self._lanes.get((a, b))
         return lane is not None and lane.reverse_into == b
 
+    def neighbours(self, kind: MoverKind, node_id: str) -> list[str]:
+        return [m for m, _w in self._adj[kind].get(node_id, [])]
+
     def reachable_by(self, kind: MoverKind, node_id: str) -> bool:
         return node_id in self._adj[kind]
 
-    def shortest_path(self, kind: MoverKind, start: str, goal: str) -> list[str] | None:
-        """Node list from start to goal inclusive, or None if unreachable for this kind."""
+    def shortest_path(self, kind: MoverKind, start: str, goal: str, avoid: set[str] | None = None) -> list[str] | None:
+        """Node list from start to goal inclusive, or None if unreachable for this kind.
+        `avoid`: nodes the path must not pass through (traffic re-routing around a blocked spot)."""
         adj = self._adj[kind]
         if start not in adj or goal not in adj:
             return None
@@ -68,6 +72,8 @@ class Graph:
             if d > dist[n]:
                 continue
             for m, w in adj[n]:
+                if avoid and m in avoid and m != goal:
+                    continue
                 nd = d + w
                 if nd < dist.get(m, math.inf):
                     dist[m] = nd

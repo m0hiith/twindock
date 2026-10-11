@@ -78,7 +78,7 @@ class SiteSim:
         if w is None:
             return d
         nodes = {n["id"]: n for n in json.loads(LAYOUT.read_text())["nodes"]}
-        routes = {name: [(nid, float(nodes[nid]["x"]), float(nodes[nid]["z"])) for nid in ids]
+        routes = {name: [(nid, float(nodes[nid]["x"]), float(nodes[nid]["z"]), bool(nodes[nid]["kinds"])) for nid in ids]
                   for name, ids in w["routes"].items()}
         return {**d, "_routes": routes, "_walk_speed": self.cfg.get("safety", {}).get("walk_speed_mps", 1.3)}
 

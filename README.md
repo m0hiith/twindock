@@ -162,6 +162,11 @@ How it works, in `backend/twindock/`:
   (`graph.py`), forklift 2.2 m/s, truck 3 m/s (1.2 m/s backing into a bay), smooth heading,
   move validation (trucks only to docks/gate, one truck per dock, no picking a carried or
   claimed pallet, one forklift per charger, low battery).
+- `traffic.py` keeps vehicles from touching each other or people: a forklift or truck may only
+  drive onto nodes and lanes it has reserved (conflicting ones are worked out once from the real
+  footprints), so it waits instead of driving into another unit. Head-on and parked blockers move
+  aside or make way into a pocket and then resume their task; forklifts stop for a pedestrian on
+  their lane. `tests/test_traffic.py` checks zero overlap over 10-minute auto-mode runs.
 - `gateway.py` keeps board state built only from real messages, each with its receive time;
   offline after 15 s without status. Hardware is limited to `hardware.py` (= HARDWARE.md).
 - Physical controls: BTN1 short press selects the next forklift on every screen; BTN0 short press

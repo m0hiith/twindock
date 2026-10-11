@@ -32,7 +32,7 @@ AUTO_START_P = 0.5
 AUTO_TRUCK_P = 0.3
 AUTO_WANDER_P = 0.15         # an idle forklift with no work drives somewhere now and then
 CHOICE_SPREAD = 3            # random choices pick among this many nearest candidates
-WANDER_TYPES = ("junction", "zone")
+WANDER_TYPES = ("zone",)  # idle forklifts park in a zone, never on an aisle junction (traffic.py)
 
 
 def _dist(world: World, u: Entity, node: str) -> float:
@@ -67,7 +67,7 @@ def _free_rack_slots(world: World, exclude: str) -> list[str]:
 def carrying_step(world: World, f: Entity, rng: random.Random | None = None) -> Step | None:
     """Where to take the pallet a forklift is holding."""
     for t in _docked(world, inbound=False):
-        if world.truck_room(t, exclude=f.id) > 0 and t.docked_at:
+        if world.truck_room(t, exclude=f.id) > 0 and t.docked_at and not _dock_taken(world, t.docked_at, f):
             return Step(t.docked_at, "load")
     slots = _nearest(world, f, _free_rack_slots(world, f.id), rng)
     if slots:
@@ -76,6 +76,15 @@ def carrying_step(world: World, f: Entity, rng: random.Random | None = None) -> 
         if world.free_spots(world.graph.nodes[z], f.id) > 0:
             return Step(z, "drop")
     return None
+
+
+def _dock_taken(world: World, dock_node: str, f: Entity) -> bool:
+    """Another forklift is already working this dock (heading there or with it in its plan): one
+    forklift per truck at a time, so they don't queue on the main aisle in front of one door."""
+    for o in world.of_kind("forklift"):
+        if o.id != f.id and (o.target == dock_node or any(s.node == dock_node for s in o.plan)):
+            return True
+    return False
 
 
 def _unclaimed(world: World, pallets: list[Entity], f: Entity) -> bool:
@@ -96,13 +105,15 @@ def suggest_forklift(world: World, f: Entity, rng: random.Random | None = None) 
         zone_a = world.graph.nodes[RECEIVING_ZONE]
         for t in _docked(world, inbound=True):
             assert t.cargo is not None and t.docked_at is not None
+            if _dock_taken(world, t.docked_at, f):
+                continue
             if _unclaimed(world, [world.entities[p] for p in t.cargo], f) and world.free_spots(zone_a, f.id) > 0:
                 return [Step(t.docked_at, "pick"), Step(RECEIVING_ZONE, "drop")]
         return []
 
     def load() -> list[Step]:
         for t in _docked(world, inbound=False):
-            if world.truck_room(t, exclude=f.id) <= 0 or t.docked_at is None:
+            if world.truck_room(t, exclude=f.id) <= 0 or t.docked_at is None or _dock_taken(world, t.docked_at, f):
                 continue
             sources = [STAGING_ZONE] if _unclaimed(world, world.pallets_at(STAGING_ZONE), f) else []
             sources += _nearest(world, f, [n.id for n in world.graph.nodes.values()
@@ -170,8 +181,8 @@ def auto_step(world: World, rng: random.Random) -> list[str]:
     notes: list[str] = []
     now = world.time
     for f in world.of_kind("forklift"):
-        if f.source == "device" or f.moving or f.busy or f.action is not None:
-            continue
+        if f.source == "device" or f.moving or f.busy or f.action is not None or f.resume is not None:
+            continue  # (resume: it made way in a jam and picks its own task up again, traffic.py)
         if now - f.idle_since < FORKLIFT_IDLE_S or rng.random() > AUTO_START_P:
             continue
         ok, text = run_next_step(world, f, "auto", rng)

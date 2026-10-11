@@ -71,7 +71,7 @@ def test_full_pick_and_load_cycle(h: Harness) -> None:
     assert w.entities["FL-01"].carrying == "PL-01"
     ack = move(h, "FL-01", "DOCK_2", "load")
     assert ack["ok"], ack
-    h.run(30)
+    h.run(35)  # rack slots sit 0.6 m into the rack face (traffic: they don't block the aisle)
     tr = w.entities["TR-01"]
     assert "PL-01" in (tr.cargo or [])
     assert w.entities["PL-01"].holder == "TR-01"

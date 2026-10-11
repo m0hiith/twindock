@@ -24,7 +24,7 @@ def test_btn0_runs_next_task_of_selected_forklift(h: Harness) -> None:
     h.run(25)
     h.press("BTN0", 30000)
     assert fl.action == "load" and fl.target == "DOCK_2"
-    h.run(30)
+    h.run(35)
     assert "PL-01" in (h.world.entities["TR-01"].cargo or [])
 
 
@@ -60,7 +60,7 @@ def test_led0_follows_bay1_rule(h: Harness) -> None:
     # Demo opener: send a truck to Bay 1. LED0 is commanded on only once it has docked.
     h.client({"type": "move_unit", "cmd_id": "d1", "unit_id": "TR-02", "target_node": "DOCK_1"})
     n = len(h.mqtt)
-    for t in range(12):  # ~36 s drive; keep the board's status fresh meanwhile
+    for t in range(20):  # up to 60 s drive from the inbound road; keep the board's status fresh meanwhile
         h.run(3)
         h.mqtt_in("twin/gateway/status", {"ts_ms": 2000 + t * 3000})
         if len(h.mqtt) > n:

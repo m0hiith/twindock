@@ -485,7 +485,7 @@
       "id": "RACK_A1",
       "type": "rack_slot",
       "x": 9.25,
-      "z": 5.7,
+      "z": 5.1,
       "kinds": [
         "forklift"
       ],
@@ -501,7 +501,7 @@
       "id": "RACK_B1",
       "type": "rack_slot",
       "x": 9.25,
-      "z": 10.3,
+      "z": 10.9,
       "kinds": [
         "forklift"
       ],
@@ -527,7 +527,7 @@
       "id": "RACK_A2",
       "type": "rack_slot",
       "x": 15.75,
-      "z": 5.7,
+      "z": 5.1,
       "kinds": [
         "forklift"
       ],
@@ -543,7 +543,7 @@
       "id": "RACK_B2",
       "type": "rack_slot",
       "x": 15.75,
-      "z": 10.3,
+      "z": 10.9,
       "kinds": [
         "forklift"
       ],
@@ -569,7 +569,7 @@
       "id": "RACK_A3",
       "type": "rack_slot",
       "x": 22.25,
-      "z": 5.7,
+      "z": 5.1,
       "kinds": [
         "forklift"
       ],
@@ -585,7 +585,7 @@
       "id": "RACK_B3",
       "type": "rack_slot",
       "x": 22.25,
-      "z": 10.3,
+      "z": 10.9,
       "kinds": [
         "forklift"
       ],
@@ -611,7 +611,7 @@
       "id": "RACK_A4",
       "type": "rack_slot",
       "x": 28.75,
-      "z": 5.7,
+      "z": 5.1,
       "kinds": [
         "forklift"
       ],
@@ -627,7 +627,7 @@
       "id": "RACK_B4",
       "type": "rack_slot",
       "x": 28.75,
-      "z": 10.3,
+      "z": 10.9,
       "kinds": [
         "forklift"
       ],
@@ -732,7 +732,7 @@
     {
       "id": "CHG_J",
       "type": "junction",
-      "x": 4.5,
+      "x": 5.5,
       "z": 24.5,
       "kinds": [
         "forklift"
@@ -1114,6 +1114,16 @@
       "z": 14,
       "kinds": [],
       "label": "Factory east aisle"
+    },
+    {
+      "id": "ROAD_IN",
+      "type": "junction",
+      "x": 90,
+      "z": 41.5,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Road (inbound)"
     }
   ],
   "lanes": [
@@ -1420,6 +1430,13 @@
       "kinds": [
         "forklift"
       ]
+    },
+    {
+      "a": "GATE_IN",
+      "b": "ROAD_IN",
+      "kinds": [
+        "truck"
+      ]
     }
   ],
   "docks": [
@@ -1557,7 +1574,7 @@
       },
       {
         "id": "TR-02",
-        "node": "ROAD_E",
+        "node": "ROAD_IN",
         "heading_rad": 3.1416,
         "state": "arriving",
         "capacity": 6,
