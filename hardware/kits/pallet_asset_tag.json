@@ -1,0 +1,631 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "pallet_asset_tag",
+    "name": "Pallet asset tag",
+    "asset_type": "pallet",
+    "status": "reference",
+    "radio": {
+      "protocol": "ble",
+      "chip": "EFR32BG22",
+      "reason": "A coin cell must last years: Bluetooth LE advertising every few seconds draws microamps on average, and the warehouse gateways already scan BLE.",
+      "evidence": "silabs.com"
+    },
+    "power_source": {
+      "type": "battery",
+      "description": "One CR2032 coin cell in the board's holder."
+    },
+    "mounting": "Screwed or zip-tied to the pallet's side block, button facing out.",
+    "purpose": "A pallet that can be found: it advertises its ID, and its button and LED answer a 'find me'.",
+    "captions": [
+      "Lets the warehouse find a pallet by asking it to blink.",
+      "Runs for years on a coin cell because it only talks in short radio blips."
+    ],
+    "publishes": [
+      {
+        "channel": "find_me",
+        "description": "True while the tag is blinking for a 'find me' request"
+      }
+    ],
+    "power_budget": {
+      "average_ma": 0.012,
+      "peak_ma": 8,
+      "supply_v": 3.0,
+      "assumptions": "BLE advertising every 2 s (~5 µA average for the radio), sleep current a few µA, LED blink only on request. Estimate."
+    },
+    "est_battery_life": {
+      "days": 900,
+      "assumptions": "CR2032 ~220 mAh usable at 12 µA average, one 10 s find-me a day, room temperature. Estimate, not measured."
+    }
+  },
+  "board": "BRD4184",
+  "sdk": "reference design (not built)",
+  "buses": [
+    {
+      "id": "vbat",
+      "name": "Coin cell (3.0 V)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    },
+    {
+      "id": "gpio",
+      "name": "GPIO",
+      "kind": "gpio",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    }
+  ],
+  "parts": [
+    {
+      "id": "mcu",
+      "name": "EFR32BG22 dev kit (BRD4184)",
+      "part_number": "SLTB010A (EFR32BG22 Thunderboard)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Advertises the tag's ID over Bluetooth LE and handles the button and the LED.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "pad1",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 2.04,
+          "y_mm": 14.58,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad20",
+          "signal": "VBAT",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 37.06,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad3",
+          "signal": "BUTTON_IN",
+          "gpio": "GPIO_25",
+          "x_mm": 2.04,
+          "y_mm": 17.07,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad5",
+          "signal": "LED_OUT",
+          "gpio": "GPIO_26",
+          "x_mm": 2.04,
+          "y_mm": 19.57,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.4,
+        "h_mm": 55.0,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "label": "EFR32BG22",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 0.3,
+            "y_mm": 3.5,
+            "w_mm": 4.4,
+            "h_mm": 7.4,
+            "rot": 90
+          },
+          {
+            "family": "antenna",
+            "variant": "chip",
+            "x_mm": 13.6,
+            "y_mm": 0.8,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "chip",
+            "variant": "qfn",
+            "label": "EFR32BG22",
+            "x_mm": 11.7,
+            "y_mm": 16.5,
+            "w_mm": 7.0,
+            "h_mm": 7.0
+          },
+          {
+            "family": "crystal",
+            "label": "40M",
+            "x_mm": 20.5,
+            "y_mm": 18.0,
+            "w_mm": 2.5,
+            "h_mm": 2.0
+          },
+          {
+            "family": "button",
+            "x_mm": 8.0,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "button",
+            "x_mm": 18.8,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "led",
+            "color": "#2BB673",
+            "x_mm": 6.2,
+            "y_mm": 46.8,
+            "w_mm": 1.6,
+            "h_mm": 0.8
+          },
+          {
+            "family": "connector",
+            "variant": "usb_c",
+            "x_mm": 10.7,
+            "y_mm": 47.4,
+            "w_mm": 9.0,
+            "h_mm": 7.3
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "EFR32BG22",
+            "x_mm": 16.5,
+            "y_mm": 5.2,
+            "w_mm": 8.928,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "Thunderboard",
+            "x_mm": 16.5,
+            "y_mm": 7.4,
+            "w_mm": 8.184000000000001,
+            "h_mm": 1.1
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "CR2032 on back",
+            "x_mm": 9.0,
+            "y_mm": 31.0,
+            "w_mm": 12,
+            "h_mm": 1.2
+          }
+        ]
+      }
+    },
+    {
+      "id": "button",
+      "name": "Find-me button",
+      "part_number": "6 × 6 mm tactile switch",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Press it to make the tag announce itself, or to stop it blinking.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "A",
+          "signal": "BUTTON_IN",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 1.2,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "B",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 5.7,
+          "y_mm": 1.2,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "button",
+        "w_mm": 6.0,
+        "h_mm": 6.0,
+        "dims_evidence": "typical"
+      }
+    },
+    {
+      "id": "led",
+      "name": "Find-me LED",
+      "part_number": "Red LED + 1 kΩ resistor",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Blinks when someone looks for this pallet.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "A",
+          "signal": "LED_OUT",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 1.25,
+          "side": "left",
+          "evidence": "unverified"
+        },
+        {
+          "name": "K",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 4.7,
+          "y_mm": 1.25,
+          "side": "right",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "led",
+        "color": "#E5392B",
+        "w_mm": 5.0,
+        "h_mm": 2.5,
+        "dims_evidence": "typical"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "mcu_pad3_button_a",
+      "from": "mcu.pad3",
+      "to": "button.A",
+      "signal": "BUTTON_IN",
+      "bus": "gpio",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "button_b_mcu_pad1",
+      "from": "button.B",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "gpio",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad5_led_a",
+      "from": "mcu.pad5",
+      "to": "led.A",
+      "signal": "LED_OUT",
+      "bus": "gpio",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "led_k_mcu_pad1",
+      "from": "led.K",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "gpio",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    }
+  ],
+  "bom": [
+    {
+      "id": "mcu",
+      "part_number": "SLTB010A (EFR32BG22 Thunderboard)",
+      "manufacturer": "Silicon Labs",
+      "description": "EFR32BG22 Thunderboard: Bluetooth LE SoC, CR2032 holder, switches between USB and battery power.",
+      "quantity": 1,
+      "unit_cost_usd": null,
+      "link": "https://www.silabs.com/wireless/bluetooth/efr32bg22-series-2-socs",
+      "source": "silabs.com",
+      "covers": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "button",
+      "part_number": "6 × 6 mm tactile switch",
+      "manufacturer": "unverified",
+      "description": "6 mm tactile switch",
+      "quantity": 1,
+      "unit_cost_usd": 0.2,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "button"
+      ]
+    },
+    {
+      "id": "led",
+      "part_number": "Red LED + 1 kΩ resistor",
+      "manufacturer": "unverified",
+      "description": "Red LED with series resistor",
+      "quantity": 1,
+      "unit_cost_usd": 0.2,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "led"
+      ]
+    }
+  ],
+  "boot_sequence": [],
+  "open_questions": [
+    {
+      "id": "pad_map",
+      "question": "Map every pad used here to a real pin of the SLTB010A (EFR32BG22 Thunderboard) expansion header (its user guide); this design reuses the BRD2605A pad numbering as a placeholder.",
+      "blocks": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "product_tag",
+      "question": "A production tag would be a custom coin-cell board around the EFR32BG22; the Thunderboard is the prototype.",
+      "blocks": [
+        "mcu"
+      ]
+    }
+  ]
+}

@@ -299,6 +299,11 @@
           "items": {
             "$ref": "#/$defs/drawing_feature"
           }
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Body colour for parts whose colour matters (an LED's colour)."
         }
       }
     }
@@ -629,7 +634,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^twin/gateway/"
+              "pattern": "^twin/"
             },
             "description": "MQTT topics this part feeds. Each must exist in /shared (checked in W5)."
           },
@@ -980,6 +985,31 @@
             "minLength": 1
           },
           "description": "2-3 plain-language sentences for non-engineers."
+        },
+        "publishes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "channel",
+              "description"
+            ],
+            "properties": {
+              "channel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "description": "Channels a device built from this kit reports (twin/<site>/<device>/<channel>). A reference kit's channels are simulated: source is always sim."
         }
       }
     },

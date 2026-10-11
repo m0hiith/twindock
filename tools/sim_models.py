@@ -15,10 +15,13 @@ from typing import Any
 
 FW = {"gateway": "sim-1.0", "machine_monitor": "sim-2.3", "env_sensor": "sim-1.4", "door_sensor": "sim-1.1",
       "occupancy_sensor": "sim-1.2", "badge": "sim-3.0", "asset_tag": "sim-1.0", "power_meter": "sim-1.0",
-      "light": "sim-1.0", "air_quality": "sim-1.3"}
+      "light": "sim-1.0", "air_quality": "sim-1.3", "truck_telematics": "sim-1.0", "dock_bay": "sim-1.0",
+      "conveyor_monitor": "sim-1.0", "compressor_monitor": "sim-1.0", "helmet_clip": "sim-1.0", "gas_detector": "sim-1.0",
+      "leak_sensor": "sim-1.0", "tank_level": "sim-1.0", "fire_panel": "sim-1.0"}
 
 # Mains-powered devices report no battery; the rest start somewhere plausible.
-MAINS = {"machine_monitor", "air_quality", "power_meter", "light", "gateway"}
+MAINS = {"machine_monitor", "air_quality", "power_meter", "light", "gateway", "dock_bay", "conveyor_monitor", "compressor_monitor",
+         "gas_detector", "fire_panel", "tank_level", "truck_telematics"}
 
 Payload = dict[str, Any]
 Out = list[tuple[str, Payload]]  # (channel, payload)
@@ -83,6 +86,8 @@ class EnvSensor(Model):
     temp: float = 0.0
     hum: float = 0.0
     door_open: bool = False  # set by the simulator from the room's door sensor
+    co2: float = 650.0
+    pm: float = 8.0
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -103,8 +108,14 @@ class EnvSensor(Model):
         self.temp += self.rng.gauss(0, 0.01) * math.sqrt(dt)
         self.hum += (self.rng.gauss(0, 0.2) - (self.hum - (82 if self.setpoint < 10 else 45)) * 0.01) * dt
         if self.every("env", t, 5.0):
-            return [("temperature", self.reading(ts_ms, round(self.temp, 2), "°C")),
-                    ("humidity", self.reading(ts_ms, round(self.hum, 1), "%RH"))]
+            out: Out = [("temperature", self.reading(ts_ms, round(self.temp, 2), "°C")),
+                        ("humidity", self.reading(ts_ms, round(self.hum, 1), "%RH"))]
+            # Env nodes built from the env_node kit also carry a CO2 and a particle sensor.
+            if "co2_ppm" in self.d["capabilities"]:
+                self.co2 += (self.rng.gauss(0, 6) - (self.co2 - 700) * 0.01) * 5.0
+                self.pm = max(1.0, self.pm + (self.rng.gauss(0, 0.4) - (self.pm - 9) * 0.02) * 5.0)
+                out += [("co2_ppm", self.reading(ts_ms, round(self.co2), "ppm")), ("pm25_ugm3", self.reading(ts_ms, round(self.pm, 1), "µg/m³"))]
+            return out
         return []
 
 
@@ -185,6 +196,7 @@ class MachineMonitor(Model):
     next_cycle: float = 0.0
     vib_offset: float = 0.0
     degrade_rate: float = 0.0  # mm/s per second while degrading
+    surface_c: float = 30.0
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -248,6 +260,11 @@ class MachineMonitor(Model):
                 vib, cur = 0.15 + abs(self.rng.gauss(0, 0.03)), (1.2 if self.state == "idle" else 0.0)
             out.append(("vibration_rms", self.reading(ts_ms, round(max(0.0, vib), 3), "mm/s")))
             out.append(("current_a", self.reading(ts_ms, round(max(0.0, cur), 2), "A")))
+            if "temperature_c" in self.d["capabilities"]:
+                # Surface temperature follows the motor current (heat) and relaxes back to the shop floor's 24 °C.
+                target = 24.0 + 2.6 * cur + 3.0 * self.vib_offset
+                self.surface_c += (target - self.surface_c) * 0.02
+                out.append(("temperature_c", self.reading(ts_ms, round(self.surface_c, 1), "°C")))
         if self.every("state", t, 5.0):
             out.append(("state", self.reading(ts_ms, self.state)))
             out.append(("units", self.reading(ts_ms, self.units)))
@@ -316,8 +333,254 @@ class Badge(Model):
         return []
 
 
+@dataclass
+class TruckTelematics(Model):
+    """Telematics on a box truck: speed, cargo door, cargo temperature, harsh events. Position is the truck's own
+    position in the twin (a real unit would report GNSS), so it is not published."""
+    speed: float = 0.0
+    door: bool = False
+    cargo_c: float = 0.0
+    target: float = 0.0
+    next_speed: float = 0.0
+    next_event: float = 0.0
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.cargo_c = float(self.d.get("sim", {}).get("cargo_c", 17.0))
+        self.next_event = self.rng.uniform(90, 200)
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        out: Out = []
+        if t >= self.next_speed:
+            self.target = self.rng.choice([0.0, 0.0, 8.0, 14.0, 22.0])
+            self.next_speed = t + self.rng.uniform(10, 40)
+        self.speed += (self.target - self.speed) * min(1.0, dt / 4.0)
+        self.cargo_c += (self.rng.gauss(0, 0.02) - (self.cargo_c - 17.0) * 0.002) * dt
+        if self.every("door", t, 45.0):
+            self.door = self.speed < 1.0 and self.rng.random() < 0.3  # only opened when stopped
+            out.append(("door_open", self.reading(ts_ms, self.door)))
+        if t >= self.next_event:
+            self.next_event = t + self.rng.uniform(120, 300)
+            out.append(("harsh_event", self.reading(ts_ms, self.rng.choice(["hard_brake", "hard_accel", "impact"]))))
+        if self.every("fast", t, 2.0):
+            out.append(("speed_kmh", self.reading(ts_ms, round(max(0.0, self.speed + self.rng.gauss(0, 0.2)), 1), "km/h")))
+            out.append(("cargo_temp_c", self.reading(ts_ms, round(self.cargo_c, 2), "°C")))
+        return out
+
+
+@dataclass
+class DockBay(Model):
+    """Dock bay: a vehicle is parked at the door (ToF occupancy), the door opens while it is there."""
+    occupied: bool = False
+    next_change: float = 0.0
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        out: Out = []
+        if t >= self.next_change:
+            self.occupied = not self.occupied
+            self.next_change = t + (self.rng.uniform(90, 200) if self.occupied else self.rng.uniform(40, 120))
+            out += [("occupied", self.reading(ts_ms, self.occupied)),
+                    ("door_position", self.reading(ts_ms, "open" if self.occupied else "closed")),
+                    ("leveler", self.reading(ts_ms, "deployed" if self.occupied else "stowed")),
+                    ("dock_light", self.reading(ts_ms, self.occupied))]
+        if self.every("hb", t, 30.0):
+            out += [("occupied", self.reading(ts_ms, self.occupied)),
+                    ("door_position", self.reading(ts_ms, "open" if self.occupied else "closed"))]
+        return out
+
+
+@dataclass
+class ConveyorMonitor(Model):
+    jam: bool = False
+    jam_until: float = 0.0
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action == "jam":
+            self.jam, self.jam_until = True, t + 25.0
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        if self.jam and t >= self.jam_until:
+            self.jam = False
+        if self.every("fast", t, 2.0):
+            run = not self.jam
+            cur = (7.5 + self.rng.gauss(0, 0.25)) if run else (13.5 + self.rng.gauss(0, 0.3))  # a jam stalls the motor: current climbs
+            speed = (0.55 + self.rng.gauss(0, 0.01)) if run else 0.0
+            return [("motor_current_a", self.reading(ts_ms, round(cur, 2), "A")),
+                    ("belt_speed_m_s", self.reading(ts_ms, round(max(0.0, speed), 3), "m/s")),
+                    ("jam", self.reading(ts_ms, self.jam))]
+        return []
+
+
+@dataclass
+class CompressorMonitor(Model):
+    """Screw compressor between 6.5 and 7.5 bar: loaded while pressure rises, unloaded while it falls."""
+    bar: float = 7.0
+    loaded: bool = True
+    hours: float = 1240.0
+    leak: float = 0.0  # extra air demand (bar/s), set by the scenario
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action == "leak":
+            self.leak = 0.02
+        elif action == "clear":
+            self.leak = 0.0
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        rate = 0.05 if self.loaded else -0.03
+        self.bar += (rate - self.leak) * dt
+        if self.bar >= 7.5:
+            self.loaded = False
+        elif self.bar <= 6.5 and self.leak < 0.04:
+            self.loaded = True
+        self.bar = max(3.0, self.bar)
+        self.hours += dt / 3600.0 if self.loaded else 0.0
+        if self.every("fast", t, 2.0):
+            cur = (46.0 if self.loaded else 13.0) + self.rng.gauss(0, 0.6)
+            return [("pressure_bar", self.reading(ts_ms, round(self.bar + self.rng.gauss(0, 0.01), 2), "bar")),
+                    ("current_a", self.reading(ts_ms, round(cur, 1), "A")),
+                    ("run_hours", self.reading(ts_ms, round(self.hours, 2), "h")),
+                    ("dew_point_c", self.reading(ts_ms, round(-22.0 + self.rng.gauss(0, 0.3), 1), "°C"))]
+        return []
+
+
+@dataclass
+class HelmetClip(Model):
+    worn: bool = True
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        out: Out = []
+        if self.every("worn", t, 30.0):
+            out.append(("worn", self.reading(ts_ms, self.worn)))
+        if self.every("impact", t, 240.0) and self.rng.random() < 0.15:
+            out.append(("impact_g", self.reading(ts_ms, round(self.rng.uniform(6, 14), 1), "g")))
+        return out
+
+
+@dataclass
+class GasDetector(Model):
+    """Fixed CO / O2 detector. "leak" ramps CO up past the alarm threshold, "clear" lets it fall again."""
+    co: float = 1.5
+    o2: float = 20.9
+    leaking: bool = False
+    alarm_ppm: float = 35.0
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action == "leak":
+            self.leaking = True
+        elif action == "clear":
+            self.leaking = False
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        goal = 90.0 if self.leaking else 1.5
+        self.co += (goal - self.co) * min(1.0, dt / (12.0 if self.leaking else 25.0))
+        self.o2 = 20.9 - (self.co / 90.0) * 0.4 + self.rng.gauss(0, 0.01)
+        if self.every("gas", t, 2.0):
+            alarm = self.co >= self.alarm_ppm
+            return [("co_ppm", self.reading(ts_ms, round(max(0.0, self.co + self.rng.gauss(0, 0.2)), 1), "ppm")),
+                    ("o2_pct", self.reading(ts_ms, round(self.o2, 2), "%")),
+                    ("alarm", self.reading(ts_ms, alarm))]
+        return []
+
+
+@dataclass
+class LeakSensor(Model):
+    wet: bool = False
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action in ("leak", "clear"):
+            self.wet = action == "leak"
+            self._due.pop("hb", None)
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        return [("wet", self.reading(ts_ms, self.wet))] if self.every("hb", t, 30.0) else []
+
+
+@dataclass
+class TankLevel(Model):
+    """Day tank: a pump refills it when it falls below 30 %, draw-off is steady."""
+    level: float = 72.0
+    pumping: bool = False
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        self.level += (1.1 if self.pumping else -0.12) * dt / 10.0
+        if self.level <= 30.0:
+            self.pumping = True
+        elif self.level >= 90.0:
+            self.pumping = False
+        if self.every("lvl", t, 10.0):
+            return [("level_pct", self.reading(ts_ms, round(self.level + self.rng.gauss(0, 0.15), 1), "%")),
+                    ("pump_on", self.reading(ts_ms, self.pumping))]
+        return []
+
+
+@dataclass
+class FirePanel(Model):
+    """Dry contacts read from an existing fire panel. We only read; we never raise or silence the real panel."""
+    alarm: bool = False
+    trouble: bool = False
+
+    def command(self, action: str, t: float, ts_ms: int) -> None:
+        if action in ("alarm", "reset"):
+            self.alarm = action == "alarm"
+            self._due.pop("hb", None)
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        if self.every("hb", t, 10.0):
+            return [("alarm", self.reading(ts_ms, self.alarm)), ("trouble", self.reading(ts_ms, self.trouble))]
+        return []
+
+
+@dataclass
+class PowerMeter(Model):
+    """DIN-rail meter on a feeder: power follows a base load plus a slow wave and noise."""
+    kwh: float = 0.0
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.base_kw = float(self.d.get("sim", {}).get("base_kw", 18.0))
+        self.kwh = float(self.d.get("sim", {}).get("kwh", 5200.0))
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        kw = self.base_kw * (1 + 0.15 * math.sin(t / 90.0)) + self.rng.gauss(0, 0.2)
+        self.kwh += kw * dt / 3600.0
+        if self.every("pw", t, 5.0):
+            return [("power_kw", self.reading(ts_ms, round(kw, 2), "kW")), ("energy_kwh", self.reading(ts_ms, round(self.kwh, 2), "kWh")),
+                    ("voltage_v", self.reading(ts_ms, round(400.0 + self.rng.gauss(0, 1.2), 1), "V"))]
+        return []
+
+
+@dataclass
+class AssetTag(Model):
+    find_until: float = -1.0
+
+    def command(self, action: str, t: float, ts_ms: int, data: Payload | None = None) -> None:
+        if action == "find_me":
+            self.find_until = t + float((data or {}).get("seconds", 10))
+            self._due.pop("hb", None)
+
+    def step(self, t: float, dt: float, ts_ms: int) -> Out:
+        super().step(t, dt, ts_ms)
+        finding = t < self.find_until
+        if self.every("hb", t, 20.0 if not finding else 1.0):
+            return [("find_me", self.reading(ts_ms, finding))]
+        return []
+
+
 MODELS: dict[str, type[Model]] = {"badge": Badge, "machine_monitor": MachineMonitor, "env_sensor": EnvSensor, "door_sensor": DoorSensor,
-                                  "occupancy_sensor": Occupancy, "air_quality": AirQuality}
+                                  "occupancy_sensor": Occupancy, "air_quality": AirQuality, "truck_telematics": TruckTelematics,
+                                  "dock_bay": DockBay, "conveyor_monitor": ConveyorMonitor, "compressor_monitor": CompressorMonitor,
+                                  "helmet_clip": HelmetClip, "gas_detector": GasDetector, "leak_sensor": LeakSensor,
+                                  "tank_level": TankLevel, "fire_panel": FirePanel, "power_meter": PowerMeter, "asset_tag": AssetTag}
 
 
 def make(d: dict[str, Any], rng: random.Random) -> Model:

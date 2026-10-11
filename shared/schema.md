@@ -136,3 +136,13 @@ to that node; manual commands, BTN0 and auto mode then leave it alone. A tag uns
 received. `online` is false when the last status is older than 15 s. LEDs carry the last
 **confirmed** `on` plus a `pending` command, so the UI can show "pending" between the click and
 the board's confirmation.
+
+### Kit devices (FACTORY_PROMPTS.md K2)
+
+Device types added for the reference kits: `truck_telematics` (speed_kmh, door_open, cargo_temp_c,
+harsh_event), `dock_bay` (occupied, door_position, leveler, dock_light), `conveyor_monitor`
+(motor_current_a, belt_speed_m_s, jam), `compressor_monitor` (pressure_bar, current_a, run_hours,
+dew_point_c), `helmet_clip` (worn, impact_g), `gas_detector` (co_ppm, o2_pct, alarm), `leak_sensor`
+(wet), `tank_level` (level_pct, pump_on), `fire_panel` (alarm, trouble); `power_meter` (power_kw,
+energy_kwh, voltage_v) and `asset_tag` (find_me) now have simulator models. Simulator commands:
+`jam`, `leak`/`clear`, `alarm`/`reset`, `find_me` (see `mqtt/site_cmd.json`). All `source: "sim"`.

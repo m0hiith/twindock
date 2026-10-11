@@ -1,0 +1,1433 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "compressor_monitor",
+    "name": "Compressor monitor",
+    "asset_type": "utility",
+    "status": "reference",
+    "radio": {
+      "protocol": "wifi",
+      "chip": "SiWG917M111MGTBA",
+      "reason": "Mains-powered in the compressor room; Wi-Fi reaches the utilities block without a mesh.",
+      "evidence": "silabs.com"
+    },
+    "power_source": {
+      "type": "mains",
+      "description": "24 V DC from the compressor's control supply, stepped down to 3.3 V and 5 V."
+    },
+    "mounting": "Board in a small box on the compressor room wall; pressure transducer on the receiver tank; dew-point transmitter after the dryer; clamp on the motor.",
+    "purpose": "Line pressure, motor current, run hours and dew point.",
+    "captions": [
+      "Shows the air pressure the factory gets, and when the compressor loads and unloads.",
+      "A leak shows up as the compressor running more often.",
+      "Wet air damages tools: the dew point says how dry it is."
+    ],
+    "publishes": [
+      {
+        "channel": "pressure_bar",
+        "unit": "bar",
+        "description": "Receiver pressure"
+      },
+      {
+        "channel": "current_a",
+        "unit": "A",
+        "description": "Motor current"
+      },
+      {
+        "channel": "run_hours",
+        "unit": "h",
+        "description": "Loaded hours (from current)"
+      },
+      {
+        "channel": "dew_point_c",
+        "unit": "°C",
+        "description": "Pressure dew point after the dryer"
+      }
+    ],
+    "power_budget": {
+      "average_ma": 110,
+      "peak_ma": 260,
+      "supply_v": 24.0,
+      "assumptions": "SiWx917 connected (~60 mA), 4-20 mA loop (up to 20 mA at 24 V), pressure transducer (~5 mA at 5 V). Estimate."
+    }
+  },
+  "board": "BRD2605A",
+  "sdk": "reference design (not built)",
+  "buses": [
+    {
+      "id": "i2c",
+      "name": "I2C2 (ULP_I2C) via Qwiic and pads 15/16",
+      "kind": "i2c",
+      "controller": "I2C2",
+      "voltage_v": 3.3,
+      "evidence": "user-guide"
+    },
+    {
+      "id": "vmcu",
+      "name": "3.3 V (VMCU)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.3,
+      "evidence": "user-guide"
+    },
+    {
+      "id": "analog",
+      "name": "Analog inputs",
+      "kind": "analog",
+      "controller": null,
+      "voltage_v": null,
+      "evidence": "unverified"
+    },
+    {
+      "id": "v24",
+      "name": "24 V DC",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 24.0,
+      "evidence": "unverified"
+    },
+    {
+      "id": "v5",
+      "name": "5 V (from pad 18)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 5.0,
+      "evidence": "unverified"
+    }
+  ],
+  "parts": [
+    {
+      "id": "mcu",
+      "name": "SiWx917 dev kit (BRD2605A)",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Reads three analog sensors through the ADC and reports over Wi-Fi.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "qwiic.GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 5.7,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 3.6.2 Table 3.3"
+        },
+        {
+          "name": "qwiic.3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 6.7,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 3.6.2 Table 3.3"
+        },
+        {
+          "name": "qwiic.SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 7.7,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 3.6.2 Table 3.3"
+        },
+        {
+          "name": "qwiic.SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 8.7,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 3.6.2 Table 3.3"
+        },
+        {
+          "name": "pad2",
+          "signal": "VMCU_IN",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 14.58,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 2 (VMCU)"
+        },
+        {
+          "name": "pad1",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 2.04,
+          "y_mm": 14.58,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 1 (GND)"
+        },
+        {
+          "name": "pad26",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 44.55,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 26 (GND)"
+        },
+        {
+          "name": "pad20",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 37.06,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 20 (3V3)"
+        },
+        {
+          "name": "pad16",
+          "signal": "SDA",
+          "gpio": "ULP_GPIO_6",
+          "x_mm": 27.66,
+          "y_mm": 32.06,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 16 (ULP_GPIO_6)"
+        },
+        {
+          "name": "pad15",
+          "signal": "SCL",
+          "gpio": "ULP_GPIO_7",
+          "x_mm": 2.04,
+          "y_mm": 32.06,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 15 (ULP_GPIO_7)"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.4,
+        "h_mm": 55.0,
+        "pcb_color": "black",
+        "dims_evidence": "datasheet",
+        "label": "SiWx917",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 0.3,
+            "y_mm": 3.5,
+            "w_mm": 4.4,
+            "h_mm": 7.4,
+            "rot": 90
+          },
+          {
+            "family": "antenna",
+            "variant": "chip",
+            "x_mm": 13.6,
+            "y_mm": 0.8,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "chip",
+            "variant": "qfn",
+            "label": "SiWx917",
+            "x_mm": 11.7,
+            "y_mm": 16.5,
+            "w_mm": 7.0,
+            "h_mm": 7.0
+          },
+          {
+            "family": "crystal",
+            "label": "40M",
+            "x_mm": 20.5,
+            "y_mm": 18.0,
+            "w_mm": 2.5,
+            "h_mm": 2.0
+          },
+          {
+            "family": "button",
+            "x_mm": 8.0,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "button",
+            "x_mm": 18.8,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "led",
+            "color": "#2BB673",
+            "x_mm": 6.2,
+            "y_mm": 46.8,
+            "w_mm": 1.6,
+            "h_mm": 0.8
+          },
+          {
+            "family": "connector",
+            "variant": "usb_c",
+            "x_mm": 10.7,
+            "y_mm": 47.4,
+            "w_mm": 9.0,
+            "h_mm": 7.3
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "SiWx917",
+            "x_mm": 16.5,
+            "y_mm": 5.2,
+            "w_mm": 6.944000000000001,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "BRD2605A",
+            "x_mm": 16.5,
+            "y_mm": 7.4,
+            "w_mm": 5.456,
+            "h_mm": 1.1
+          }
+        ]
+      }
+    },
+    {
+      "id": "buck",
+      "name": "Step-down regulator",
+      "part_number": "3.3 V step-down module (e.g. Pololu D24V10F3 class)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": "v24",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns the 24 V supply into the 3.3 V the board needs.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VIN",
+          "signal": "VIN",
+          "gpio": null,
+          "x_mm": 6.36,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 8.9,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "VOUT",
+          "signal": "VOUT",
+          "gpio": null,
+          "x_mm": 11.44,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 17.8,
+        "h_mm": 12.7,
+        "pcb_color": "green",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "BUCK",
+            "x_mm": 6.45,
+            "y_mm": 6.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "header_3",
+            "x_mm": 5.09,
+            "y_mm": 0.3,
+            "w_mm": 7.62,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 4.5,
+        "max_v": 36.0
+      }
+    },
+    {
+      "id": "clamp",
+      "name": "Current clamp",
+      "part_number": "SCT-013-030 split-core current transformer (30 A : 1 V)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Motor current",
+      "forklift_use": "",
+      "caption": "Clips around one motor wire and measures the current without cutting anything.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "OUT",
+          "signal": "CT_OUT",
+          "gpio": null,
+          "x_mm": 13.5,
+          "y_mm": 45.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "REF",
+          "signal": "CT_REF",
+          "gpio": null,
+          "x_mm": 17.5,
+          "y_mm": 45.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "current_clamp",
+        "w_mm": 31.0,
+        "h_mm": 46.0,
+        "dims_evidence": "typical"
+      }
+    },
+    {
+      "id": "bias",
+      "name": "Mid-supply bias",
+      "part_number": "2 × 10 kΩ divider + 10 µF capacitor",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Lifts the clamp's AC signal to half the supply so the ADC sees it swing both ways.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VCC",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 1.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 3.5,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "MID",
+          "signal": "CT_REF",
+          "gpio": null,
+          "x_mm": 7.0,
+          "y_mm": 9.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "MID_ADC",
+          "signal": "AIN_REF",
+          "gpio": null,
+          "x_mm": 10.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 14.0,
+        "h_mm": 10.0,
+        "pcb_color": "green",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "passive",
+            "variant": "r0805",
+            "label": "10k",
+            "x_mm": 2.0,
+            "y_mm": 2.5,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "passive",
+            "variant": "r0805",
+            "label": "10k",
+            "x_mm": 2.0,
+            "y_mm": 5.5,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "passive",
+            "variant": "c0805",
+            "x_mm": 8.0,
+            "y_mm": 4.0,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          }
+        ]
+      }
+    },
+    {
+      "id": "adc",
+      "name": "16-bit ADC",
+      "part_number": "ADS1115 breakout",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "i2c",
+      "address": "0x48",
+      "supplied_from": "vmcu",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns the analog sensor voltages into numbers the board can read, much finer than the chip's own ADC.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VDD",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 10.19,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 12.73,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_mm": 15.27,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_mm": 17.81,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A0",
+          "signal": "AIN_CT",
+          "gpio": null,
+          "x_mm": 10.19,
+          "y_mm": 16.07,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A1",
+          "signal": "AIN_REF",
+          "gpio": null,
+          "x_mm": 12.73,
+          "y_mm": 16.07,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A2",
+          "signal": "AIN_PRESS",
+          "gpio": null,
+          "x_mm": 15.27,
+          "y_mm": 16.07,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A3",
+          "signal": "AIN_DEW",
+          "gpio": null,
+          "x_mm": 17.81,
+          "y_mm": 16.07,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 28.0,
+        "h_mm": 17.8,
+        "pcb_color": "blue",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 24.2,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "ADS1115",
+            "x_mm": 11.55,
+            "y_mm": 9.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "header_4",
+            "x_mm": 8.92,
+            "y_mm": 0.3,
+            "w_mm": 10.16,
+            "h_mm": 2.54
+          },
+          {
+            "family": "connector",
+            "variant": "header_4",
+            "x_mm": 8.92,
+            "y_mm": 14.8,
+            "w_mm": 10.16,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "address_evidence": "unverified",
+      "supply": {
+        "min_v": 2.0,
+        "max_v": 5.5
+      }
+    },
+    {
+      "id": "pressure",
+      "name": "Pressure transducer",
+      "part_number": "0-10 bar, 0.5-4.5 V ratiometric transducer (1/4\" BSP)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": "v5",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Pressure 0-10 bar",
+      "forklift_use": "",
+      "caption": "Screws into the air tank and gives a voltage that rises with pressure.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "V+",
+          "signal": "5V",
+          "gpio": null,
+          "x_mm": 64.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 66.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "OUT",
+          "signal": "AIN_PRESS",
+          "gpio": null,
+          "x_mm": 68.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "probe",
+        "w_mm": 70.0,
+        "h_mm": 22.0,
+        "dims_evidence": "typical"
+      },
+      "supply": {
+        "min_v": 4.75,
+        "max_v": 5.25
+      }
+    },
+    {
+      "id": "divider",
+      "name": "Pressure signal divider",
+      "part_number": "10 kΩ / 20 kΩ divider",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Scales the transducer's 4.5 V maximum down to 3 V so the ADC input stays inside its supply.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "IN",
+          "signal": "AIN_PRESS",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 1.5,
+          "side": "left",
+          "evidence": "unverified"
+        },
+        {
+          "name": "OUT",
+          "signal": "AIN_PRESS",
+          "gpio": null,
+          "x_mm": 7.7,
+          "y_mm": 1.5,
+          "side": "right",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "passive",
+        "variant": "r0805",
+        "label": "2:3",
+        "w_mm": 8.0,
+        "h_mm": 3.0,
+        "dims_evidence": "typical"
+      }
+    },
+    {
+      "id": "dewpoint",
+      "name": "Dew-point transmitter",
+      "part_number": "Pressure dew-point transmitter, 4-20 mA (-60 … +20 °C)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": "v24",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Dew point",
+      "forklift_use": "",
+      "caption": "Measures how much water is left in the compressed air after the dryer.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "LOOP+",
+          "signal": "V24",
+          "gpio": null,
+          "x_mm": 86.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "LOOP-",
+          "signal": "AIN_DEW",
+          "gpio": null,
+          "x_mm": 88.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "probe",
+        "w_mm": 90.0,
+        "h_mm": 18.0,
+        "dims_evidence": "typical"
+      },
+      "supply": {
+        "min_v": 18.0,
+        "max_v": 30.0
+      }
+    },
+    {
+      "id": "shunt",
+      "name": "Loop shunt",
+      "part_number": "150 Ω 0.1 % resistor",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns the 4-20 mA loop into 0.6-3.0 V for the ADC.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "A",
+          "signal": "AIN_DEW",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 1.2,
+          "side": "left",
+          "evidence": "unverified"
+        },
+        {
+          "name": "B",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 5.7,
+          "y_mm": 1.2,
+          "side": "right",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "passive",
+        "variant": "r0805",
+        "label": "151",
+        "w_mm": 6.0,
+        "h_mm": 2.4,
+        "dims_evidence": "typical"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "buck_vout_mcu_pad2",
+      "from": "buck.VOUT",
+      "to": "mcu.pad2",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "buck_gnd_mcu_pad1",
+      "from": "buck.GND",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_adc_vdd",
+      "from": "mcu.pad20",
+      "to": "adc.VDD",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad26_adc_gnd",
+      "from": "mcu.pad26",
+      "to": "adc.GND",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad16_adc_sda",
+      "from": "mcu.pad16",
+      "to": "adc.SDA",
+      "signal": "SDA",
+      "bus": "i2c",
+      "medium": "wire",
+      "wire_color": "blue",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad15_adc_scl",
+      "from": "mcu.pad15",
+      "to": "adc.SCL",
+      "signal": "SCL",
+      "bus": "i2c",
+      "medium": "wire",
+      "wire_color": "yellow",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "clamp_out_adc_a0",
+      "from": "clamp.OUT",
+      "to": "adc.A0",
+      "signal": "AIN_CT",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "clamp_ref_bias_mid",
+      "from": "clamp.REF",
+      "to": "bias.MID",
+      "signal": "CT_REF",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "grey",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "bias_mid_adc_adc_a1",
+      "from": "bias.MID_ADC",
+      "to": "adc.A1",
+      "signal": "AIN_REF",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "grey",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "bias_vcc_mcu_pad20",
+      "from": "bias.VCC",
+      "to": "mcu.pad20",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "bias_gnd_mcu_pad26",
+      "from": "bias.GND",
+      "to": "mcu.pad26",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "pressure_out_divider_in",
+      "from": "pressure.OUT",
+      "to": "divider.IN",
+      "signal": "AIN_PRESS",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "divider_out_adc_a2",
+      "from": "divider.OUT",
+      "to": "adc.A2",
+      "signal": "AIN_PRESS",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "pressure_gnd_mcu_pad1",
+      "from": "pressure.GND",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "v5",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "dewpoint_loopn_shunt_a",
+      "from": "dewpoint.LOOP-",
+      "to": "shunt.A",
+      "signal": "AIN_DEW",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "shunt_a_adc_a3",
+      "from": "shunt.A",
+      "to": "adc.A3",
+      "signal": "AIN_DEW",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "shunt_b_mcu_pad1",
+      "from": "shunt.B",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "buck_vin_dewpoint_loopp",
+      "from": "buck.VIN",
+      "to": "dewpoint.LOOP+",
+      "signal": "V24",
+      "bus": "v24",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    }
+  ],
+  "bom": [
+    {
+      "id": "mcu",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "manufacturer": "Silicon Labs",
+      "description": "SiWx917 Wi-Fi 6 + Bluetooth LE dev kit (SiWG917M111MGTBA SoC, Qwiic connector, 26 breakout pads).",
+      "quantity": 1,
+      "unit_cost_usd": 40.0,
+      "link": "https://www.silabs.com/development-tools/wireless/wi-fi/siwx917-dk2605a-wifi-6-bluetooth-le-soc-dev-kit",
+      "source": "silabs.com",
+      "covers": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "buck",
+      "part_number": "3.3 V step-down module (e.g. Pololu D24V10F3 class)",
+      "manufacturer": "unverified",
+      "description": "Switching regulator, 4.5-36 V in, 3.3 V out, about 1 A",
+      "quantity": 1,
+      "unit_cost_usd": 8.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "buck"
+      ]
+    },
+    {
+      "id": "clamp",
+      "part_number": "SCT-013-030 split-core current transformer (30 A : 1 V)",
+      "manufacturer": "unverified",
+      "description": "Split-core current transformer, 30 A, 1 V output",
+      "quantity": 1,
+      "unit_cost_usd": 9.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "clamp"
+      ]
+    },
+    {
+      "id": "bias",
+      "part_number": "2 × 10 kΩ divider + 10 µF capacitor",
+      "manufacturer": "unverified",
+      "description": "Two 10 kΩ resistors and a 10 µF capacitor on a scrap of prototype board",
+      "quantity": 1,
+      "unit_cost_usd": 1.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "bias"
+      ]
+    },
+    {
+      "id": "adc",
+      "part_number": "ADS1115 breakout",
+      "manufacturer": "unverified",
+      "description": "TI ADS1115 4-channel 16-bit ADC breakout",
+      "quantity": 1,
+      "unit_cost_usd": 10.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "adc"
+      ]
+    },
+    {
+      "id": "pressure",
+      "part_number": "0-10 bar, 0.5-4.5 V ratiometric transducer (1/4\" BSP)",
+      "manufacturer": "unverified",
+      "description": "Stainless pressure transducer, 0-10 bar, 0.5-4.5 V out, 5 V supply",
+      "quantity": 1,
+      "unit_cost_usd": 25.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "pressure"
+      ]
+    },
+    {
+      "id": "divider",
+      "part_number": "10 kΩ / 20 kΩ divider",
+      "manufacturer": "unverified",
+      "description": "10 kΩ and 20 kΩ resistors",
+      "quantity": 1,
+      "unit_cost_usd": 0.2,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "divider"
+      ]
+    },
+    {
+      "id": "dewpoint",
+      "part_number": "Pressure dew-point transmitter, 4-20 mA (-60 … +20 °C)",
+      "manufacturer": "unverified",
+      "description": "Industrial dew-point transmitter, 4-20 mA loop",
+      "quantity": 1,
+      "unit_cost_usd": 350.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "dewpoint"
+      ]
+    },
+    {
+      "id": "shunt",
+      "part_number": "150 Ω 0.1 % resistor",
+      "manufacturer": "unverified",
+      "description": "150 Ω precision resistor",
+      "quantity": 1,
+      "unit_cost_usd": 0.5,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "shunt"
+      ]
+    }
+  ],
+  "boot_sequence": [],
+  "open_questions": [
+    {
+      "id": "five_volt",
+      "question": "Pad 18 (5 V) is only live on USB power; give the pressure transducer its own 5 V regulator from the 24 V supply.",
+      "blocks": [
+        "pressure"
+      ]
+    },
+    {
+      "id": "parts_tbc",
+      "question": "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.",
+      "blocks": [
+        "pressure",
+        "dewpoint",
+        "adc",
+        "clamp"
+      ]
+    }
+  ]
+}

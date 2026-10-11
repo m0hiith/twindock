@@ -28,7 +28,10 @@ export function PartPanel({ ix, part, readings, online, onClose }: {
         <p className="text-[15px] leading-snug">{part.caption}</p>
         <StatusBadge status={part.status} help />
 
-        <ReadingArea part={part} readings={readings} online={online} />
+        {ix.w.kit.status === "reference"
+          ? <div className="rounded-xl bg-idle-bg p-3 text-[13px] text-ink-2">Reference design: this part has not been built. Devices that use this kit
+              report <b className="text-ink">simulated</b> values (SIM), shown on the Fleet and Twin pages.</div>
+          : <ReadingArea part={part} readings={readings} online={online} />}
 
         <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-[13px]">
           {part.measures && <Row k="Measures">{part.measures}</Row>}

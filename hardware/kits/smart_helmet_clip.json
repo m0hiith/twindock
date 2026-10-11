@@ -1,0 +1,910 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "smart_helmet_clip",
+    "name": "Smart helmet clip",
+    "asset_type": "worker",
+    "status": "reference",
+    "radio": {
+      "protocol": "ble",
+      "chip": "EFR32BG22",
+      "reason": "Coin-cell clip that only needs to report 'worn' and impacts; BLE advertising lasts months on a CR2032.",
+      "evidence": "silabs.com"
+    },
+    "power_source": {
+      "type": "battery",
+      "description": "One CR2032 coin cell in the board's holder."
+    },
+    "mounting": "Clipped inside the helmet's suspension band; the proximity sensor faces the wearer's forehead.",
+    "purpose": "Proves the helmet is worn (presence + motion) and reports hard knocks.",
+    "captions": [
+      "Confirms the helmet is on the head in zones that need one; a missing helmet gets a reminder, never a penalty.",
+      "Notices a hard knock on the helmet."
+    ],
+    "publishes": [
+      {
+        "channel": "worn",
+        "description": "Helmet on the head (forehead proximity + recent motion)"
+      },
+      {
+        "channel": "impact_g",
+        "unit": "g",
+        "description": "Peak of a hard knock"
+      }
+    ],
+    "power_budget": {
+      "average_ma": 0.03,
+      "peak_ma": 12,
+      "supply_v": 3.0,
+      "assumptions": "BLE advertising every 5 s, proximity sensor sampled every 10 s, accelerometer in wake-on-shock mode. Estimate."
+    },
+    "est_battery_life": {
+      "days": 250,
+      "assumptions": "CR2032 ~220 mAh at ~30 µA average plus self-discharge. Estimate, not measured."
+    }
+  },
+  "board": "BRD4184",
+  "sdk": "reference design (not built)",
+  "buses": [
+    {
+      "id": "i2c",
+      "name": "I2C",
+      "kind": "i2c",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    },
+    {
+      "id": "spi",
+      "name": "SPI",
+      "kind": "spi",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    },
+    {
+      "id": "vbat",
+      "name": "Coin cell (3.0 V)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    }
+  ],
+  "parts": [
+    {
+      "id": "mcu",
+      "name": "EFR32BG22 dev kit (BRD4184)",
+      "part_number": "SLTB010A (EFR32BG22 Thunderboard)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Advertises 'worn' and impact events over Bluetooth LE.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "qwiic.GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 5.7,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "dev kit user guide (to check)"
+        },
+        {
+          "name": "qwiic.3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 6.7,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "dev kit user guide (to check)"
+        },
+        {
+          "name": "qwiic.SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 7.7,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "dev kit user guide (to check)"
+        },
+        {
+          "name": "qwiic.SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_mm": 0.3,
+          "y_mm": 8.7,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "dev kit user guide (to check)"
+        },
+        {
+          "name": "pad1",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 2.04,
+          "y_mm": 14.58,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad20",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 37.06,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad4",
+          "signal": "MOSI",
+          "gpio": "ULP_GPIO_1",
+          "x_mm": 27.66,
+          "y_mm": 17.07,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad6",
+          "signal": "MISO",
+          "gpio": "ULP_GPIO_2",
+          "x_mm": 27.66,
+          "y_mm": 19.57,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad8",
+          "signal": "SCK",
+          "gpio": "ULP_GPIO_8",
+          "x_mm": 27.66,
+          "y_mm": 22.07,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad10",
+          "signal": "CS",
+          "gpio": "ULP_GPIO_10",
+          "x_mm": 27.66,
+          "y_mm": 24.57,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.4,
+        "h_mm": 55.0,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "label": "EFR32BG22",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 0.3,
+            "y_mm": 3.5,
+            "w_mm": 4.4,
+            "h_mm": 7.4,
+            "rot": 90
+          },
+          {
+            "family": "antenna",
+            "variant": "chip",
+            "x_mm": 13.6,
+            "y_mm": 0.8,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "chip",
+            "variant": "qfn",
+            "label": "EFR32BG22",
+            "x_mm": 11.7,
+            "y_mm": 16.5,
+            "w_mm": 7.0,
+            "h_mm": 7.0
+          },
+          {
+            "family": "crystal",
+            "label": "40M",
+            "x_mm": 20.5,
+            "y_mm": 18.0,
+            "w_mm": 2.5,
+            "h_mm": 2.0
+          },
+          {
+            "family": "button",
+            "x_mm": 8.0,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "button",
+            "x_mm": 18.8,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "led",
+            "color": "#2BB673",
+            "x_mm": 6.2,
+            "y_mm": 46.8,
+            "w_mm": 1.6,
+            "h_mm": 0.8
+          },
+          {
+            "family": "connector",
+            "variant": "usb_c",
+            "x_mm": 10.7,
+            "y_mm": 47.4,
+            "w_mm": 9.0,
+            "h_mm": 7.3
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "EFR32BG22",
+            "x_mm": 16.5,
+            "y_mm": 5.2,
+            "w_mm": 8.928,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "Thunderboard",
+            "x_mm": 16.5,
+            "y_mm": 7.4,
+            "w_mm": 8.184000000000001,
+            "h_mm": 1.1
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "CR2032 on back",
+            "x_mm": 9.0,
+            "y_mm": 31.0,
+            "w_mm": 12,
+            "h_mm": 1.2
+          }
+        ]
+      }
+    },
+    {
+      "id": "prox",
+      "name": "Forehead proximity",
+      "part_number": "VCNL4040 Qwiic breakout",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "i2c",
+      "address": "0x60",
+      "supplied_from": "vbat",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Proximity",
+      "forklift_use": "",
+      "caption": "Sees the forehead a few millimetres away when the helmet is on.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "qwiic_in.GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 11.2,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "datasheet",
+          "source": "Qwiic connector standard (JST SH 4-pin: GND, 3.3V, SDA, SCL)"
+        },
+        {
+          "name": "qwiic_in.3V3",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 12.2,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "datasheet",
+          "source": "Qwiic connector standard (JST SH 4-pin: GND, 3.3V, SDA, SCL)"
+        },
+        {
+          "name": "qwiic_in.SDA",
+          "signal": "SDA",
+          "gpio": null,
+          "x_mm": 13.2,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "datasheet",
+          "source": "Qwiic connector standard (JST SH 4-pin: GND, 3.3V, SDA, SCL)"
+        },
+        {
+          "name": "qwiic_in.SCL",
+          "signal": "SCL",
+          "gpio": null,
+          "x_mm": 14.2,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "datasheet",
+          "source": "Qwiic connector standard (JST SH 4-pin: GND, 3.3V, SDA, SCL)"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 25.4,
+        "h_mm": 17.8,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 21.6,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "lga",
+            "label": "VCNL4040",
+            "x_mm": 10.7,
+            "y_mm": 7.0,
+            "w_mm": 4.0,
+            "h_mm": 2.0
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 9.0,
+            "y_mm": 0,
+            "w_mm": 7.4,
+            "h_mm": 4.4,
+            "rot": 180
+          }
+        ]
+      },
+      "address_evidence": "unverified",
+      "supply": {
+        "min_v": 2.5,
+        "max_v": 3.6
+      }
+    },
+    {
+      "id": "accel",
+      "name": "High-g accelerometer",
+      "part_number": "ADXL372 breakout (±200 g)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "spi",
+      "address": null,
+      "supplied_from": "vbat",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Impact acceleration",
+      "forklift_use": "",
+      "caption": "Measures how hard a knock was, up to 200 g, sleeping until something hits.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VIN",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 6.35,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 8.89,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "MOSI",
+          "signal": "MOSI",
+          "gpio": null,
+          "x_mm": 11.43,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "MISO",
+          "signal": "MISO",
+          "gpio": null,
+          "x_mm": 13.97,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "SCK",
+          "signal": "SCK",
+          "gpio": null,
+          "x_mm": 16.51,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "CS",
+          "signal": "CS",
+          "gpio": null,
+          "x_mm": 19.05,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 25.4,
+        "h_mm": 17.8,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 21.6,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "lga",
+            "label": "ADXL372",
+            "x_mm": 11.2,
+            "y_mm": 7.0,
+            "w_mm": 3.0,
+            "h_mm": 3.25
+          },
+          {
+            "family": "connector",
+            "variant": "header_6",
+            "x_mm": 5.08,
+            "y_mm": 0.3,
+            "w_mm": 15.24,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 1.6,
+        "max_v": 3.5
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "mcu_qwiic_gnd_prox_qwiic_in_gnd",
+      "from": "mcu.qwiic.GND",
+      "to": "prox.qwiic_in.GND",
+      "signal": "GND",
+      "bus": "vbat",
+      "medium": "qwiic_cable",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_qwiic_3v3_prox_qwiic_in_3v3",
+      "from": "mcu.qwiic.3V3",
+      "to": "prox.qwiic_in.3V3",
+      "signal": "3V3",
+      "bus": "vbat",
+      "medium": "qwiic_cable",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_qwiic_sda_prox_qwiic_in_sda",
+      "from": "mcu.qwiic.SDA",
+      "to": "prox.qwiic_in.SDA",
+      "signal": "SDA",
+      "bus": "i2c",
+      "medium": "qwiic_cable",
+      "wire_color": "blue",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_qwiic_scl_prox_qwiic_in_scl",
+      "from": "mcu.qwiic.SCL",
+      "to": "prox.qwiic_in.SCL",
+      "signal": "SCL",
+      "bus": "i2c",
+      "medium": "qwiic_cable",
+      "wire_color": "yellow",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_accel_vin",
+      "from": "mcu.pad20",
+      "to": "accel.VIN",
+      "signal": "3V3",
+      "bus": "vbat",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad1_accel_gnd",
+      "from": "mcu.pad1",
+      "to": "accel.GND",
+      "signal": "GND",
+      "bus": "vbat",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad4_accel_mosi",
+      "from": "mcu.pad4",
+      "to": "accel.MOSI",
+      "signal": "MOSI",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "blue",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "accel_miso_mcu_pad6",
+      "from": "accel.MISO",
+      "to": "mcu.pad6",
+      "signal": "MISO",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "green",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad8_accel_sck",
+      "from": "mcu.pad8",
+      "to": "accel.SCK",
+      "signal": "SCK",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "yellow",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad10_accel_cs",
+      "from": "mcu.pad10",
+      "to": "accel.CS",
+      "signal": "CS",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    }
+  ],
+  "bom": [
+    {
+      "id": "mcu",
+      "part_number": "SLTB010A (EFR32BG22 Thunderboard)",
+      "manufacturer": "Silicon Labs",
+      "description": "EFR32BG22 Thunderboard: Bluetooth LE SoC, CR2032 holder, switches between USB and battery power.",
+      "quantity": 1,
+      "unit_cost_usd": null,
+      "link": "https://www.silabs.com/wireless/bluetooth/efr32bg22-series-2-socs",
+      "source": "silabs.com",
+      "covers": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "prox",
+      "part_number": "VCNL4040 Qwiic breakout",
+      "manufacturer": "unverified",
+      "description": "Vishay VCNL4040 proximity sensor breakout, Qwiic",
+      "quantity": 1,
+      "unit_cost_usd": 7.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "prox"
+      ]
+    },
+    {
+      "id": "accel",
+      "part_number": "ADXL372 breakout (±200 g)",
+      "manufacturer": "unverified",
+      "description": "Analog Devices ADXL372 high-g accelerometer breakout",
+      "quantity": 1,
+      "unit_cost_usd": 25.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "accel"
+      ]
+    }
+  ],
+  "boot_sequence": [],
+  "open_questions": [
+    {
+      "id": "pad_map",
+      "question": "Map every pad used here to a real pin of the SLTB010A (EFR32BG22 Thunderboard) expansion header (its user guide); this design reuses the BRD2605A pad numbering as a placeholder.",
+      "blocks": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "parts_tbc",
+      "question": "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.",
+      "blocks": [
+        "prox",
+        "accel"
+      ]
+    }
+  ]
+}

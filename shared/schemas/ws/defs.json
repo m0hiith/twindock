@@ -483,7 +483,16 @@
         "asset_tag",
         "power_meter",
         "light",
-        "air_quality"
+        "air_quality",
+        "truck_telematics",
+        "dock_bay",
+        "conveyor_monitor",
+        "compressor_monitor",
+        "helmet_clip",
+        "gas_detector",
+        "leak_sensor",
+        "tank_level",
+        "fire_panel"
       ]
     },
     "protocol": {

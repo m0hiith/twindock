@@ -28,14 +28,12 @@ export function KitsPage() {
         </div>
         {error && <div role="alert" className="rounded-xl bg-crit-bg px-4 py-2 text-[13px] text-crit">{error}</div>}
         {!kits && !error && <div className="text-ink-2">Loading kits…</div>}
-        {kits && groupKits(kits).map(([type, list]) => (
-          <section key={type} aria-label={ASSET_LABEL[type]}>
-            <h2 className="mb-2 text-[15px] font-semibold">{ASSET_LABEL[type]}</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {list.map((k) => <KitCard key={k.id} k={k} />)}
-            </div>
-          </section>
-        ))}
+        {kits && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {groupKits(kits).flatMap(([, list]) => list).map((k) => <KitCard key={k.id} k={k} />)}
+          </div>
+        )}
+        {kits && <p className="text-[12px] text-ink-2">Costs are rough budget estimates, not quotes; “≥” means some parts have no price yet. Silicon Labs boards and links are checked on silabs.com; third-party values are marked unverified in each kit.</p>}
       </div>
     </div>
   );
@@ -47,12 +45,13 @@ function KitCard({ k }: { k: KitSummary }) {
     <a href={kitPath(k.id)} data-testid={`kit-${k.id}`}
       onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); navigate(kitPath(k.id)); }}
       className="card flex flex-col gap-2 p-4 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.14)]">
+      <div className="text-[12px] text-ink-2">{ASSET_LABEL[k.asset_type]}</div>
       <div className="flex items-start justify-between gap-2">
         <div className="text-[15px] font-semibold leading-tight">{k.name}</div>
         <StatusBadge status={k.status} />
       </div>
       <p className="text-[13px] text-ink-2">{k.purpose}</p>
-      <dl className="mt-1 grid grid-cols-[88px_1fr] gap-y-1 text-[13px]">
+      <dl className="mt-1 grid grid-cols-[112px_1fr] gap-y-1 text-[13px]">
         <dt className="text-ink-2">Radio</dt><dd>{RADIO_LABEL[k.radio.protocol]} · {k.radio.chip}</dd>
         <dt className="text-ink-2">Power</dt><dd>{POWER_LABEL[k.power_source.type]}</dd>
         <dt className="text-ink-2">Parts</dt><dd className="tabular">{k.part_count} in {k.bom_lines} lines</dd>

@@ -85,13 +85,17 @@ export function summarize(list: Device[]): FleetSummary {
 export const MAIN_CHANNEL: Record<Device["type"], string | null> = {
   gateway: "wifi_rssi_dbm", machine_monitor: "vibration_rms", env_sensor: "temperature", door_sensor: "open",
   occupancy_sensor: "occupied", badge: null, asset_tag: null, power_meter: "power_kw", light: "level_pct",
-  air_quality: "co2_ppm",
+  air_quality: "co2_ppm", truck_telematics: "speed_kmh", dock_bay: "occupied", conveyor_monitor: "motor_current_a",
+  compressor_monitor: "pressure_bar", helmet_clip: "worn", gas_detector: "co_ppm", leak_sensor: "wet", tank_level: "level_pct",
+  fire_panel: "alarm",
 };
 
 export const TYPE_LABEL: Record<Device["type"], string> = {
   gateway: "Gateway", machine_monitor: "Machine monitor", env_sensor: "Environment sensor", door_sensor: "Door sensor",
   occupancy_sensor: "Occupancy sensor", badge: "Worker badge", asset_tag: "Asset tag", power_meter: "Power meter",
-  light: "Light", air_quality: "Air quality",
+  light: "Light", air_quality: "Air quality", truck_telematics: "Truck telematics", dock_bay: "Dock bay monitor",
+  conveyor_monitor: "Conveyor monitor", compressor_monitor: "Compressor monitor", helmet_clip: "Helmet clip", gas_detector: "Gas detector",
+  leak_sensor: "Leak sensor", tank_level: "Tank level", fire_panel: "Fire panel bridge",
 };
 
 /** "-61 dBm" to 0-4 bars, the usual phone-style buckets. */

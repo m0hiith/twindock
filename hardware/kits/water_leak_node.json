@@ -1,0 +1,794 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "water_leak_node",
+    "name": "Water leak node",
+    "asset_type": "building",
+    "status": "reference",
+    "radio": {
+      "protocol": "thread",
+      "chip": "EFR32MG24",
+      "reason": "Battery sensor on the floor of plant rooms: a Thread sleepy end device wakes only on a leak or a heartbeat.",
+      "evidence": "silabs.com"
+    },
+    "power_source": {
+      "type": "battery",
+      "description": "Two AA lithium cells (3.0 V)."
+    },
+    "mounting": "On the floor under the press hydraulics or the pump skid, probe pads touching the floor.",
+    "purpose": "Water (or hydraulic oil) on the floor.",
+    "captions": [
+      "Raises a warning the moment liquid bridges the two probe pads.",
+      "Sleeps the rest of the time: the batteries last years."
+    ],
+    "publishes": [
+      {
+        "channel": "wet",
+        "description": "Liquid detected between the probe contacts"
+      }
+    ],
+    "power_budget": {
+      "average_ma": 0.02,
+      "peak_ma": 15,
+      "supply_v": 3.0,
+      "assumptions": "Sleepy end device, 30 s heartbeat poll, wake on the comparator's edge. Estimate."
+    },
+    "est_battery_life": {
+      "days": 1800,
+      "assumptions": "2 × AA lithium (~3000 mAh) at ~20 µA average, self-discharge included. Estimate, not measured."
+    }
+  },
+  "board": "BRD2601B",
+  "sdk": "reference design (not built)",
+  "buses": [
+    {
+      "id": "vbat",
+      "name": "2 × AA (3.0 V)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    },
+    {
+      "id": "gpio",
+      "name": "GPIO",
+      "kind": "gpio",
+      "controller": null,
+      "voltage_v": 3.0,
+      "evidence": "unverified"
+    }
+  ],
+  "parts": [
+    {
+      "id": "mcu",
+      "name": "EFR32MG24 dev kit (BRD2601B)",
+      "part_number": "xG24-DK2601B",
+      "quantity": 1,
+      "location": "external",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Sleeps until the comparator reports a leak, then wakes and tells the mesh.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "pad1",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 2.04,
+          "y_mm": 14.58,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad2",
+          "signal": "VBAT_IN",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 14.58,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad20",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 37.06,
+          "side": "right",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        },
+        {
+          "name": "pad3",
+          "signal": "LEAK_IN",
+          "gpio": "GPIO_25",
+          "x_mm": 2.04,
+          "y_mm": 17.07,
+          "side": "left",
+          "evidence": "unverified",
+          "source": "pad mapping to be checked in the dev kit user guide"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.4,
+        "h_mm": 55.0,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "label": "EFR32MG24",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 0.3,
+            "y_mm": 3.5,
+            "w_mm": 4.4,
+            "h_mm": 7.4,
+            "rot": 90
+          },
+          {
+            "family": "antenna",
+            "variant": "chip",
+            "x_mm": 13.6,
+            "y_mm": 0.8,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "chip",
+            "variant": "qfn",
+            "label": "EFR32MG24",
+            "x_mm": 11.7,
+            "y_mm": 16.5,
+            "w_mm": 7.0,
+            "h_mm": 7.0
+          },
+          {
+            "family": "crystal",
+            "label": "40M",
+            "x_mm": 20.5,
+            "y_mm": 18.0,
+            "w_mm": 2.5,
+            "h_mm": 2.0
+          },
+          {
+            "family": "button",
+            "x_mm": 8.0,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "button",
+            "x_mm": 18.8,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "led",
+            "color": "#2BB673",
+            "x_mm": 6.2,
+            "y_mm": 46.8,
+            "w_mm": 1.6,
+            "h_mm": 0.8
+          },
+          {
+            "family": "connector",
+            "variant": "usb_c",
+            "x_mm": 10.7,
+            "y_mm": 47.4,
+            "w_mm": 9.0,
+            "h_mm": 7.3
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "EFR32MG24",
+            "x_mm": 16.5,
+            "y_mm": 5.2,
+            "w_mm": 8.928,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "xG24 Dev Kit",
+            "x_mm": 16.5,
+            "y_mm": 7.4,
+            "w_mm": 8.184000000000001,
+            "h_mm": 1.1
+          }
+        ]
+      }
+    },
+    {
+      "id": "comparator",
+      "name": "Leak comparator",
+      "part_number": "LM393 comparator module",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": "vbat",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns 'water between the probe pads' into a clean on/off signal.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VCC",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 12.46,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 15.0,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "DO",
+          "signal": "LEAK_IN",
+          "gpio": null,
+          "x_mm": 17.54,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "P1",
+          "signal": "PROBE_A",
+          "gpio": null,
+          "x_mm": 26.0,
+          "y_mm": 15.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "P2",
+          "signal": "PROBE_B",
+          "gpio": null,
+          "x_mm": 28.5,
+          "y_mm": 15.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.0,
+        "h_mm": 16.0,
+        "pcb_color": "green",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 12.2,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.2,
+            "y_mm": 12.2,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "LM393",
+            "x_mm": 12.55,
+            "y_mm": 5.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "header_3",
+            "x_mm": 11.19,
+            "y_mm": 0.3,
+            "w_mm": 7.62,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 3.0,
+        "max_v": 5.5
+      }
+    },
+    {
+      "id": "probe",
+      "name": "Leak probe",
+      "part_number": "Gold-plated floor probe (two contacts)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Two interleaved gold tracks that conduct when water bridges them.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "A",
+          "signal": "PROBE_A",
+          "gpio": null,
+          "x_mm": 18.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "B",
+          "signal": "PROBE_B",
+          "gpio": null,
+          "x_mm": 22.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 40.0,
+        "h_mm": 20.0,
+        "pcb_color": "black",
+        "dims_evidence": "typical",
+        "label": "PROBE",
+        "features": [
+          {
+            "family": "antenna",
+            "variant": "trace",
+            "x_mm": 4.0,
+            "y_mm": 6.0,
+            "w_mm": 32.0,
+            "h_mm": 8.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "battery",
+      "name": "Battery",
+      "part_number": "2 × AA lithium in holder",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Two AA lithium cells keep it running for years.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "+",
+          "signal": "VBAT",
+          "gpio": null,
+          "x_mm": 31.6,
+          "y_mm": 25.0,
+          "side": "right",
+          "evidence": "unverified"
+        },
+        {
+          "name": "-",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 31.6,
+          "y_mm": 32.0,
+          "side": "right",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "lipo",
+        "label": "2×AA 3.0 V",
+        "w_mm": 32.0,
+        "h_mm": 58.0,
+        "dims_evidence": "typical"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "battery_p_mcu_pad2",
+      "from": "battery.+",
+      "to": "mcu.pad2",
+      "signal": "VBAT",
+      "bus": "vbat",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "battery_n_mcu_pad1",
+      "from": "battery.-",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "vbat",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_comparator_vcc",
+      "from": "mcu.pad20",
+      "to": "comparator.VCC",
+      "signal": "3V3",
+      "bus": "vbat",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad1_comparator_gnd",
+      "from": "mcu.pad1",
+      "to": "comparator.GND",
+      "signal": "GND",
+      "bus": "vbat",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "comparator_do_mcu_pad3",
+      "from": "comparator.DO",
+      "to": "mcu.pad3",
+      "signal": "LEAK_IN",
+      "bus": "gpio",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "probe_a_comparator_p1",
+      "from": "probe.A",
+      "to": "comparator.P1",
+      "signal": "PROBE_A",
+      "bus": null,
+      "medium": "wire",
+      "wire_color": "orange",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "probe_b_comparator_p2",
+      "from": "probe.B",
+      "to": "comparator.P2",
+      "signal": "PROBE_B",
+      "bus": null,
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    }
+  ],
+  "bom": [
+    {
+      "id": "mcu",
+      "part_number": "xG24-DK2601B",
+      "manufacturer": "Silicon Labs",
+      "description": "EFR32xG24 dev kit: EFR32MG24 SoC for Thread / Matter / Zigbee and Bluetooth LE.",
+      "quantity": 1,
+      "unit_cost_usd": null,
+      "link": "https://www.silabs.com/wireless/zigbee/efr32mg24-series-2-socs",
+      "source": "silabs.com",
+      "covers": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "comparator",
+      "part_number": "LM393 comparator module",
+      "manufacturer": "unverified",
+      "description": "LM393 comparator module with sensitivity trimmer",
+      "quantity": 1,
+      "unit_cost_usd": 2.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "comparator"
+      ]
+    },
+    {
+      "id": "probe",
+      "part_number": "Gold-plated floor probe (two contacts)",
+      "manufacturer": "unverified",
+      "description": "Floor leak probe with interleaved contacts",
+      "quantity": 1,
+      "unit_cost_usd": 5.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "probe"
+      ]
+    },
+    {
+      "id": "battery",
+      "part_number": "2 × AA lithium in holder",
+      "manufacturer": "unverified",
+      "description": "2 × AA lithium cells and holder",
+      "quantity": 1,
+      "unit_cost_usd": 6.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "battery"
+      ]
+    }
+  ],
+  "boot_sequence": [],
+  "open_questions": [
+    {
+      "id": "pad_map",
+      "question": "Map every pad used here to a real pin of the xG24-DK2601B expansion header (its user guide); this design reuses the BRD2605A pad numbering as a placeholder.",
+      "blocks": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "parts_tbc",
+      "question": "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.",
+      "blocks": [
+        "comparator",
+        "probe"
+      ]
+    }
+  ]
+}

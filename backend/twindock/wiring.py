@@ -73,7 +73,13 @@ def kit_summary(k: dict[str, Any], devices: list[str] | None = None) -> dict[str
 
 
 # Signals that several parts may legitimately share on one pin/net.
-_SHARED = {"SDA", "SCL", "INT", "GND", "3V3", "5V", "VIN", "SCK", "MOSI", "MISO", "TX", "RX", "RS485_A", "RS485_B"}
+_SHARED = {"SDA", "SCL", "INT", "GND", "3V3", "5V", "VIN", "SCK", "MOSI", "MISO", "TX", "RX", "RS485_A", "RS485_B", "ONEWIRE"}
+
+
+def _shared(signal: str) -> bool:
+    """A net several parts may sit on: buses, power, a 1-Wire line, or an analog node (AIN_*: e.g. a shunt and the ADC
+    input on the same 4-20 mA node). Anything else on one pin twice means two outputs fighting."""
+    return signal in _SHARED or signal.startswith("AIN_")
 
 
 def _addr(p: dict[str, Any]) -> str | None:
@@ -117,7 +123,7 @@ def validate_kit(k: dict[str, Any]) -> list[str]:
         if len(cs) > 1:
             if len({c["signal"] for c in cs}) > 1:
                 errs.append(f"{ref}: used for different signals ({', '.join(sorted({c['signal'] for c in cs}))})")
-            elif cs[0]["signal"] not in _SHARED:
+            elif not _shared(cs[0]["signal"]):
                 errs.append(f"{ref}: signal {cs[0]['signal']} wired {len(cs)} times (pin driven twice)")
     gpio_signal: dict[str, set[str]] = {}
     for p in k["parts"]:

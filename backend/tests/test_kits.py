@@ -25,11 +25,43 @@ def test_kit_is_valid(kit_id: str) -> None:
 @pytest.mark.parametrize("kit_id", IDS)
 def test_every_sim_kit_is_attached_to_a_device(kit_id: str) -> None:
     used = {d.get("kit") for d in load_sites()["devices"]}
-    if load_kit(kit_id)["kit"]["status"] == "reference" and kit_id not in ATTACH_LATER:
+    if load_kit(kit_id)["kit"]["status"] == "reference":
         assert kit_id in used, f"{kit_id} is not attached to any device in sites.json"
 
 
-ATTACH_LATER: set[str] = set()
+def test_devices_report_only_what_their_kit_publishes() -> None:
+    for d in load_sites()["devices"]:
+        if d.get("kit") and d["source"] == "sim":
+            chans = {c["channel"] for c in load_kit(d["kit"])["kit"].get("publishes", [])}
+            assert set(d["capabilities"]) <= chans, f"{d['id']} reports {set(d['capabilities']) - chans}, not in kit {d['kit']}"
+            assert load_kit(d["kit"])["kit"]["status"] == "reference", f"{d['id']} is simulated but uses a built kit"
+
+
+def test_simulated_kit_devices_publish_their_channels() -> None:
+    """Run the simulator for two minutes: every kit device publishes, and only on channels it declared."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+    from site_sim import SiteSim, select_devices  # type: ignore[import-not-found]
+
+    cfg = load_sites()
+    devices = [d for d in select_devices(cfg, None, None) if d.get("kit")]
+    sim = SiteSim(cfg, devices, seed=3)
+    seen: dict[str, set[str]] = {d["id"]: set() for d in devices}
+    real_publish = sim.publish
+
+    def spy(m, channel, payload, retain=False):  # type: ignore[no-untyped-def]
+        real_publish(m, channel, payload, retain)
+        if channel not in ("hello", "status"):
+            assert payload["source"] == "sim"
+            seen[m.id].add(channel)
+    sim.publish = spy  # type: ignore[method-assign]
+    for _ in range(480):
+        sim.step(0.25)
+    by_id = {d["id"]: d for d in devices}
+    for dev, chans in seen.items():
+        assert chans, f"{dev} published nothing"
+        assert chans <= set(by_id[dev]["capabilities"]), f"{dev} published undeclared {chans - set(by_id[dev]['capabilities'])}"
 
 
 def _break(kit: dict, fn) -> list[str]:  # type: ignore[type-arg]

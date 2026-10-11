@@ -14,7 +14,16 @@ export type DeviceType =
   | "asset_tag"
   | "power_meter"
   | "light"
-  | "air_quality";
+  | "air_quality"
+  | "truck_telematics"
+  | "dock_bay"
+  | "conveyor_monitor"
+  | "compressor_monitor"
+  | "helmet_clip"
+  | "gas_detector"
+  | "leak_sensor"
+  | "tank_level"
+  | "fire_panel";
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "protocol".
@@ -320,7 +329,7 @@ export interface GatewayStatus {
   replay?: boolean;
 }
 /**
- * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); door_open, door_close (door sensors); route (badges); silence (any sim device stops publishing, to demonstrate staleness).
+ * Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness).
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "site_cmd".
@@ -1294,6 +1303,14 @@ export interface Wiring {
      * 2-3 plain-language sentences for non-engineers.
      */
     captions?: string[];
+    /**
+     * Channels a device built from this kit reports (twin/<site>/<device>/<channel>). A reference kit's channels are simulated: source is always sim.
+     */
+    publishes?: {
+      channel: string;
+      unit?: string;
+      description: string;
+    }[];
   };
   /**
    * @minItems 1
@@ -1420,6 +1437,10 @@ export interface WiringDrawing {
   label?: string;
   dims_evidence: WiringDimsEvidence;
   features?: WiringDrawingFeature[];
+  /**
+   * Body colour for parts whose colour matters (an LED's colour).
+   */
+  color?: string;
 }
 /**
  * A part drawn on top of its PCB (chip, connector, LED...), positioned in mm from the PCB's top-left corner.

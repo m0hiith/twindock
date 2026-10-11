@@ -115,7 +115,7 @@ class SiteSim:
             m.silent = bool(data.get("on", True))
         elif action == "door_open" and hasattr(m, "force_open"):
             m.force_open(t, float(data.get("seconds", 90)))  # type: ignore[attr-defined]
-        elif action == "route" and hasattr(m, "command"):
+        elif action in ("route", "find_me") and hasattr(m, "command"):
             m.command(action, t, int(t * 1000), data)  # type: ignore[attr-defined]
         elif hasattr(m, "command"):
             m.command(action, t, int(t * 1000))  # type: ignore[attr-defined]

@@ -351,7 +351,8 @@
         "vibration_rms",
         "units",
         "rejects",
-        "alarm"
+        "alarm",
+        "temperature_c"
       ],
       "label": "Press monitor",
       "source": "sim",
@@ -365,7 +366,8 @@
           "Die jam",
           "Hydraulic pressure low"
         ]
-      }
+      },
+      "kit": "machine_monitor"
     },
     {
       "id": "MM-02",
@@ -382,7 +384,8 @@
         "vibration_rms",
         "units",
         "rejects",
-        "alarm"
+        "alarm",
+        "temperature_c"
       ],
       "label": "Packer monitor",
       "source": "sim",
@@ -396,7 +399,8 @@
           "Film break",
           "Carton feed empty"
         ]
-      }
+      },
+      "kit": "machine_monitor"
     },
     {
       "id": "AQ-01",
@@ -458,7 +462,8 @@
         "open"
       ],
       "label": "Cold room door",
-      "source": "sim"
+      "source": "sim",
+      "kit": "door_access"
     },
     {
       "id": "OC-01",
@@ -490,7 +495,8 @@
       "attached_to": "WK-01",
       "sim": {
         "battery_pct": 76
-      }
+      },
+      "kit": "worker_badge"
     },
     {
       "id": "BG-02",
@@ -508,7 +514,8 @@
       "attached_to": "WK-02",
       "sim": {
         "battery_pct": 64
-      }
+      },
+      "kit": "worker_badge"
     },
     {
       "id": "BG-03",
@@ -526,7 +533,8 @@
       "attached_to": "WK-03",
       "sim": {
         "battery_pct": 88
-      }
+      },
+      "kit": "worker_badge"
     },
     {
       "id": "BG-04",
@@ -544,7 +552,8 @@
       "attached_to": "WK-04",
       "sim": {
         "battery_pct": 52
-      }
+      },
+      "kit": "worker_badge"
     },
     {
       "id": "RB-01",
@@ -560,6 +569,255 @@
       "label": "Phone as badge TD-BADGE-01 (seen by GW-01)",
       "source": "device",
       "ble_tag": "TD-BADGE-01"
+    },
+    {
+      "id": "TT-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_YARD",
+      "type": "truck_telematics",
+      "protocol": "wifi",
+      "x": 22,
+      "z": 36.5,
+      "capabilities": [
+        "speed_kmh",
+        "door_open",
+        "cargo_temp_c",
+        "harsh_event"
+      ],
+      "label": "Telematics of TR-01",
+      "kit": "truck_telematics",
+      "source": "sim",
+      "attached_to": "TR-01"
+    },
+    {
+      "id": "TT-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_DOCKS",
+      "type": "truck_telematics",
+      "protocol": "wifi",
+      "x": 108,
+      "z": 34,
+      "capabilities": [
+        "speed_kmh",
+        "door_open",
+        "cargo_temp_c",
+        "harsh_event"
+      ],
+      "label": "Telematics of TR-02",
+      "kit": "truck_telematics",
+      "source": "sim",
+      "attached_to": "TR-02",
+      "sim": {
+        "cargo_c": 4.5
+      }
+    },
+    {
+      "id": "DB-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_DOCKS",
+      "type": "dock_bay",
+      "protocol": "wifi",
+      "x": 12,
+      "z": 28.6,
+      "capabilities": [
+        "occupied",
+        "door_position",
+        "leveler",
+        "dock_light"
+      ],
+      "label": "Dock bay 1 monitor",
+      "kit": "dock_bay",
+      "source": "sim",
+      "attached_to": "DK-01"
+    },
+    {
+      "id": "DB-02",
+      "site_id": "WH-01",
+      "zone_id": "WH01_DOCKS",
+      "type": "dock_bay",
+      "protocol": "wifi",
+      "x": 22,
+      "z": 28.6,
+      "capabilities": [
+        "occupied",
+        "door_position",
+        "leveler",
+        "dock_light"
+      ],
+      "label": "Dock bay 2 monitor",
+      "kit": "dock_bay",
+      "source": "sim",
+      "attached_to": "DK-02"
+    },
+    {
+      "id": "AT-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_STORAGE",
+      "type": "asset_tag",
+      "protocol": "ble",
+      "x": 9.2,
+      "z": 3.2,
+      "capabilities": [
+        "find_me"
+      ],
+      "label": "Tag on pallet PL-01",
+      "kit": "pallet_asset_tag",
+      "source": "sim",
+      "attached_to": "PL-01"
+    },
+    {
+      "id": "CV-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "conveyor_monitor",
+      "protocol": "wifi",
+      "x": 112,
+      "z": 10.6,
+      "capabilities": [
+        "motor_current_a",
+        "belt_speed_m_s",
+        "jam"
+      ],
+      "label": "Line conveyor monitor",
+      "kit": "conveyor_monitor",
+      "source": "sim"
+    },
+    {
+      "id": "CP-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "compressor_monitor",
+      "protocol": "wifi",
+      "x": 92,
+      "z": 23,
+      "capabilities": [
+        "pressure_bar",
+        "current_a",
+        "run_hours",
+        "dew_point_c"
+      ],
+      "label": "Air compressor monitor",
+      "kit": "compressor_monitor",
+      "source": "sim"
+    },
+    {
+      "id": "HC-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "helmet_clip",
+      "protocol": "ble",
+      "x": 122,
+      "z": 12.2,
+      "capabilities": [
+        "worn",
+        "impact_g"
+      ],
+      "label": "Helmet clip of WK-01",
+      "kit": "smart_helmet_clip",
+      "source": "sim",
+      "attached_to": "WK-01"
+    },
+    {
+      "id": "EN-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 100,
+      "z": 3,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Production air node",
+      "kit": "env_node",
+      "source": "sim"
+    },
+    {
+      "id": "GD-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "gas_detector",
+      "protocol": "wifi",
+      "x": 96,
+      "z": 22,
+      "capabilities": [
+        "co_ppm",
+        "o2_pct",
+        "alarm"
+      ],
+      "label": "Gas detector (CO / O2)",
+      "kit": "gas_detector_node",
+      "source": "sim"
+    },
+    {
+      "id": "LK-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "leak_sensor",
+      "protocol": "thread",
+      "x": 92,
+      "z": 5,
+      "capabilities": [
+        "wet"
+      ],
+      "label": "Leak probe under the press",
+      "kit": "water_leak_node",
+      "source": "sim"
+    },
+    {
+      "id": "TL-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_YARD",
+      "type": "tank_level",
+      "protocol": "thread",
+      "x": 60,
+      "z": 50,
+      "capabilities": [
+        "level_pct",
+        "pump_on"
+      ],
+      "label": "Water day tank",
+      "kit": "tank_level_node",
+      "source": "sim"
+    },
+    {
+      "id": "FP-01",
+      "site_id": "WH-01",
+      "zone_id": "WH01_OFFICE",
+      "type": "fire_panel",
+      "protocol": "wifi",
+      "x": 50,
+      "z": 3,
+      "capabilities": [
+        "alarm",
+        "trouble"
+      ],
+      "label": "Fire panel bridge (read only)",
+      "kit": "fire_panel_bridge",
+      "source": "sim"
+    },
+    {
+      "id": "PM-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 90,
+      "z": 3,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "Production feeder meter",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 42.0
+      }
     }
   ],
   "production": {

@@ -185,7 +185,7 @@ function Intro({ wiring }: { wiring: Wiring | null }) {
         <LegendRow swatch={<span className="block h-4 w-7 rounded border border-dashed border-idle bg-[#F1F1F1]" />}>Planned · not connected yet</LegendRow>
         <LegendRow swatch={<span className="block h-4 w-7 rounded border border-ink bg-[#2E2E2E]" />}>Wired · connected, not read yet</LegendRow>
         <LegendRow swatch={<span className="block h-4 w-7 rounded border-2 border-ok bg-white" />}>Verified · the firmware has read it</LegendRow>
-        <LegendRow swatch={<span className="block h-3 w-3 rounded-full bg-live" />}>Live reading from the board</LegendRow>
+        {wiring?.kit.status === "built" && <LegendRow swatch={<span className="block h-3 w-3 rounded-full bg-live" />}>Live reading from the board</LegendRow>}
       </div>
       <div className="flex flex-col gap-2.5">
         <div className="text-[13px] font-semibold">Qwiic cable wires</div>
@@ -202,7 +202,9 @@ function Intro({ wiring }: { wiring: Wiring | null }) {
         </div>
       )}
       <p className="mt-auto text-[12px] text-ink-2">
-        Generated from the kit file in hardware/kits. Readings appear only from real messages sent by the board; until then a part shows “Waiting for firmware”.
+        {wiring?.kit.status === "reference"
+          ? `Generated from hardware/kits/${wiring.kit.id}.json. Reference design: real parts, simulated data. Values marked unverified must be checked before building.`
+          : "Generated from the kit file in hardware/kits. Readings appear only from real messages sent by the board; until then a part shows “Waiting for firmware”."}
       </p>
     </div>
   );

@@ -106,19 +106,58 @@ export function layoutBreadboard(ix: WiringIndex, photo: boolean): Geometry {
     const d = ix.depth.get(p.id) ?? 1;
     rows.set(d, [...(rows.get(d) ?? []), p]);
   }
+  // Where a part's pin sits once the part is placed (drawing position when known, else the box centre).
+  const pinAt = (ref: string): { x: number; y: number } | null => {
+    const { part, pin } = splitRef(ref);
+    const placed = parts.get(part);
+    if (!placed) return null;
+    const q = placed.part.pins.find((x) => x.name === pin);
+    if (placed.drawn && q?.x_mm != null && q.y_mm != null) return { x: placed.box.x + q.x_mm * PX_PER_MM, y: placed.box.y + q.y_mm * PX_PER_MM };
+    return { x: placed.box.x + placed.box.w / 2, y: placed.box.y + placed.box.h / 2 };
+  };
   let y = 60;
   for (const d of [...rows.keys()].sort((a, b) => a - b)) {
     const row = rows.get(d)!;
-    const sizes = row.map(sizeOf);
-    const total = sizes.reduce((a, s) => a + s.w, 0) + (row.length - 1) * COL_GAP;
-    // With a dev board, rows end at its left; in a tree they are centred under the processor.
-    let x = tree ? 700 - total / 2 : MODULE_COL_RIGHT - total;
-    row.forEach((p, i) => {
-      const sz = sizes[i]!;
-      parts.set(p.id, { part: p, box: { x, y, w: sz.w, h: sz.h }, onBoard: false, approx: false, connectors: [], drawn: sz.drawn });
-      x += sz.w + COL_GAP;
-    });
-    y += Math.max(...sizes.map((s) => s.h)) + CAPTION + ROW_GAP;
+    const sizes = new Map(row.map((p) => [p.id, sizeOf(p)]));
+    const total = row.reduce((a, p) => a + sizes.get(p.id)!.w, 0) + (row.length - 1) * COL_GAP;
+    if (!tree) {
+      // With a dev board, rows end at its left, where its Qwiic connector is.
+      let x = MODULE_COL_RIGHT - total;
+      for (const p of row) {
+        const sz = sizes.get(p.id)!;
+        parts.set(p.id, { part: p, box: { x, y, w: sz.w, h: sz.h }, onBoard: false, approx: false, connectors: [], drawn: sz.drawn });
+        x += sz.w + COL_GAP;
+      }
+    } else {
+      // In a tree each part goes under the pins it connects to on the rows above, so wires stay short and
+      // rarely cross: sort by that target, place left to right without overlap, then centre the row on its targets.
+      const target = new Map<string, number>();
+      for (const p of row) {
+        const xs = ix.connectionsOf(p.id).flatMap((c) => {
+          const other = splitRef(c.from).part === p.id ? c.to : c.from;
+          const at = pinAt(other);
+          return at ? [at.x] : [];
+        });
+        target.set(p.id, xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 700);
+      }
+      const order = [...row].sort((a, b) => target.get(a.id)! - target.get(b.id)!);
+      const xs: number[] = [];
+      let right = -Infinity;
+      for (const p of order) {
+        const w = sizes.get(p.id)!.w;
+        const x = Math.max(target.get(p.id)! - w / 2, right + COL_GAP);
+        xs.push(x);
+        right = x + w;
+      }
+      const placedMid = (xs[0]! + right) / 2;
+      const wantMid = order.reduce((a, p) => a + target.get(p.id)!, 0) / order.length;
+      const shift = wantMid - placedMid;
+      order.forEach((p, i) => {
+        const sz = sizes.get(p.id)!;
+        parts.set(p.id, { part: p, box: { x: xs[i]! + shift, y, w: sz.w, h: sz.h }, onBoard: false, approx: false, connectors: [], drawn: sz.drawn });
+      });
+    }
+    y += Math.max(...row.map((p) => sizes.get(p.id)!.h)) + CAPTION + ROW_GAP;
   }
 
   // Pins of external parts. With a drawing the pad sits where the datasheet puts it; without one each
