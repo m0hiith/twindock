@@ -139,6 +139,13 @@ export type WiringPct = number;
  */
 export type WiringStatus = "planned" | "wired" | "verified";
 /**
+ * datasheet: dimensions from the datasheet or the breakout's product page. typical: the usual size for this kind of part, because the exact model is not chosen yet.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_dims_evidence".
+ */
+export type WiringDimsEvidence = "datasheet" | "typical";
+/**
  * <part id>.<pin name>, e.g. soc.ULP_GPIO_6 or vl53l1x.qwiic_in.SDA
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -1132,6 +1139,7 @@ export interface Wiring {
       status: WiringStatus;
       pins: WiringPin[];
       notes?: string;
+      drawing?: WiringDrawing;
     },
     ...{
       id: WiringId;
@@ -1186,6 +1194,7 @@ export interface Wiring {
       status: WiringStatus;
       pins: WiringPin[];
       notes?: string;
+      drawing?: WiringDrawing;
     }[]
   ];
   connections: {
@@ -1195,13 +1204,13 @@ export interface Wiring {
     signal: string;
     bus?: string | null;
     /**
-     * pcb = trace on the dev kit, drawn as a highlight, not a wire.
+     * pcb = trace on the dev kit, drawn as a highlight, not a wire. *_cable = a pre-made cable with moulded connectors, drawn as one cable per connector pair.
      */
-    medium: "pcb" | "qwiic_cable" | "wire";
+    medium: "pcb" | "qwiic_cable" | "wire" | "m12_cable" | "jst_cable" | "usb_cable";
     /**
      * Qwiic code: red 3.3 V, black GND, blue SDA, yellow SCL. null for PCB traces.
      */
-    wire_color: "red" | "black" | "blue" | "yellow" | "white" | "green" | null;
+    wire_color: "red" | "black" | "blue" | "yellow" | "white" | "green" | "brown" | "grey" | "orange" | null;
     status: WiringStatus;
     evidence: WiringEvidence;
     source?: string;
@@ -1364,6 +1373,98 @@ export interface WiringPin {
    * File or document the value came from.
    */
   source?: string;
+  /**
+   * Pad position on the part's drawing, mm from its top-left corner, so wires land on the real pads.
+   */
+  x_mm?: number | null;
+  y_mm?: number | null;
+  /**
+   * Edge of the drawing the wire leaves from (defaults to the nearest edge to x_mm/y_mm).
+   */
+  side?: "left" | "right" | "top" | "bottom";
+}
+/**
+ * How the part looks from above on the breadboard view, drawn at true size from real dimensions. If frontend/public/parts/<part_id>.jpg exists it is shown instead.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_drawing".
+ */
+export interface WiringDrawing {
+  family:
+    | "pcb"
+    | "chip"
+    | "connector"
+    | "passive"
+    | "crystal"
+    | "antenna"
+    | "led"
+    | "button"
+    | "coin_cell_holder"
+    | "lipo"
+    | "sensor_window"
+    | "relay"
+    | "terminal_block"
+    | "current_clamp"
+    | "load_cell"
+    | "reed_switch"
+    | "pir_dome"
+    | "buzzer"
+    | "magnet"
+    | "probe"
+    | "din_meter"
+    | "enclosure";
+  variant?: string;
+  w_mm: number;
+  h_mm: number;
+  pcb_color?: "green" | "blue" | "black" | "red" | "white" | "yellow" | "none";
+  label?: string;
+  dims_evidence: WiringDimsEvidence;
+  features?: WiringDrawingFeature[];
+}
+/**
+ * A part drawn on top of its PCB (chip, connector, LED...), positioned in mm from the PCB's top-left corner.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_drawing_feature".
+ */
+export interface WiringDrawingFeature {
+  family:
+    | "pcb"
+    | "chip"
+    | "connector"
+    | "passive"
+    | "crystal"
+    | "antenna"
+    | "led"
+    | "button"
+    | "coin_cell_holder"
+    | "lipo"
+    | "sensor_window"
+    | "relay"
+    | "terminal_block"
+    | "current_clamp"
+    | "load_cell"
+    | "reed_switch"
+    | "pir_dome"
+    | "buzzer"
+    | "magnet"
+    | "probe"
+    | "din_meter"
+    | "enclosure";
+  /**
+   * qfn, lga, soic, module, qwiic, jst_ph, screw, header, usb_c, m12, r0603, c0805, chip, trace, ufl, tof, gas, mic, light...
+   */
+  variant?: string;
+  /**
+   * Marking printed on the part (e.g. VL53L1X), kept short.
+   */
+  label?: string;
+  x_mm: number;
+  y_mm: number;
+  w_mm: number;
+  h_mm: number;
+  rot?: 0 | 90 | 180 | 270;
+  color?: string;
 }
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema

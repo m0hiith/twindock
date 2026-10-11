@@ -115,6 +115,28 @@
         "source": {
           "type": "string",
           "description": "File or document the value came from."
+        },
+        "x_mm": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Pad position on the part's drawing, mm from its top-left corner, so wires land on the real pads."
+        },
+        "y_mm": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "side": {
+          "enum": [
+            "left",
+            "right",
+            "top",
+            "bottom"
+          ],
+          "description": "Edge of the drawing the wire leaves from (defaults to the nearest edge to x_mm/y_mm)."
         }
       }
     },
@@ -125,6 +147,160 @@
         "silabs.com",
         "unverified"
       ]
+    },
+    "dims_evidence": {
+      "description": "datasheet: dimensions from the datasheet or the breakout's product page. typical: the usual size for this kind of part, because the exact model is not chosen yet.",
+      "enum": [
+        "datasheet",
+        "typical"
+      ]
+    },
+    "drawing_feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "x_mm",
+        "y_mm",
+        "w_mm",
+        "h_mm"
+      ],
+      "description": "A part drawn on top of its PCB (chip, connector, LED...), positioned in mm from the PCB's top-left corner.",
+      "properties": {
+        "family": {
+          "enum": [
+            "pcb",
+            "chip",
+            "connector",
+            "passive",
+            "crystal",
+            "antenna",
+            "led",
+            "button",
+            "coin_cell_holder",
+            "lipo",
+            "sensor_window",
+            "relay",
+            "terminal_block",
+            "current_clamp",
+            "load_cell",
+            "reed_switch",
+            "pir_dome",
+            "buzzer",
+            "magnet",
+            "probe",
+            "din_meter",
+            "enclosure"
+          ]
+        },
+        "variant": {
+          "type": "string",
+          "description": "qfn, lga, soic, module, qwiic, jst_ph, screw, header, usb_c, m12, r0603, c0805, chip, trace, ufl, tof, gas, mic, light..."
+        },
+        "label": {
+          "type": "string",
+          "description": "Marking printed on the part (e.g. VL53L1X), kept short."
+        },
+        "x_mm": {
+          "type": "number"
+        },
+        "y_mm": {
+          "type": "number"
+        },
+        "w_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "h_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rot": {
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ]
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        }
+      }
+    },
+    "drawing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "w_mm",
+        "h_mm",
+        "dims_evidence"
+      ],
+      "description": "How the part looks from above on the breadboard view, drawn at true size from real dimensions. If frontend/public/parts/<part_id>.jpg exists it is shown instead.",
+      "properties": {
+        "family": {
+          "enum": [
+            "pcb",
+            "chip",
+            "connector",
+            "passive",
+            "crystal",
+            "antenna",
+            "led",
+            "button",
+            "coin_cell_holder",
+            "lipo",
+            "sensor_window",
+            "relay",
+            "terminal_block",
+            "current_clamp",
+            "load_cell",
+            "reed_switch",
+            "pir_dome",
+            "buzzer",
+            "magnet",
+            "probe",
+            "din_meter",
+            "enclosure"
+          ]
+        },
+        "variant": {
+          "type": "string"
+        },
+        "w_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "h_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pcb_color": {
+          "enum": [
+            "green",
+            "blue",
+            "black",
+            "red",
+            "white",
+            "yellow",
+            "none"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "dims_evidence": {
+          "$ref": "#/$defs/dims_evidence"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/drawing_feature"
+          }
+        }
+      }
     }
   },
   "properties": {
@@ -496,6 +672,9 @@
           },
           "notes": {
             "type": "string"
+          },
+          "drawing": {
+            "$ref": "#/$defs/drawing"
           }
         }
       }
@@ -539,9 +718,12 @@
             "enum": [
               "pcb",
               "qwiic_cable",
-              "wire"
+              "wire",
+              "m12_cable",
+              "jst_cable",
+              "usb_cable"
             ],
-            "description": "pcb = trace on the dev kit, drawn as a highlight, not a wire."
+            "description": "pcb = trace on the dev kit, drawn as a highlight, not a wire. *_cable = a pre-made cable with moulded connectors, drawn as one cable per connector pair."
           },
           "wire_color": {
             "type": [
@@ -556,6 +738,9 @@
               "yellow",
               "white",
               "green",
+              "brown",
+              "grey",
+              "orange",
               null
             ]
           },

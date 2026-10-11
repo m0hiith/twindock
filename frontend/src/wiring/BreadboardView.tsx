@@ -4,9 +4,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { color } from "../theme";
 import { ago, useTick } from "../hud/ui";
-import { layoutBreadboard, CANVAS, type Geometry, type PlacedPart } from "./geometry";
+import { layoutBreadboard, offsetPath, PX_PER_MM, type Cable, type End, type Geometry, type PinPos, type PlacedPart, type Wire } from "./geometry";
+import { PartArt } from "./parts";
 import { pinShort, splitRef, statusHelp, statusLabel, WIRE_HEX, WIRE_SIGNAL, type Connection, type WiringIndex } from "./model";
-import { BOARD_PHOTO, type PhotoState } from "./photo";
+import { BOARD_PHOTO, partPhotoUrl, usePartPhotos, type PhotoState } from "./photo";
 import { formatReading, WAITING, type PartReadings } from "./readings";
 import { FONT, relPos, Tooltip, usePanZoom, ZoomControls, type HoverInfo } from "./ui";
 
@@ -28,7 +29,9 @@ interface Props {
 
 export function BreadboardView({ ix, photo, readings, online, selected, onSelect, svgRef }: Props) {
   const geo = useMemo(() => layoutBreadboard(ix, photo === "photo"), [ix, photo]);
-  const pz = usePanZoom(CANVAS);
+  const cv = geo.canvas;
+  const pz = usePanZoom(cv);
+  const photos = usePartPhotos(useMemo(() => ix.w.parts.filter((p) => p.drawing).map((p) => p.id), [ix]));
   const container = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<HoverInfo | null>(null);
   const [hoverPart, setHoverPart] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export function BreadboardView({ ix, photo, readings, online, selected, onSelect
       <svg
         ref={pz.attach(svgRef)}
         viewBox={pz.viewBox} preserveAspectRatio="xMidYMid meet" fontFamily={FONT}
-        data-full-w={CANVAS.w} data-full-h={CANVAS.h}
+        data-full-w={cv.w} data-full-h={cv.h} data-full-x={cv.x} data-full-y={cv.y}
         className="h-full w-full cursor-grab touch-none select-none active:cursor-grabbing" {...pz.handlers}
         onClick={select(null)}>
         <defs>
@@ -81,34 +84,31 @@ export function BreadboardView({ ix, photo, readings, online, selected, onSelect
             <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#000" floodOpacity="0.12" />
           </filter>
         </defs>
-        <rect x={-CANVAS.w} y={-CANVAS.h} width={CANVAS.w * 3} height={CANVAS.h * 3} fill="#F7F7F7" />
-        <rect x={-CANVAS.w} y={-CANVAS.h} width={CANVAS.w * 3} height={CANVAS.h * 3} fill="url(#bb-grid)" />
+        <rect x={cv.x - cv.w} y={cv.y - cv.h} width={cv.w * 3} height={cv.h * 3} fill="#F7F7F7" />
+        <rect x={cv.x - cv.w} y={cv.y - cv.h} width={cv.w * 3} height={cv.h * 3} fill="url(#bb-grid)" />
 
-        {/* Wires under the modules, so their ends tuck into the connectors. */}
+        {/* Wires and cables under the modules, so their ends tuck into the connectors. */}
         <g>
           {geo.wires.map((w) => {
-            const planned = w.conn.status === "planned";
-            const hex = WIRE_HEX[w.conn.wire_color ?? "black"] ?? "#555";
             const lit = focus !== null && (splitRef(w.conn.from).part === focus || splitRef(w.conn.to).part === focus);
-            return (
-              <g key={w.conn.id} opacity={planned && !lit ? 0.6 : 1} {...hoverable(() => wireInfo(w.conn))}>
-                <path d={w.d} fill="none" stroke={w.conn.wire_color === "black" ? "#6B6B6B" : "#00000055"} strokeWidth={lit ? 7.5 : 6}
-                  strokeLinecap="round" strokeDasharray={planned ? "10 7" : undefined} />
-                <path ref={refPath(w.conn.id)} d={w.d} fill="none" stroke={hex} strokeWidth={lit ? 5 : 3.6} strokeLinecap="round"
-                  strokeDasharray={planned ? "10 7" : undefined} />
-                <path d={w.d} fill="none" stroke="transparent" strokeWidth={14} />
-              </g>
-            );
+            return w.conn.medium.endsWith("_cable")
+              // Part of a cable: only a hidden path, so a reading's pulse can still travel along it.
+              ? <path key={w.conn.id} ref={refPath(w.conn.id)} d={w.d} fill="none" stroke="none" />
+              : <WireArt key={w.conn.id} w={w} lit={lit} pathRef={refPath(w.conn.id)} hover={hoverable(() => wireInfo(w.conn))} />;
+          })}
+          {geo.cables.map((c) => {
+            const lit = focus !== null && c.conns.some((k) => splitRef(k.from).part === focus || splitRef(k.to).part === focus);
+            return <CableArt key={c.id} c={c} lit={lit} hover={hoverable(() => cableInfo(c, connName))} />;
           })}
         </g>
 
         {[...geo.parts.values()].filter((p) => !p.onBoard).map((p) => (
-          <ExternalPart key={p.part.id} placed={p} geo={geo} ix={ix} readings={readings[p.part.id]} online={online}
+          <ExternalPart key={p.part.id} placed={p} geo={geo} ix={ix} photo={photos.has(p.part.id)} readings={readings[p.part.id]} online={online}
             selected={selected === p.part.id} hovered={hoverPart === p.part.id}
             onClick={select(p.part.id)} hoverable={hoverable} />
         ))}
 
-        {ix.w.board_drawing && (
+        {ix.w.board_drawing && geo.board && (
           <Board geo={geo} ix={ix} photo={photo} focus={focus} selected={selected} onSelect={select}
             hoverable={hoverable} wireInfo={wireInfo} refPath={refPath} />
         )}
@@ -121,6 +121,8 @@ export function BreadboardView({ ix, photo, readings, online, selected, onSelect
               active={focus === c.partId} onClick={select(c.partId)} />
           );
         })}
+
+        <ScaleBar x={cv.x + 70} y={cv.y + cv.h - 44} />
 
         {pulses.list.map((p) => (
           <Pulse key={p.key} steps={ix.dataPath(p.partId)} els={pathEls} onDone={() => pulses.remove(p.key)} />
@@ -139,7 +141,7 @@ function Board({ geo, ix, photo, focus, selected, onSelect, hoverable, wireInfo,
   onSelect: (id: string | null) => (e: React.MouseEvent) => void; hoverable: Hoverable;
   wireInfo: (c: Connection) => Omit<HoverInfo, "x" | "y">; refPath: (id: string) => (el: SVGPathElement | null) => void;
 }) {
-  const b = geo.board;
+  const b = geo.board!; // Board is only rendered when the kit has a board drawing
   const bd = ix.w.board_drawing!; // Board is only rendered for kits that have one
   const usedBy = (net: string) =>
     [...new Set(ix.w.connections.flatMap((c) => [c.from, c.to]).filter((r) => ix.pin(r)?.pin.gpio === net)
@@ -297,8 +299,8 @@ function OnBoardPart({ placed, photo, geo, ix, selected, hovered, onClick, hover
   );
 }
 
-function ExternalPart({ placed, geo, ix, readings, online, selected, hovered, onClick, hoverable }: {
-  placed: PlacedPart; geo: Geometry; ix: WiringIndex; readings: PartReadings | undefined; online: boolean;
+function ExternalPart({ placed, geo, ix, photo, readings, online, selected, hovered, onClick, hoverable }: {
+  placed: PlacedPart; geo: Geometry; ix: WiringIndex; photo: boolean; readings: PartReadings | undefined; online: boolean;
   selected: boolean; hovered: boolean; onClick: (e: React.MouseEvent) => void; hoverable: Hoverable;
 }) {
   const { part: p, box: b } = placed;
@@ -312,6 +314,47 @@ function ExternalPart({ placed, geo, ix, readings, online, selected, hovered, on
   const reading = readingLine(readings, online);
   const textX = b.x + 16;
   const titleY = transducer ? b.y + 44 : b.y + 42;
+  if (placed.drawn && p.drawing) {
+    const edgeD = selected ? color.accent : hovered ? "#FF6A73" : planned ? PLANNED : "transparent";
+    const crowded = (q: PinPos) => pins.some((o) => o !== q && Math.hypot(o.x - q.x, o.y - q.y) < 14);
+    return (
+      <g onClick={onClick} className="cursor-pointer" {...hoverable(() => ({
+        title: `${p.part_number} · ${p.name}`,
+        rows: [["Status", `${statusLabel[p.status]} · ${statusHelp[p.status].toLowerCase()}`],
+          ...(p.bus ? [["Bus", ix.busName(p.bus)]] : []), ...(p.address ? [["Address", ix.address(p)]] : []),
+          ["Drawn from", photo ? "your photo" : p.drawing!.dims_evidence === "datasheet" ? "datasheet dimensions" : "typical dimensions (model not chosen yet)"]] as [string, string][],
+      }), p.id)}>
+        <g opacity={planned ? 0.82 : 1} filter="url(#bb-shadow)">
+          {photo
+            ? <image href={partPhotoUrl(p.id)} x={b.x} y={b.y} width={b.w} height={b.h} preserveAspectRatio="xMidYMid meet" />
+            : <g transform={`translate(${b.x} ${b.y})`}><PartArt drawing={p.drawing} s={PX_PER_MM} /></g>}
+        </g>
+        <rect x={b.x - 5} y={b.y - 5} width={b.w + 10} height={b.h + 10} rx={8} fill={selected || hovered ? "#D91E2A14" : "transparent"}
+          stroke={edgeD} strokeWidth={selected ? 3 : 1.6} strokeDasharray={planned && !selected ? "7 5" : undefined} />
+        <text x={b.x} y={b.y + b.h + 24} fontSize={15} fontWeight={700} fill={color.ink}>{p.part_number.length > 30 ? p.name : p.part_number}</text>
+        <text x={b.x} y={b.y + b.h + 41} fontSize={12} fill={color.ink2}>{p.part_number.length > 30 ? p.part_number : p.name}</text>
+        <text x={b.x} y={b.y + b.h + 58} fontSize={12} fontWeight={600} fill={planned ? color.ink2 : reading.fill}>
+          {planned ? "Not connected yet" : reading.text}
+        </text>
+        {pins.map((q) => {
+          const off = q.side === "left" ? [-8, 3] : q.side === "right" ? [8, 3] : q.side === "top" ? [0, -8] : [0, 15];
+          return (
+            <g key={q.ref} {...hoverable(() => ({
+              title: `${p.part_number} · ${pinShort(q.pin.name)}${q.pin.name.includes(".") ? ` (${q.pin.name.split(".")[0]!.replace("_", " ")})` : ""}`,
+              rows: [["Signal", q.pin.signal], ["Bus", ix.busName(p.bus)], ...(p.address ? [["Address", ix.address(p)]] : []),
+                ["Evidence", q.pin.evidence]] as [string, string][],
+            }), p.id)}>
+              {(selected || hovered) && !crowded(q) && (
+                <text x={q.x + off[0]!} y={q.y + off[1]!} fontSize={9.5} fontWeight={600} fill={color.ink}
+                  textAnchor={q.side === "left" ? "end" : q.side === "right" ? "start" : "middle"}>{pinShort(q.pin.name)}</text>
+              )}
+              <circle cx={q.x} cy={q.y} r={6} fill="transparent" />
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
   return (
     <g onClick={onClick} className="cursor-pointer" {...hoverable(() => ({
       title: `${p.part_number} · ${p.name}`,
@@ -438,4 +481,86 @@ function Pulse({ steps, els, onDone }: { steps: { conn: Connection; reverse: boo
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per pulse
   }, []);
   return <circle ref={dot} r={6} fill={color.live} stroke="#FFFFFF" strokeWidth={2} pointerEvents="none" data-export-skip />;
+}
+
+
+const sideAngle: Record<string, number> = { right: 0, bottom: 90, left: 180, top: 270 };
+
+/** A single insulated wire: dark outline, coloured insulation, a thin highlight, tinned ends. */
+function WireArt({ w, lit, pathRef, hover }: { w: Wire; lit: boolean; pathRef: (el: SVGPathElement | null) => void; hover: Record<string, unknown> }) {
+  const planned = w.conn.status === "planned";
+  const hex = WIRE_HEX[w.conn.wire_color ?? "black"] ?? "#555";
+  const dash = undefined; // planned wires are drawn faded, not dashed: a dashed insulated wire reads as a chain
+  const ferrule = (p: PinPos) => (
+    <g key={p.ref} transform={`translate(${p.x} ${p.y}) rotate(${sideAngle[p.side]})`}>
+      <rect x={-3} y={-3.6} width={17} height={7.2} rx={1.4} fill="#C9CDD2" stroke="#6D7279" strokeWidth={1} />
+      <rect x={5} y={-3.6} width={3} height={7.2} fill="#8E949B" opacity={0.6} />
+    </g>
+  );
+  return (
+    <g opacity={planned && !lit ? 0.62 : 1} {...hover}>
+      <path d={w.d} fill="none" stroke="#000" strokeOpacity={0.45} strokeWidth={lit ? 10.5 : 9} strokeLinecap="round" strokeDasharray={dash} />
+      <path ref={pathRef} d={w.d} fill="none" stroke={hex} strokeWidth={lit ? 7.5 : 6.5} strokeLinecap="round" strokeDasharray={dash} />
+      <path d={w.d} fill="none" stroke="#FFFFFF" strokeOpacity={w.conn.wire_color === "white" ? 0 : 0.38} strokeWidth={1.6} strokeLinecap="round"
+        strokeDasharray={dash} transform="translate(-1.4 -1.4)" />
+      {ferrule(w.a)}{ferrule(w.b)}
+      <path d={w.d} fill="none" stroke="transparent" strokeWidth={16} />
+    </g>
+  );
+}
+
+/** A pre-made cable: moulded plug at each end, one jacket, the conductors lying side by side inside it. */
+function CableArt({ c, lit, hover }: { c: Cable; lit: boolean; hover: Record<string, unknown> }) {
+  const n = c.conns.length;
+  const pitch = 8;
+  const planned = c.conns.every((k) => k.status === "planned");
+  const mid = (n - 1) / 2;
+  const plug = (e: End) => (
+    <g transform={`translate(${e.x} ${e.y}) rotate(${sideAngle[e.side]})`}>
+      <rect x={-18} y={-(n * pitch + 18) / 2} width={50} height={n * pitch + 18} rx={5} fill="#F4F4F0" stroke="#8E8E86" strokeWidth={1.4} />
+      <rect x={20} y={-(n * pitch + 6) / 2} width={14} height={n * pitch + 6} rx={3} fill="#E2E2DB" stroke="#8E8E86" strokeWidth={1} />
+      <rect x={-6} y={-6} width={14} height={12} rx={2} fill="#E2E2DB" opacity={0.7} />
+    </g>
+  );
+  return (
+    <g opacity={planned && !lit ? 0.7 : 1} {...hover}>
+      <path d={offsetPath(c.a, c.b, 0, 0)} fill="none" stroke="#1B1B1D" strokeWidth={n * pitch + 6} strokeLinecap="round" strokeLinejoin="round"
+        strokeOpacity={lit ? 1 : 0.92} />
+      {c.conns.map((k, i) => {
+        const off = (i - mid) * pitch;
+        const d = offsetPath(c.a, c.b, off, off);
+        return (
+          <g key={k.id}>
+            <path d={d} fill="none" stroke={WIRE_HEX[k.wire_color ?? "black"] ?? "#555"} strokeWidth={pitch - 1.2} strokeLinecap="butt" />
+            <path d={d} fill="none" stroke="#FFF" strokeOpacity={k.wire_color === "white" ? 0 : 0.3} strokeWidth={1.2} transform="translate(-1 -1)" />
+          </g>
+        );
+      })}
+      {plug(c.a)}{plug(c.b)}
+      <path d={offsetPath(c.a, c.b, 0, 0)} fill="none" stroke="transparent" strokeWidth={n * pitch + 14} />
+    </g>
+  );
+}
+
+const MEDIUM_NAME: Record<string, string> = { qwiic_cable: "Qwiic cable", m12_cable: "M12 cable", jst_cable: "JST cable", usb_cable: "USB cable" };
+function cableInfo(c: Cable, connName: (ref: string) => string): Omit<HoverInfo, "x" | "y"> {
+  const first = c.conns[0]!;
+  return {
+    title: MEDIUM_NAME[c.medium] ?? "Cable",
+    rows: [["From", connName(first.from)], ["To", connName(first.to)],
+      ["Conductors", c.conns.map((k) => `${k.wire_color ?? "?"} ${k.signal}`).join(", ")],
+      ["Status", `${statusLabel[first.status]} · ${statusHelp[first.status].toLowerCase()}`]],
+  };
+}
+
+/** True-scale ruler: the same PX_PER_MM as every part on the page. */
+function ScaleBar({ x, y }: { x: number; y: number }) {
+  const mm = 20;
+  const len = mm * PX_PER_MM;
+  return (
+    <g stroke={color.ink2} strokeWidth={1.5} fill={color.ink2} fontSize={12} pointerEvents="none">
+      <path d={`M${x},${y} H${x + len} M${x},${y - 6} V${y + 6} M${x + len},${y - 6} V${y + 6} M${x + len / 2},${y - 3} V${y + 3}`} fill="none" />
+      <text x={x} y={y + 22} stroke="none">{mm} mm · parts drawn at true relative size</text>
+    </g>
+  );
 }

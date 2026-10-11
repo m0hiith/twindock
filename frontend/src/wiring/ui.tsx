@@ -48,9 +48,9 @@ const MAX_ZOOM = 4;
  * Wheel to zoom around the pointer, drag to pan. Returns `dragged()` so click handlers can ignore
  * the click that ends a drag.
  */
-export function usePanZoom(full: { w: number; h: number }) {
+export function usePanZoom(full: { x?: number; y?: number; w: number; h: number }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [vb, setVb] = useState<ViewBox>({ x: 0, y: 0, ...full });
+  const [vb, setVb] = useState<ViewBox>({ x: full.x ?? 0, y: full.y ?? 0, w: full.w, h: full.h });
   const drag = useRef<{ x: number; y: number; vb: ViewBox; moved: boolean } | null>(null);
   const lastDragMoved = useRef(false);
 
@@ -77,7 +77,7 @@ export function usePanZoom(full: { w: number; h: number }) {
     });
   }, [full.w, full.h]);
 
-  const fit = useCallback(() => setVb({ x: 0, y: 0, ...full }), [full]);
+  const fit = useCallback(() => setVb({ x: full.x ?? 0, y: full.y ?? 0, w: full.w, h: full.h }), [full]);
 
   useEffect(() => {
     const el = svgRef.current;

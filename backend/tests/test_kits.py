@@ -78,3 +78,17 @@ def test_sites_json_rejects_an_unknown_kit(tmp_path) -> None:  # type: ignore[no
     f.write_text(json.dumps(cfg))
     with pytest.raises(ValueError, match="unknown kit"):
         load_sites(f)
+
+
+@pytest.mark.parametrize("kit_id", IDS)
+def test_external_parts_are_drawn_and_pads_sit_on_the_drawing(kit_id: str) -> None:
+    for p in load_kit(kit_id)["parts"]:
+        if p["location"] == "on-board":
+            continue
+        d = p.get("drawing")
+        assert d, f"{kit_id}.{p['id']} has no drawing"
+        for pin in p["pins"]:
+            if pin.get("x_mm") is not None:
+                assert 0 <= pin["x_mm"] <= d["w_mm"] and 0 <= pin["y_mm"] <= d["h_mm"], f"{p['id']}.{pin['name']} is off the drawing"
+        for f in d.get("features", []):
+            assert f["x_mm"] + f["w_mm"] <= d["w_mm"] + 0.01 and f["y_mm"] + f["h_mm"] <= d["h_mm"] + 0.01, f"{p['id']}: feature {f['family']} sticks out"

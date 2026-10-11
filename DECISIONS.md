@@ -90,3 +90,12 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - BOM costs are `null` where not confirmed (FL-01 breakouts and load cell are still "model TBD"); the dev kit is $40 MSRP from the Silicon Labs page.
 - The kit status badge is green BUILT / grey REFERENCE, not violet: violet is for real device data, and a kit's status is not a reading.
 - `.venv` did not exist on this machine; created with Python 3.13 (3.14 failed in ensurepip).
+
+## Factory extension: K1 part library
+- Parts are drawn procedurally in SVG (`frontend/src/wiring/parts/`), one function per family; no third-party artwork, so CREDITS.md only matters once a photo is added under `frontend/public/parts/<part_id>.jpg` (the breadboard view uses it instead of the drawing when it exists).
+- The breadboard view is now at one scale, 10 px per mm, for the board and every external part; the canvas grows to fit (a 90 mm load cell next to a 30 mm board). A 20 mm scale bar sits bottom-left.
+- `drawing.dims_evidence` says whether sizes come from a datasheet or are typical for that kind of part. FL-01's two breakouts and the load cell are still "model TBD" (open questions), so they are drawn at typical Qwiic-breakout (25.4 mm square) and 50 kg bar load cell sizes, and the tooltip says so.
+- Pads: `pins[].x_mm/y_mm` on a part's drawing put wires on the real pad; an optional `side` says which way the wire leaves.
+- Pre-made cables (`qwiic_cable`, `m12_cable`, `jst_cable`, `usb_cable`) are drawn once per connector pair as a jacketed cable with moulded plugs at both ends and the conductors side by side; loose `wire` connections get insulation, a highlight and tinned ends. Planned wires are faded, not dashed.
+- /parts is the gallery (100% / 300%); a test requires every schema family to have a drawing function and a gallery specimen.
+- Checked in the browser at fit and at about 5× zoom on /wiring/fl01_sensor_pack and /parts. Fixed: conductors crossing inside the Qwiic cable, load-cell leads crossing, dashed wires reading as chains.

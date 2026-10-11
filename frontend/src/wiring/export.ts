@@ -50,6 +50,8 @@ function legend(y: number, showWires: boolean): string {
 export async function renderView(svg: SVGSVGElement, title: string, subtitle: string, showWires: boolean): Promise<HTMLCanvasElement> {
   const W = Number(svg.dataset.fullW);
   const H = Number(svg.dataset.fullH);
+  const X = Number(svg.dataset.fullX ?? 0);
+  const Y = Number(svg.dataset.fullY ?? 0);
   const clone = svg.cloneNode(true) as SVGSVGElement;
   clone.querySelectorAll("[data-export-skip]").forEach((n) => n.remove());
   for (const img of clone.querySelectorAll("image")) {
@@ -58,7 +60,7 @@ export async function renderView(svg: SVGSVGElement, title: string, subtitle: st
     if (data) img.setAttribute("href", data);
     else img.remove();
   }
-  clone.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  clone.setAttribute("viewBox", `${X} ${Y} ${W} ${H}`);
   clone.setAttribute("x", String(MARGIN));
   clone.setAttribute("y", String(HEADER));
   clone.setAttribute("width", String(W));

@@ -150,7 +150,7 @@ export function WiringPage() {
             <div className="grid h-full place-items-center text-ink-2">{error ? "Wiring data unavailable" : "Loading wiring…"}</div>
           ) : view === "breadboard" ? (
             photo === "checking" ? null : (
-              <BreadboardView ix={ix} photo={photo} readings={readings.byPart} online={readings.online}
+              <BreadboardView key={kitId} ix={ix} photo={photo} readings={readings.byPart} online={readings.online}
                 selected={selected} onSelect={setSelected} svgRef={registerSvg} />
             )
           ) : view === "schematic" ? (
