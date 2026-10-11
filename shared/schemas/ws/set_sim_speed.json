@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/set_sim_speed.json",
+  "title": "set_sim_speed (client -> server)",
+  "description": "Run the simulation clock at x1 (real time, the default), x5 or x20. Refused while the real board is online: board data is always on real time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "cmd_id", "speed"],
+  "properties": {
+    "type": { "const": "set_sim_speed" },
+    "cmd_id": { "$ref": "defs.json#/$defs/cmd_id" },
+    "speed": { "enum": [1, 5, 20] }
+  }
+}

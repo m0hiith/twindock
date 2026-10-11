@@ -184,6 +184,9 @@ Ctrl-C: the devices then go stale (15 s) and offline (60 s) in the twin, which i
 If the backend can't reach a broker when it starts (the hosted container), it runs the same simulator in-process
 (`TWINDOCK_SIM=auto`, the default; force with `embedded` or `external`). The SIM devices then report without
 Mosquitto, and the Demo tab works. The real board (GW-01) and its badge (RB-01) still show "Waiting for device".
+With the embedded simulator the backend first fast-forwards 45 simulated minutes (about 6 s) so the factory is already
+running when the page opens (`TWINDOCK_WARM_START_MIN=0` turns this off). The top bar shows the simulation clock and
+its speed (×1 real time, ×5, ×20); only ×1 is allowed while the real board is online.
 
 ### 3. Backend
 

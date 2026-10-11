@@ -52,6 +52,8 @@ class EmbeddedSim:
         self.sim = ss.SiteSim(cfg, ss.select_devices(cfg, None, None), seed)
         self.sim.verbose = False
         self.sim.sink = self._deliver
+        if engine.sim_clock is not None:
+            self.sim.local_hour = engine.sim_clock.hour  # solar, shifts and tariffs follow simulated time
 
     def _deliver(self, topic: str, payload: bytes, retain: bool) -> None:
         assert not topic.startswith("twin/gateway/"), "the embedded simulator never speaks for the board"

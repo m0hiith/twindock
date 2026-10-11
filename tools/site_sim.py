@@ -79,6 +79,9 @@ class SiteSim:
         self.sink: Callable[[str, bytes, bool], None] | None = None  # in-process delivery (backend's embedded mode)
         self.sent = 0
         self.verbose = True
+        # Schema check before sending. The backend's warm start turns it off while it fast-forwards in-process:
+        # the engine still validates every message it receives, so nothing unchecked reaches the twin.
+        self.validate = True
 
     def with_routes(self, d: dict[str, Any]) -> dict[str, Any]:
         """Badges walk their worker's routes: node ids from sites.json -> layout coordinates."""
@@ -98,7 +101,8 @@ class SiteSim:
 
     def publish(self, m: Model, channel: str, payload: dict[str, Any], retain: bool = False) -> None:
         kind = channel if channel in ("hello", "status") else "reading"
-        self.v[kind].validate(payload)
+        if self.validate:
+            self.v[kind].validate(payload)
         data = json.dumps(payload, separators=(",", ":"))
         if self.sink is not None:
             self.sink(self.topic(m, channel), data.encode(), retain)

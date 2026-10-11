@@ -25,13 +25,14 @@ from .production import Production
 from .rules import Rules, load_rules
 from .routing import PedGraph, evacuation_routes
 from .safety import Safety, Today, heat_index_c
+from .simclock import SPEEDS, SimClock
 from .gateway import GatewayStore
 from .graph import Graph
 from .hardware import (EXPOSED_BUTTONS, LED_CONFIRM_TIMEOUT_MS, RULE_LED_RETRY_MS, RULE_LEDS,
                        SHORT_PRESS_MAX_MS)
 from .models import (AckAlert, SafetyCommand, ScenarioCommand, AlertsUpdate, BleTracks, ButtonState, ClientMessage, CommandAck, DeviceUpdate, Event, GatewayUpdate, Layout, LedCommand,
                      MachineCommand, MoveUnit, PendingLed, ProductionUpdate, RawMqtt, SafetyUpdate, SelectionChanged,
-                     SelectUnit, SetAutoMode, Timed, UnitUpdate, WorldSnapshot)
+                     SelectUnit, SetAutoMode, SetSimSpeed, SimClockMsg, Timed, UnitUpdate, WarmStart, WorldSnapshot)
 from .world import Entity, World
 
 TOPIC_PREFIX = "twin/gateway/"
@@ -42,6 +43,8 @@ PRODUCTION_FLUSH_S = 1.0  # production_update at most 1 Hz: machine monitors rep
 SAFETY_EVAL_S = 0.25     # proximity check 4x a second: a forklift at demo pace covers ~1.4 m in that time
 SAFETY_FLUSH_S = 0.5     # safety_update at most 2 Hz
 RULES_EVAL_S = 0.5       # rules 2x a second: fast enough for 1.5 m proximity at demo pace, cheap
+RULES_EVAL_FF_S = 2.0    # during the warm start nobody watches; alerts still raise and resolve, just less often
+SIM_CLOCK_FLUSH_S = 5.0  # sim_clock every 5 s (and on change), so a screen's clock never drifts far at x20
 SEVERITY_LEVEL = {"info": "info", "warning": "warn", "critical": "error"}
 
 
@@ -69,6 +72,11 @@ class Engine:
                  sites: dict[str, Any] | None = None) -> None:
         self.layout = layout
         self.clock = clock
+        # The simulation clock when the backend runs one (main.py); tests pass a plain callable.
+        self.sim_clock: SimClock | None = clock if isinstance(clock, SimClock) else None
+        self.warm_start: WarmStart | None = None
+        self.fast_forward = False  # warm start: no clients yet, so skip building WebSocket diffs
+        self._clock_acc = 0.0
         # Site twin: sim devices live in their own registry, which has no path to self.gw.
         self.devices = DeviceRegistry(sites if sites is not None else load_sites())
         self._dev_last: dict[str, dict[str, Any]] = {}
@@ -476,7 +484,7 @@ class Engine:
             self._energy_acc = 0.0
             self._tick_energy()
         self._rules_acc += dt
-        if self._rules_acc < RULES_EVAL_S:
+        if self._rules_acc < (RULES_EVAL_FF_S if self.fast_forward else RULES_EVAL_S):
             return
         self._rules_acc = 0.0
         if self.gw.online:
@@ -652,8 +660,33 @@ class Engine:
 
     # ------------------------------------------------------------------ lifecycle
 
+    def speed_locked(self) -> str | None:
+        if self.sim_clock is None:
+            return "No simulation clock in this backend"
+        if self.gw.online:
+            return "The real board is online: board data always runs on real time"
+        return None
+
+    def _send_sim_clock(self, to: str | None = None) -> None:
+        if self.sim_clock is None:
+            return
+        self._send(SimClockMsg(seq=self._next_seq(), server_ts_ms=self.clock(), sim_ms=self.sim_clock.sim_ms,
+                               speed=self.sim_clock.speed, speeds=list(SPEEDS), warm_start=self.warm_start,  # type: ignore[arg-type]
+                               speed_locked=self.speed_locked()), to)
+
+    def _set_sim_speed(self, client_id: str, m: SetSimSpeed) -> None:
+        locked = self.speed_locked()
+        if self.sim_clock is None or (locked and m.speed != 1):
+            self._ack(client_id, m.cmd_id, "set_sim_speed", False, locked)
+            return
+        self.sim_clock.speed = m.speed
+        self._ack(client_id, m.cmd_id, "set_sim_speed", True)
+        self.event("info", f"Simulation speed x{m.speed}" + (" (real time)" if m.speed == 1 else ""), client_id)
+        self._send_sim_clock()
+
     def on_connect(self, client_id: str) -> None:
-        self._send(self.snapshot(), client_id)
+        self._send(self.snapshot(), client_id)  # always the first message on a connection
+        self._send_sim_clock(client_id)
         self._send_ble_tracks(client_id)
         self._send_production(client_id)
         self._send_safety(client_id)
@@ -730,6 +763,17 @@ class Engine:
         self._tick_safety(dt)
         self._tick_rules(dt)
         self._drain_world_events()
+        if self.sim_clock is not None:
+            if self.sim_clock.speed != 1 and self.gw.online:
+                self.sim_clock.speed = 1
+                self.event("warn", "The real board came online: simulation back to real time (x1)", "sim")
+                self._send_sim_clock()
+            self._clock_acc += dt
+            if self._clock_acc >= SIM_CLOCK_FLUSH_S * self.sim_clock.speed:
+                self._clock_acc = 0.0
+                self._send_sim_clock()
+        if self.fast_forward:
+            return
         self._flush_units()
         self._dev_acc += dt
         if self._dev_acc >= DEVICE_FLUSH_S:
@@ -1024,6 +1068,8 @@ class Engine:
             self._safety_command(client_id, msg)
         elif isinstance(msg, MachineCommand):
             self._machine_command(client_id, msg)
+        elif isinstance(msg, SetSimSpeed):
+            self._set_sim_speed(client_id, msg)
         elif isinstance(msg, SetAutoMode):
             self.auto_mode = msg.enabled
             self._auto_mode_dirty = True

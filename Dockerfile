@@ -16,13 +16,16 @@ RUN npm run build
 
 # ---- 2. backend: slim Python serving everything
 FROM python:3.12-slim
+# TZ is the site's time zone: solar output, shifts and tariffs follow the simulated local time (override with -e TZ=...).
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PORT=7860 \
+    TZ=Asia/Kolkata \
     TWINDOCK_MQTT=0 \
     TWINDOCK_SIM=auto
 WORKDIR /app
 COPY backend/requirements.txt backend/requirements.txt
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir -r backend/requirements.txt
 # Same layout as the repo, so every path in the code works unchanged.
 COPY shared shared
 COPY hardware hardware

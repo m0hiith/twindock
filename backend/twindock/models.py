@@ -110,6 +110,12 @@ class SetAutoMode(Strict):
     enabled: bool
 
 
+class SetSimSpeed(Strict):
+    type: Literal["set_sim_speed"]
+    cmd_id: str
+    speed: Literal[1, 5, 20]
+
+
 class ScenarioCommand(Strict):
     type: Literal["scenario_command"]
     cmd_id: str
@@ -140,7 +146,7 @@ class MachineCommand(Strict):
 
 
 ClientMessage = Annotated[Union[MoveUnit, SelectUnit, LedCommand, SetAutoMode, MachineCommand, AckAlert,
-                                ScenarioCommand, SafetyCommand],
+                                ScenarioCommand, SafetyCommand, SetSimSpeed],
                           Field(discriminator="type")]
 
 
@@ -331,7 +337,7 @@ class CommandAck(Strict):
     type: Literal["command_ack"] = "command_ack"
     cmd_id: str
     command: Literal["move_unit", "select_unit", "led_command", "set_auto_mode", "machine_command", "ack_alert",
-                     "scenario_command", "safety_command"]
+                     "scenario_command", "safety_command", "set_sim_speed"]
     ok: bool
     reason: str | None = None
     path: list[str] | None = None
@@ -349,6 +355,23 @@ class BleTracks(Strict):
     server_ts_ms: int
     config: dict[str, Any]
     tracks: list[dict[str, Any]]
+
+
+class WarmStart(Strict):
+    sim_s: float
+    wall_s: float
+    seed: int
+
+
+class SimClockMsg(Strict):
+    type: Literal["sim_clock"] = "sim_clock"
+    seq: int
+    server_ts_ms: int
+    sim_ms: int
+    speed: Literal[1, 5, 20]
+    speeds: list[Literal[1, 5, 20]]
+    warm_start: WarmStart | None
+    speed_locked: str | None
 
 
 class Event(Strict):

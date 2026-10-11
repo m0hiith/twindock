@@ -233,6 +233,8 @@ export interface TwinDockContract {
   select_unit?: SelectUnit;
   selection_changed?: SelectionChanged;
   set_auto_mode?: SetAutoMode;
+  set_sim_speed?: SetSimSpeed;
+  sim_clock?: SimClock;
   unit_update?: UnitUpdate;
   world_snapshot?: WorldSnapshot;
   wiring?: Wiring;
@@ -552,7 +554,8 @@ export interface CommandAck {
     | "machine_command"
     | "ack_alert"
     | "scenario_command"
-    | "safety_command";
+    | "safety_command"
+    | "set_sim_speed";
   ok: boolean;
   /**
    * Short human reason when ok is false.
@@ -1023,6 +1026,37 @@ export interface SetAutoMode {
   type: "set_auto_mode";
   cmd_id: CmdId;
   enabled: boolean;
+}
+/**
+ * Run the simulation clock at x1 (real time, the default), x5 or x20. Refused while the real board is online: board data is always on real time.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "set_sim_speed".
+ */
+export interface SetSimSpeed {
+  type: "set_sim_speed";
+  cmd_id: CmdId;
+  speed: 1 | 5 | 20;
+}
+/**
+ * The simulation clock (backend/twindock/simclock.py): on connect, when the speed changes and every few seconds. sim_ms is the simulated time (also every message's server_ts_ms); speed 1 is real time. warm_start says how much simulated time was fast-forwarded before the backend served, with which seed. speed_locked is why the speed can't be changed now (the real board is online), or null.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "sim_clock".
+ */
+export interface SimClock {
+  type: "sim_clock";
+  seq: number;
+  server_ts_ms: number;
+  sim_ms: number;
+  speed: 1 | 5 | 20;
+  speeds: (1 | 5 | 20)[];
+  warm_start: null | {
+    sim_s: number;
+    wall_s: number;
+    seed: number;
+  };
+  speed_locked: string | null;
 }
 /**
  * Changed units since the last tick (full unit objects). removed lists units that left the world.

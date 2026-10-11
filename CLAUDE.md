@@ -79,9 +79,11 @@ Every message has a `type`. Server → client: `world_snapshot` (on connect and 
 `event` (`{seq, server_ts_ms, level: info|warn|error, source, text, unit_id?}` for the event log:
 BTN0/BTN1 actions, auto mode, LED timeouts, dropped device messages, BLE tags), and
 `ble_tracks` (after each BLE scan: per tag last/smoothed RSSI, raw/committed/pending zone, plus
-the zone config; for the /device calibration helper).
+the zone config; for the /device calibration helper), `sim_clock` (simulated time, speed ×1/×5/×20,
+warm start; every `server_ts_ms` is on this clock).
 Client → server: `move_unit` (`unit_id`, `target_node`, `action`, `dry_run`, optional `pallet_id`
-for `pick`), `select_unit` (a unit or a device id), `led_command`, `set_auto_mode`.
+for `pick`), `select_unit` (a unit or a device id), `led_command`, `set_auto_mode`, `set_sim_speed`
+(refused above ×1 while the real board is online).
 
 Site twin additions (see `shared/schema.md`): server → client `device_update`,
 `production_update`, `safety_update`, `alerts_update` (and `sites` + `devices` in `world_snapshot`);

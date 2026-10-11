@@ -15,6 +15,7 @@ import contextlib
 import json
 import logging
 import os
+import random
 import time
 from collections.abc import AsyncIterator
 from typing import Any
@@ -29,7 +30,9 @@ from .embedded_sim import STEP_S, EmbeddedSim, broker_reachable
 from .engine import Engine, MqttOut, WsOut
 from .graph import DEFAULT_LAYOUT, load_layout
 from .hub import Hub
+from .models import WarmStart
 from .mqtt_bridge import BrokerConfig, MqttBridge
+from .simclock import SimClock, day_seed
 from .wiring import KitNotFound, WiringInvalid, kit_summary, load_kit, load_kits, load_wiring
 
 log = logging.getLogger("twindock")
@@ -48,6 +51,16 @@ MQTT_CLIENT_ID = os.environ.get("TWINDOCK_MQTT_CLIENT_ID", "twindock-backend")
 # embedded when no local broker is reachable at startup or the broker is a remote one from MQTT_URL (nobody runs
 # tools/site_sim.py next to a hosted backend), external otherwise.
 SIM_MODE = os.environ.get("TWINDOCK_SIM", "auto")
+MAX_STEP_S = 0.05  # one live tick at 20 Hz; at x5/x20 one tick is cut into slices this long
+# Warm start (D3), embedded simulator only: fast-forward this many simulated minutes before serving, so a host that
+# was asleep wakes up into a running factory. 0 switches it off (tests, local work against the real board).
+WARM_START_MIN = float(os.environ.get("TWINDOCK_WARM_START_MIN", "45"))
+# Engine and simulator step during the warm start. Movement is reservation-based (a unit never skips a node it
+# hasn't been granted), so 0.5 s slices only make the fast-forward coarser, never wrong; it halves its cost.
+WARM_STEP_S = 0.5
+WARM_CHUNK_S = 10.0  # simulated seconds between drains of the (discarded) output
+# After a warm start auto mode stays on (the hosted demo is a working factory); TWINDOCK_AUTO=0 turns it off.
+AUTO_AFTER_WARM = os.environ.get("TWINDOCK_AUTO", "1") != "0"
 # The built frontend (vite build). The container serves it from here; locally Vite serves it instead.
 STATIC_DIR = Path(os.environ.get("TWINDOCK_STATIC_DIR") or Path(__file__).resolve().parents[2] / "frontend" / "dist")
 
@@ -55,12 +68,14 @@ STATIC_DIR = Path(os.environ.get("TWINDOCK_STATIC_DIR") or Path(__file__).resolv
 class App:
     def __init__(self) -> None:
         self.layout_json: dict[str, Any] = json.loads(DEFAULT_LAYOUT.read_text())
-        self.engine = Engine(load_layout())
+        self.clock = SimClock()
+        self.engine = Engine(load_layout(), clock=self.clock)
         self.hub = Hub()
         self.mqtt = MqttBridge(self.engine, self.flush, BROKER, MQTT_CLIENT_ID)
         self.sim: EmbeddedSim | None = None
         self.started_wall = time.time()
         self.tick_hz: float | None = None  # achieved over the last TICK_REPORT_S
+        self._sim_acc = 0.0
 
     def flush(self) -> None:
         for o in self.engine.drain():
@@ -71,35 +86,67 @@ class App:
                     continue  # a command for a simulated device, handled in-process
                 self.mqtt.publish(o.topic, o.payload)
 
-    async def tick_loop(self) -> None:
+    def advance(self, sim_dt: float, step: float = MAX_STEP_S, sim_step: float = STEP_S) -> None:
+        """Move simulated time forward by sim_dt: the clock, the simulator (fixed STEP_S steps) and the engine, in
+        slices of at most `step` so movement and traffic never jump. Used by the live loop and the warm start."""
+        while sim_dt > 1e-9:
+            h = min(sim_dt, step)
+            sim_dt -= h
+            self.clock.advance(h)
+            if self.sim is not None:
+                self._sim_acc += h
+                while self._sim_acc >= sim_step - 1e-9:
+                    self._sim_acc -= sim_step
+                    self.sim.step(sim_step)
+            self.engine.tick(h)
+            self.flush()
+
+    def start_sim(self, seed: int) -> None:
+        self.sim = EmbeddedSim(self.engine, seed)
+        self.sim.start()
+        self.flush()
+
+    def warm_start(self, minutes: float, seed: int) -> None:
+        """Fast-forward `minutes` of simulated time before serving (D3): machines learn their baselines, the
+        compressor cycles, trucks are mid-route. The clock was started that long ago, so it ends a few seconds behind
+        the wall clock (the time the fast-forward took). Exactly `minutes` are simulated, so the same seed and start
+        time give the same factory."""
+        t0 = time.perf_counter()
+        start_ms = self.clock.sim_ms
+        e = self.engine
+        e.fast_forward, e.auto_mode = True, True
+        assert self.sim is not None
+        self.sim.sim.validate = False  # in-process and trusted; the engine still validates every message
+        try:
+            target = start_ms + int(minutes * 60_000)
+            while self.clock.sim_ms < target:
+                self.advance(min(WARM_CHUNK_S, (target - self.clock.sim_ms) / 1000), step=WARM_STEP_S, sim_step=WARM_STEP_S)
+                e.drain()  # nobody is connected yet
+        finally:
+            self.sim.sim.validate = True
+            e.fast_forward = False
+        wall = time.perf_counter() - t0
+        e.warm_start = WarmStart(sim_s=round((self.clock.sim_ms - start_ms) / 1000, 1), wall_s=round(wall, 2), seed=seed)
+        e.event("info", f"Warm start: {e.warm_start.sim_s / 60:.0f} simulated minutes in {wall:.1f} s (seed {seed})", "sim")
+        log.info("warm start: %.0f simulated s in %.2f s (seed %d)", e.warm_start.sim_s, wall, seed)
+
+    async def run_loop(self) -> None:
+        """The live loop: 20 Hz, each tick advances simulated time by real time x speed."""
         period = 1.0 / TICK_HZ
         last = time.monotonic()
         window_start, ticks = last, 0
         while True:
             await asyncio.sleep(max(0.0, last + period - time.monotonic()))
             now = time.monotonic()
-            # Cap dt so a stalled loop (laptop sleep) doesn't teleport units across the map.
-            self.engine.tick(min(now - last, 0.25))
+            # Cap real dt so a stalled loop (laptop sleep, a frozen host) doesn't teleport units across the map.
+            self.advance(min(now - last, 0.25) * self.clock.speed)
             last = now
-            self.flush()
             ticks += 1
             if now - window_start >= TICK_REPORT_S:
                 self.tick_hz = ticks / (now - window_start)
                 if self.tick_hz < TICK_WARN_HZ:
                     log.warning("tick loop at %.1f Hz (target %.0f Hz): the host is too slow or overloaded", self.tick_hz, TICK_HZ)
                 window_start, ticks = now, 0
-
-    async def sim_loop(self) -> None:
-        assert self.sim is not None
-        self.sim.start()
-        self.flush()
-        last = time.monotonic()
-        while True:
-            await asyncio.sleep(STEP_S)
-            now = time.monotonic()
-            self.sim.step(min(now - last, 1.0))
-            last = now
-            self.flush()
 
 
 state = App()
@@ -116,18 +163,26 @@ def _want_embedded_sim() -> bool:
 @contextlib.asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
-    tasks = [asyncio.create_task(state.tick_loop())]
     if MQTT_ENABLED:
-        tasks.append(asyncio.create_task(state.mqtt.run()))
+        mqtt_task = asyncio.create_task(state.mqtt.run())
     else:
         log.warning("MQTT disabled (TWINDOCK_MQTT=0): the board twin will show Waiting for device")
     if _want_embedded_sim():
+        seed = int(os.environ["TWINDOCK_SEED"]) if os.environ.get("TWINDOCK_SEED") else day_seed(time.strftime("%Y-%m-%d"))
+        if not os.environ.get("TWINDOCK_AUTO_SEED"):
+            state.engine.rng = random.Random(seed + 1)
         try:
-            state.sim = EmbeddedSim(state.engine)
-            tasks.append(asyncio.create_task(state.sim_loop()))
+            if WARM_START_MIN > 0:
+                state.clock.sim_ms = int(time.time() * 1000) - int(WARM_START_MIN * 60_000)
+            state.start_sim(seed)
+            if WARM_START_MIN > 0:
+                state.warm_start(WARM_START_MIN, seed)
+                state.engine.auto_mode = AUTO_AFTER_WARM
         except Exception:  # noqa: BLE001 - a missing simulator only leaves the SIM devices offline
             log.exception("embedded site simulator unavailable; SIM devices will show offline")
             state.sim = None
+            state.engine.fast_forward = False
+    tasks = [asyncio.create_task(state.run_loop())] + ([mqtt_task] if MQTT_ENABLED else [])
     yield
     for t in tasks:
         t.cancel()
@@ -146,7 +201,8 @@ def health() -> dict[str, Any]:
     return {"ok": True, "uptime_s": round(time.time() - state.started_wall, 1),
             "tick_hz": None if state.tick_hz is None else round(state.tick_hz, 1), "tick_target_hz": TICK_HZ,
             "sim": "embedded" if state.sim else "external",
-            "sim_clock_s": round(state.sim.sim.t, 1) if state.sim else None,
+            "sim_clock_ms": state.clock.sim_ms, "sim_speed": state.clock.speed,
+            "warm_start": e.warm_start.model_dump() if e.warm_start else None,
             "devices_online": sum(d["status"] == "online" for d in devices), "devices_total": len(devices),
             "mqtt": str(BROKER) if MQTT_ENABLED else None, "mqtt_connected": e.mqtt_connected,
             "gateway_online": e.gw.online, "gateway_fake": e.gw.fake, "clients": len(state.hub.clients), "auto_mode": e.auto_mode}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twindock/ws/sim_clock.json",
+  "title": "sim_clock (server -> client)",
+  "description": "The simulation clock (backend/twindock/simclock.py): on connect, when the speed changes and every few seconds. sim_ms is the simulated time (also every message's server_ts_ms); speed 1 is real time. warm_start says how much simulated time was fast-forwarded before the backend served, with which seed. speed_locked is why the speed can't be changed now (the real board is online), or null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "seq", "server_ts_ms", "sim_ms", "speed", "speeds", "warm_start", "speed_locked"],
+  "properties": {
+    "type": { "const": "sim_clock" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "server_ts_ms": { "type": "integer" },
+    "sim_ms": { "type": "integer" },
+    "speed": { "enum": [1, 5, 20] },
+    "speeds": { "type": "array", "items": { "enum": [1, 5, 20] } },
+    "warm_start": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sim_s", "wall_s", "seed"],
+          "properties": {
+            "sim_s": { "type": "number", "minimum": 0 },
+            "wall_s": { "type": "number", "minimum": 0 },
+            "seed": { "type": "integer" }
+          }
+        }
+      ]
+    },
+    "speed_locked": { "type": ["string", "null"] }
+  }
+}

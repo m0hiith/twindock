@@ -27,7 +27,8 @@
         "machine_command",
         "ack_alert",
         "scenario_command",
-        "safety_command"
+        "safety_command",
+        "set_sim_speed"
       ]
     },
     "ok": {

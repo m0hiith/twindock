@@ -26,7 +26,7 @@ def test_health_reports_process_state() -> None:
         h = c.get("/api/health").json()
     assert h["ok"] is True
     assert h["sim"] == "embedded"  # tests run without a broker
-    for k in ("uptime_s", "tick_hz", "tick_target_hz", "sim_clock_s", "devices_online", "devices_total"):
+    for k in ("uptime_s", "tick_hz", "tick_target_hz", "sim_clock_ms", "sim_speed", "devices_online", "devices_total"):
         assert k in h
     assert h["devices_total"] > 50
 

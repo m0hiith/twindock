@@ -1,7 +1,7 @@
 // Client mirror of server state. It only ever changes in response to server messages:
 // the UI sends intents (ws.ts) and waits for the backend to broadcast the result.
 import { create } from "zustand";
-import type { AlertsUpdate, BleTracks, CommandAck, Device, Event, Gateway, ProductionUpdate, SafetyUpdate, ServerMessage, Site, Unit } from "../contract";
+import type { AlertsUpdate, BleTracks, CommandAck, Device, Event, Gateway, ProductionUpdate, SafetyUpdate, ServerMessage, SimClock, Site, Unit } from "../contract";
 import type { Layout } from "../layout";
 import { kpiCounts, type KpiCounts } from "../hud/kpis";
 
@@ -23,6 +23,8 @@ interface WorldState {
   safety: SafetyUpdate | null;
   /** Open + recently resolved alerts and every rule (backend/rules/*.yaml). Shared by all screens. */
   alerts: AlertsUpdate | null;
+  /** The simulation clock: speed (x1 real time, x5, x20) and the warm start the backend did before serving. */
+  simClock: SimClock | null;
   selected: string | null;
   autoMode: boolean;
   events: Event[];
@@ -40,10 +42,12 @@ interface WorldState {
 const MAX_LOG = 200;
 const MAX_BLE_POINTS = 90; // 3 minutes of 2 s scans
 
-/** Server time minus local time, from the latest server_ts_ms. Device ages are measured on the
- *  server clock, so a phone with a skewed clock still shows "12s ago" correctly. */
-export const serverClock = { offsetMs: 0 };
-export const serverNow = () => Date.now() + serverClock.offsetMs;
+/** The server's clock, anchored on the latest server_ts_ms. Device ages are measured on it, so a phone with a skewed
+ *  clock still shows "12s ago" correctly. The server runs on simulated time (x1, x5 or x20, see sim_clock), so between
+ *  messages it advances at that speed. offsetMs is the server time minus local time at the last message. */
+export const serverClock = { offsetMs: 0, speed: 1, anchorServer: 0, anchorLocal: 0 };
+export const serverNow = () =>
+  serverClock.anchorLocal ? serverClock.anchorServer + (Date.now() - serverClock.anchorLocal) * serverClock.speed : Date.now();
 
 export const useWorld = create<WorldState>((set) => ({
   conn: "connecting",
@@ -56,6 +60,7 @@ export const useWorld = create<WorldState>((set) => ({
   production: null,
   safety: null,
   alerts: null,
+  simClock: null,
   selected: null,
   autoMode: false,
   events: [],
@@ -68,7 +73,10 @@ export const useWorld = create<WorldState>((set) => ({
   apply: (m) =>
     set((s) => {
       const now = performance.now();
-      if ("server_ts_ms" in m) serverClock.offsetMs = m.server_ts_ms - Date.now();
+      if ("server_ts_ms" in m) {
+        const local = Date.now();
+        Object.assign(serverClock, { offsetMs: m.server_ts_ms - local, anchorServer: m.server_ts_ms, anchorLocal: local });
+      }
       switch (m.type) {
         case "world_snapshot": {
           const units: Record<string, Unit> = {};
@@ -115,6 +123,9 @@ export const useWorld = create<WorldState>((set) => ({
           return { acks: [...s.acks, m].slice(-MAX_LOG) };
         case "event":
           return { events: [...s.events, m].slice(-MAX_LOG) };
+        case "sim_clock":
+          serverClock.speed = m.speed;
+          return { simClock: m };
         case "ble_tracks": {
           const bleHistory = { ...s.bleHistory };
           for (const t of m.tracks) {
