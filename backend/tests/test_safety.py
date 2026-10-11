@@ -78,7 +78,7 @@ def test_restricted_zones_by_role() -> None:
     place(s, "WK-02", 135.0, 21.0, "FAC01_COLD")    # logistics in the cold room: allowed
     place(s, "WK-03", 135.0, 21.0, "FAC01_COLD")    # QC inspector in the cold room: not allowed
     s.evaluate(0, [], FRESH, ZONES)
-    assert {w.id: w.restricted for w in s.workers.values()} == {
+    assert {w.id: w.restricted for w in s.workers.values() if w.id in ("WK-01", "WK-02", "WK-03", "WK-04")} == {
         "WK-01": None, "WK-02": None, "WK-03": "FAC01_COLD", "WK-04": "FAC01_PRESS"}
     s.evaluate(1, [], FRESH, ZONES)
     assert s.today.restricted == 2  # counted once per entry, not every tick

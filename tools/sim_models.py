@@ -290,6 +290,7 @@ class Badge(Model):
     still_until: float = -1.0  # lying still (simulated fall / man-down)
     pending: list[tuple[str, Payload]] = field(default_factory=list)
     last_buzz: str | None = None
+    skip_checkin: bool = False  # demo: this worker "forgets" the lone-worker check-in
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -322,6 +323,8 @@ class Badge(Model):
             self.pending.append(("sos", self.reading(ts_ms, True)))
         elif action == "checkin":
             self.pending.append(("checkin", self.reading(ts_ms, True)))
+        elif action == "skip_checkin":
+            self.skip_checkin = bool(data.get("on", True))
 
     def step(self, t: float, dt: float, ts_ms: int) -> Out:
         super().step(t, dt, ts_ms)
@@ -366,6 +369,9 @@ class Badge(Model):
                 self.z += dz / dist * stepm
         if self.every("pos", t, 1.0):
             out.append(("position", self.reading(ts_ms, [round(self.x, 2), round(self.z, 2)], "m")))
+        every = float(self.d.get("sim", {}).get("checkin_s", 0))
+        if every and not self.skip_checkin and self.every("checkin", t, every):
+            out.append(("checkin", self.reading(ts_ms, True)))  # the double press on the badge, every `checkin_s`
         return out
 
 
@@ -587,7 +593,7 @@ class PowerMeter(Model):
 
     def step(self, t: float, dt: float, ts_ms: int) -> Out:
         super().step(t, dt, ts_ms)
-        kw = self.base_kw * (1 + 0.15 * math.sin(t / 90.0)) + self.rng.gauss(0, 0.2)
+        kw = max(0.0, self.base_kw * (1 + 0.15 * math.sin(t / 90.0)) + self.rng.gauss(0, 0.2) * (1 if self.base_kw else 0))
         self.kwh += kw * dt / 3600.0
         if self.every("pw", t, 5.0):
             return [("power_kw", self.reading(ts_ms, round(kw, 2), "kW")), ("energy_kwh", self.reading(ts_ms, round(self.kwh, 2), "kWh")),

@@ -533,7 +533,10 @@
         "storage",
         "utilities",
         "workshop",
-        "yard"
+        "yard",
+        "medical",
+        "pump_house",
+        "raw_store"
       ]
     },
     "xz": {

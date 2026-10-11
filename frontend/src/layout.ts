@@ -5,7 +5,7 @@ export type MoverKind = "forklift" | "truck";
 
 export interface LayoutNode {
   id: string;
-  type: "rack_slot" | "zone" | "dock" | "bay" | "charger" | "junction" | "gate" | "exit";
+  type: "rack_slot" | "zone" | "dock" | "bay" | "charger" | "junction" | "gate" | "exit" | "door" | "crossing" | "muster";
   x: number;
   z: number;
   kinds: MoverKind[];

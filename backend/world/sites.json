@@ -14,11 +14,11 @@
       "bounds": {
         "x": [
           -14,
-          82
+          83
         ],
         "z": [
           -12,
-          62
+          104
         ]
       },
       "home": [
@@ -109,8 +109,7 @@
           ],
           "hazard": "medium",
           "ppe": [
-            "vest",
-            "safety_shoes"
+            "vest"
           ]
         },
         {
@@ -137,6 +136,109 @@
             ]
           ],
           "hazard": "low"
+        },
+        {
+          "site_id": "WH-01",
+          "id": "WH01_GATE",
+          "name": "Main gate",
+          "kind": "gate",
+          "polygon": [
+            [
+              63,
+              33
+            ],
+            [
+              83,
+              33
+            ],
+            [
+              83,
+              52
+            ],
+            [
+              63,
+              52
+            ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest"
+          ]
+        },
+        {
+          "site_id": "WH-01",
+          "id": "WH01_ADMIN",
+          "name": "Admin block",
+          "kind": "office",
+          "polygon": [
+            [
+              58,
+              56
+            ],
+            [
+              78,
+              56
+            ],
+            [
+              78,
+              72
+            ],
+            [
+              58,
+              72
+            ]
+          ],
+          "hazard": "low"
+        },
+        {
+          "site_id": "WH-01",
+          "id": "WH01_PARKING",
+          "name": "Car park",
+          "kind": "parking",
+          "polygon": [
+            [
+              -10,
+              56
+            ],
+            [
+              42,
+              56
+            ],
+            [
+              42,
+              78
+            ],
+            [
+              -10,
+              78
+            ]
+          ],
+          "hazard": "low"
+        },
+        {
+          "site_id": "WH-01",
+          "id": "WH01_2W",
+          "name": "Two-wheeler park",
+          "kind": "parking",
+          "polygon": [
+            [
+              46,
+              56
+            ],
+            [
+              56,
+              56
+            ],
+            [
+              56,
+              64
+            ],
+            [
+              46,
+              64
+            ]
+          ],
+          "hazard": "low"
         }
       ]
     },
@@ -149,16 +251,16 @@
       "bounds": {
         "x": [
           84,
-          150
+          216
         ],
         "z": [
-          -8,
-          50
+          -12,
+          104
         ]
       },
       "home": [
-        114,
-        18
+        150,
+        30
       ],
       "zones": [
         {
@@ -321,6 +423,411 @@
             ]
           ],
           "hazard": "low"
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_CANTEEN",
+          "name": "Canteen",
+          "kind": "canteen",
+          "polygon": [
+            [
+              88,
+              56
+            ],
+            [
+              104,
+              56
+            ],
+            [
+              104,
+              68
+            ],
+            [
+              88,
+              68
+            ]
+          ],
+          "hazard": "low"
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_MEDICAL",
+          "name": "First aid",
+          "kind": "medical",
+          "polygon": [
+            [
+              106,
+              56
+            ],
+            [
+              114,
+              56
+            ],
+            [
+              114,
+              64
+            ],
+            [
+              106,
+              64
+            ]
+          ],
+          "hazard": "low"
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_RAW",
+          "name": "Raw material store",
+          "kind": "raw_store",
+          "polygon": [
+            [
+              118,
+              56
+            ],
+            [
+              150,
+              56
+            ],
+            [
+              150,
+              78
+            ],
+            [
+              118,
+              78
+            ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest",
+            "safety_shoes",
+            "helmet"
+          ]
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_RAWYARD",
+          "name": "Raw material yard",
+          "kind": "yard",
+          "polygon": [
+            [
+              146,
+              54
+            ],
+            [
+              166,
+              54
+            ],
+            [
+              166,
+              94
+            ],
+            [
+              146,
+              94
+            ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "vest"
+          ]
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_QC",
+          "name": "QC lab",
+          "kind": "lab",
+          "polygon": [
+            [
+              143,
+              2
+            ],
+            [
+              159,
+              2
+            ],
+            [
+              159,
+              16
+            ],
+            [
+              143,
+              16
+            ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "glasses",
+            "gloves"
+          ]
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_WORKSHOP",
+          "name": "Maintenance workshop",
+          "kind": "workshop",
+          "polygon": [
+            [
+              143,
+              20
+            ],
+            [
+              169,
+              20
+            ],
+            [
+              169,
+              36
+            ],
+            [
+              143,
+              36
+            ]
+          ],
+          "hazard": "high",
+          "ppe": [
+            "helmet",
+            "glasses",
+            "gloves",
+            "hearing"
+          ]
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_SUBSTATION",
+          "name": "Substation",
+          "kind": "utilities",
+          "polygon": [
+            [
+              172,
+              -6
+            ],
+            [
+              188,
+              -6
+            ],
+            [
+              188,
+              8
+            ],
+            [
+              172,
+              8
+            ]
+          ],
+          "hazard": "high",
+          "ppe": [
+            "helmet",
+            "gloves"
+          ],
+          "restricted_roles": [
+            "utilities_operator",
+            "maintenance"
+          ],
+          "lone_worker": true,
+          "checkin_min": 10
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_GENERATOR",
+          "name": "Generator",
+          "kind": "utilities",
+          "polygon": [
+            [
+              196,
+              -10
+            ],
+            [
+              210,
+              -10
+            ],
+            [
+              210,
+              6
+            ],
+            [
+              196,
+              6
+            ]
+          ],
+          "hazard": "high",
+          "ppe": [
+            "hearing",
+            "helmet"
+          ],
+          "restricted_roles": [
+            "utilities_operator",
+            "maintenance"
+          ],
+          "lone_worker": true,
+          "checkin_min": 10
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_COMPRESSOR",
+          "name": "Compressor room",
+          "kind": "utilities",
+          "polygon": [
+            [
+              172,
+              12
+            ],
+            [
+              188,
+              12
+            ],
+            [
+              188,
+              24
+            ],
+            [
+              172,
+              24
+            ]
+          ],
+          "hazard": "high",
+          "ppe": [
+            "hearing"
+          ],
+          "restricted_roles": [
+            "utilities_operator",
+            "maintenance"
+          ],
+          "lone_worker": true,
+          "checkin_min": 10
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_TANKS",
+          "name": "Water tanks and pumps",
+          "kind": "utilities",
+          "polygon": [
+            [
+              172,
+              26
+            ],
+            [
+              188,
+              26
+            ],
+            [
+              188,
+              36
+            ],
+            [
+              172,
+              36
+            ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "helmet"
+          ]
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_ETP",
+          "name": "Effluent treatment plant",
+          "kind": "etp",
+          "polygon": [
+            [
+              196,
+              12
+            ],
+            [
+              214,
+              12
+            ],
+            [
+              214,
+              34
+            ],
+            [
+              196,
+              34
+            ]
+          ],
+          "hazard": "high",
+          "ppe": [
+            "gloves",
+            "glasses",
+            "safety_shoes"
+          ],
+          "restricted_roles": [
+            "etp_operator",
+            "utilities_operator",
+            "maintenance"
+          ],
+          "lone_worker": true,
+          "checkin_min": 10
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_HAZMAT",
+          "name": "Hazardous materials store",
+          "kind": "hazmat",
+          "polygon": [
+            [
+              196,
+              62
+            ],
+            [
+              210,
+              62
+            ],
+            [
+              210,
+              76
+            ],
+            [
+              196,
+              76
+            ]
+          ],
+          "hazard": "high",
+          "ppe": [
+            "respirator",
+            "gloves",
+            "glasses"
+          ],
+          "restricted_roles": [
+            "utilities_operator",
+            "maintenance"
+          ],
+          "time_limit_min": 30
+        },
+        {
+          "site_id": "FAC-01",
+          "id": "FAC01_FIREPUMP",
+          "name": "Fire pump house",
+          "kind": "pump_house",
+          "polygon": [
+            [
+              178,
+              54
+            ],
+            [
+              198,
+              54
+            ],
+            [
+              198,
+              64
+            ],
+            [
+              178,
+              64
+            ]
+          ],
+          "hazard": "medium",
+          "ppe": [
+            "hearing"
+          ],
+          "restricted_roles": [
+            "utilities_operator",
+            "maintenance",
+            "security_guard"
+          ]
         }
       ]
     }
@@ -629,7 +1136,7 @@
     {
       "id": "TT-01",
       "site_id": "WH-01",
-      "zone_id": "WH01_YARD",
+      "zone_id": "WH01_DOCKS",
       "type": "truck_telematics",
       "protocol": "wifi",
       "x": 22,
@@ -741,11 +1248,11 @@
     {
       "id": "CP-01",
       "site_id": "FAC-01",
-      "zone_id": "FAC01_PRODUCTION",
+      "zone_id": "FAC01_COMPRESSOR",
       "type": "compressor_monitor",
       "protocol": "wifi",
-      "x": 92,
-      "z": 23,
+      "x": 180,
+      "z": 18,
       "capabilities": [
         "pressure_bar",
         "current_a",
@@ -825,12 +1332,12 @@
     },
     {
       "id": "TL-01",
-      "site_id": "WH-01",
-      "zone_id": "WH01_YARD",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_TANKS",
       "type": "tank_level",
       "protocol": "thread",
-      "x": 60,
-      "z": 50,
+      "x": 177,
+      "z": 32,
       "capabilities": [
         "level_pct",
         "pump_on"
@@ -874,6 +1381,885 @@
       "sim": {
         "base_kw": 42.0
       }
+    },
+    {
+      "id": "DR-02",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 79,
+      "z": 36.5,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Security cabin door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-02",
+      "site_id": "WH-01",
+      "zone_id": "WH01_PARKING",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 4,
+      "z": 58,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "EV chargers feeder",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 14.0
+      },
+      "campus": true
+    },
+    {
+      "id": "EN-05",
+      "site_id": "WH-01",
+      "zone_id": "WH01_ADMIN",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 68,
+      "z": 64,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Admin block air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DR-04",
+      "site_id": "WH-01",
+      "zone_id": "WH01_ADMIN",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 68,
+      "z": 56.6,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Reception door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "FP-02",
+      "site_id": "WH-01",
+      "zone_id": "WH01_ADMIN",
+      "type": "fire_panel",
+      "protocol": "wifi",
+      "x": 60,
+      "z": 58,
+      "capabilities": [
+        "alarm",
+        "trouble"
+      ],
+      "label": "Admin fire panel bridge (read only)",
+      "kit": "fire_panel_bridge",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "EN-06",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_CANTEEN",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 96,
+      "z": 62,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Canteen air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "LK-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_CANTEEN",
+      "type": "leak_sensor",
+      "protocol": "thread",
+      "x": 92,
+      "z": 60,
+      "capabilities": [
+        "wet"
+      ],
+      "label": "Kitchen leak probe",
+      "kit": "water_leak_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DR-05",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_CANTEEN",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 96,
+      "z": 56.6,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Canteen door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DR-06",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_MEDICAL",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 110,
+      "z": 56.6,
+      "capabilities": [
+        "open"
+      ],
+      "label": "First aid door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DB-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAW",
+      "type": "dock_bay",
+      "protocol": "wifi",
+      "x": 149,
+      "z": 62,
+      "capabilities": [
+        "occupied",
+        "door_position",
+        "leveler",
+        "dock_light"
+      ],
+      "label": "Raw dock 1 monitor",
+      "kit": "dock_bay",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DB-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAW",
+      "type": "dock_bay",
+      "protocol": "wifi",
+      "x": 149,
+      "z": 70,
+      "capabilities": [
+        "occupied",
+        "door_position",
+        "leveler",
+        "dock_light"
+      ],
+      "label": "Raw dock 2 monitor",
+      "kit": "dock_bay",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "EN-07",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAW",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 134,
+      "z": 68,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Raw store air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_RAW",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 122,
+      "z": 60,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "Raw store feeder",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 8.0
+      },
+      "campus": true
+    },
+    {
+      "id": "MM-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "machine_monitor",
+      "protocol": "wifi",
+      "x": 122,
+      "z": 3.5,
+      "capabilities": [
+        "state",
+        "cycle_time_s",
+        "current_a",
+        "vibration_rms",
+        "temperature_c",
+        "units",
+        "rejects",
+        "alarm"
+      ],
+      "label": "Press 2 monitor",
+      "kit": "machine_monitor",
+      "source": "sim",
+      "attached_to": "M-03",
+      "sim": {
+        "cycle_s": 6.0,
+        "vibration_mm_s": 2.6,
+        "current_a": 13.0,
+        "reject_rate": 0.0,
+        "alarms": [
+          "Die jam",
+          "Hydraulic pressure low"
+        ]
+      },
+      "campus": true
+    },
+    {
+      "id": "MM-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "machine_monitor",
+      "protocol": "wifi",
+      "x": 111,
+      "z": 3.5,
+      "capabilities": [
+        "state",
+        "cycle_time_s",
+        "current_a",
+        "vibration_rms",
+        "temperature_c",
+        "units",
+        "rejects",
+        "alarm"
+      ],
+      "label": "Packer 2 monitor",
+      "kit": "machine_monitor",
+      "source": "sim",
+      "attached_to": "M-04",
+      "sim": {
+        "cycle_s": 8.0,
+        "vibration_mm_s": 1.9,
+        "current_a": 7.0,
+        "reject_rate": 0.02,
+        "alarms": [
+          "Film jam"
+        ]
+      },
+      "campus": true
+    },
+    {
+      "id": "CV-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_PRODUCTION",
+      "type": "conveyor_monitor",
+      "protocol": "wifi",
+      "x": 104,
+      "z": 5.2,
+      "capabilities": [
+        "motor_current_a",
+        "belt_speed_m_s",
+        "jam"
+      ],
+      "label": "Line 2 conveyor monitor",
+      "kit": "conveyor_monitor",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "EN-08",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_QC",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 150,
+      "z": 9,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "QC lab air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DR-07",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_QC",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 144,
+      "z": 9,
+      "capabilities": [
+        "open"
+      ],
+      "label": "QC lab door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "EN-09",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_WORKSHOP",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 156,
+      "z": 28,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Workshop air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DR-08",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_WORKSHOP",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 144,
+      "z": 29,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Workshop door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "GD-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_WORKSHOP",
+      "type": "gas_detector",
+      "protocol": "wifi",
+      "x": 162,
+      "z": 34,
+      "capabilities": [
+        "co_ppm",
+        "o2_pct",
+        "alarm"
+      ],
+      "label": "Workshop gas detector",
+      "kit": "gas_detector_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_SUBSTATION",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 180,
+      "z": -2,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "Substation incomer",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 120.0
+      },
+      "campus": true
+    },
+    {
+      "id": "DR-09",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_SUBSTATION",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 187.5,
+      "z": 0,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Substation door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "EN-10",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_SUBSTATION",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 176,
+      "z": 4,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Substation air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-05",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_GENERATOR",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 203,
+      "z": 2,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "Generator output meter",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 0.0
+      },
+      "campus": true
+    },
+    {
+      "id": "TL-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_GENERATOR",
+      "type": "tank_level",
+      "protocol": "thread",
+      "x": 205,
+      "z": -8,
+      "capabilities": [
+        "level_pct",
+        "pump_on"
+      ],
+      "label": "Diesel day tank",
+      "kit": "tank_level_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-06",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_COMPRESSOR",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 176,
+      "z": 16,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "Compressor feeder",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 30.0
+      },
+      "campus": true
+    },
+    {
+      "id": "EN-11",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_COMPRESSOR",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 184,
+      "z": 20,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Compressor room air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "TL-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_TANKS",
+      "type": "tank_level",
+      "protocol": "thread",
+      "x": 184,
+      "z": 32,
+      "capabilities": [
+        "level_pct",
+        "pump_on"
+      ],
+      "label": "Water tank 2",
+      "kit": "tank_level_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "TL-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_ETP",
+      "type": "tank_level",
+      "protocol": "thread",
+      "x": 205,
+      "z": 18,
+      "capabilities": [
+        "level_pct",
+        "pump_on"
+      ],
+      "label": "ETP equalisation tank",
+      "kit": "tank_level_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "LK-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_ETP",
+      "type": "leak_sensor",
+      "protocol": "thread",
+      "x": 200,
+      "z": 28,
+      "capabilities": [
+        "wet"
+      ],
+      "label": "ETP bund leak probe",
+      "kit": "water_leak_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "GD-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_ETP",
+      "type": "gas_detector",
+      "protocol": "wifi",
+      "x": 203,
+      "z": 26,
+      "capabilities": [
+        "co_ppm",
+        "o2_pct",
+        "alarm"
+      ],
+      "label": "ETP gas detector",
+      "kit": "gas_detector_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "GD-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_HAZMAT",
+      "type": "gas_detector",
+      "protocol": "wifi",
+      "x": 203,
+      "z": 70,
+      "capabilities": [
+        "co_ppm",
+        "o2_pct",
+        "alarm"
+      ],
+      "label": "Hazmat store gas detector",
+      "kit": "gas_detector_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "LK-04",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_HAZMAT",
+      "type": "leak_sensor",
+      "protocol": "thread",
+      "x": 200,
+      "z": 66,
+      "capabilities": [
+        "wet"
+      ],
+      "label": "Hazmat bund leak probe",
+      "kit": "water_leak_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "DR-10",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_HAZMAT",
+      "type": "door_sensor",
+      "protocol": "thread",
+      "x": 196.4,
+      "z": 69,
+      "capabilities": [
+        "open"
+      ],
+      "label": "Hazmat store door",
+      "kit": "door_access",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "EN-13",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_HAZMAT",
+      "type": "env_sensor",
+      "protocol": "thread",
+      "x": 206,
+      "z": 73,
+      "capabilities": [
+        "temperature",
+        "humidity",
+        "co2_ppm",
+        "pm25_ugm3"
+      ],
+      "label": "Hazmat store air",
+      "kit": "env_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "FP-03",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_FIREPUMP",
+      "type": "fire_panel",
+      "protocol": "wifi",
+      "x": 182,
+      "z": 58,
+      "capabilities": [
+        "alarm",
+        "trouble"
+      ],
+      "label": "Fire pump house panel bridge (read only)",
+      "kit": "fire_panel_bridge",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "TL-05",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_FIREPUMP",
+      "type": "tank_level",
+      "protocol": "thread",
+      "x": 194,
+      "z": 59,
+      "capabilities": [
+        "level_pct",
+        "pump_on"
+      ],
+      "label": "Fire water tank",
+      "kit": "tank_level_node",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-07",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_FIREPUMP",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 185,
+      "z": 56,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v"
+      ],
+      "label": "Fire pump feeder",
+      "kit": "energy_meter",
+      "source": "sim",
+      "sim": {
+        "base_kw": 1.0
+      },
+      "campus": true
+    },
+    {
+      "id": "BG-05",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 79,
+      "z": 38,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-05",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-05",
+      "sim": {
+        "battery_pct": 78
+      },
+      "campus": true
+    },
+    {
+      "id": "BG-06",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 141.5,
+      "z": 29,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-06",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-06",
+      "sim": {
+        "battery_pct": 79
+      },
+      "campus": true
+    },
+    {
+      "id": "BG-07",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 189.5,
+      "z": 0,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-07",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-07",
+      "sim": {
+        "battery_pct": 80,
+        "checkin_s": 420
+      },
+      "campus": true
+    },
+    {
+      "id": "BG-08",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 194.5,
+      "z": 22,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-08",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-08",
+      "sim": {
+        "battery_pct": 81,
+        "checkin_s": 420
+      },
+      "campus": true
+    },
+    {
+      "id": "BG-09",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 96,
+      "z": 55,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-09",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-09",
+      "sim": {
+        "battery_pct": 82
+      },
+      "campus": true
+    },
+    {
+      "id": "BG-10",
+      "site_id": "WH-01",
+      "zone_id": "WH01_GATE",
+      "type": "badge",
+      "protocol": "ble",
+      "x": 110,
+      "z": 55,
+      "capabilities": [
+        "position",
+        "fall",
+        "sos",
+        "cancel",
+        "checkin"
+      ],
+      "label": "Badge of WK-10",
+      "kit": "worker_badge",
+      "source": "sim",
+      "attached_to": "WK-10",
+      "sim": {
+        "battery_pct": 74
+      },
+      "campus": true
     }
   ],
   "production": {
@@ -886,7 +2272,9 @@
     "units_per_pallet": 6,
     "ideal_cycle_s": {
       "M-01": 6.0,
-      "M-02": 8.0
+      "M-02": 8.0,
+      "M-03": 6.0,
+      "M-04": 8.0
     },
     "outbound_node": "FAC_OUT",
     "finished_by": "M-02"
@@ -981,6 +2369,138 @@
           "WALK_STAFF_DOOR"
         ]
       }
+    },
+    {
+      "id": "WK-05",
+      "name": "Sam Okafor",
+      "role": "security_guard",
+      "badge": "BG-05",
+      "routes": {
+        "default": [
+          "WALK_CAB",
+          "XN4",
+          "XS4",
+          "P1_79",
+          "P1_68",
+          "WALK_ADMIN",
+          "P1_68",
+          "P1_79",
+          "XS4",
+          "XN4"
+        ]
+      },
+      "first_aider": false,
+      "campus": true
+    },
+    {
+      "id": "WK-06",
+      "name": "Lena Fischer",
+      "role": "maintenance",
+      "badge": "BG-06",
+      "routes": {
+        "default": [
+          "WALK_WS",
+          "P0_141",
+          "P0_150",
+          "P0_160",
+          "P0_172",
+          "P0_192",
+          "P_U3",
+          "P_U2",
+          "P_U1",
+          "WALK_COMP",
+          "P_U1",
+          "P_U0",
+          "WALK_SUB",
+          "P_U0",
+          "P_U1",
+          "P_U2",
+          "P_U3",
+          "P0_192",
+          "P0_172",
+          "P0_160",
+          "P0_150",
+          "P0_141"
+        ]
+      },
+      "first_aider": false,
+      "campus": true
+    },
+    {
+      "id": "WK-07",
+      "name": "Tom Rivera",
+      "role": "utilities_operator",
+      "badge": "BG-07",
+      "routes": {
+        "default": [
+          "WALK_SUB",
+          "P_U0",
+          "P_U1",
+          "WALK_COMP",
+          "P_U1",
+          "P_U2",
+          "P_U3",
+          "WALK_TANK",
+          "P_U3",
+          "P_U2",
+          "P_U1",
+          "P_U0"
+        ]
+      },
+      "first_aider": false,
+      "campus": true
+    },
+    {
+      "id": "WK-08",
+      "name": "Aisha Khan",
+      "role": "etp_operator",
+      "badge": "BG-08",
+      "routes": {
+        "default": [
+          "WALK_ETP",
+          "P_U2",
+          "P_U3",
+          "P_U2"
+        ]
+      },
+      "first_aider": false,
+      "campus": true
+    },
+    {
+      "id": "WK-09",
+      "name": "Marta Novak",
+      "role": "canteen_staff",
+      "badge": "BG-09",
+      "routes": {
+        "default": [
+          "WALK_CANTEEN",
+          "P1_96",
+          "P1_110",
+          "WALK_MED",
+          "P1_110",
+          "P1_96"
+        ]
+      },
+      "first_aider": false,
+      "campus": true
+    },
+    {
+      "id": "WK-10",
+      "name": "Ravi Menon",
+      "role": "first_aider",
+      "badge": "BG-10",
+      "routes": {
+        "default": [
+          "WALK_MED",
+          "P1_110",
+          "P1_96",
+          "WALK_CANTEEN",
+          "P1_96",
+          "P1_110"
+        ]
+      },
+      "first_aider": true,
+      "campus": true
     }
   ],
   "safety": {
@@ -1015,16 +2535,23 @@
   "muster_points": [
     {
       "id": "MP-1",
-      "name": "Muster point 1 (warehouse car park)",
-      "x": 58.0,
-      "z": 56.0,
+      "name": "Muster point 1 (car park south)",
+      "x": 43.5,
+      "z": 90.0,
       "radius_m": 6.0
     },
     {
       "id": "MP-2",
-      "name": "Muster point 2 (factory forecourt)",
-      "x": 96.0,
-      "z": 44.0,
+      "name": "Muster point 2 (raw store west)",
+      "x": 116.0,
+      "z": 92.0,
+      "radius_m": 6.0
+    },
+    {
+      "id": "MP-3",
+      "name": "Muster point 3 (east fire pump)",
+      "x": 166.0,
+      "z": 88.0,
       "radius_m": 6.0
     }
   ]

@@ -367,7 +367,7 @@ class Event(Strict):
 
 # ---------------------------------------------------------------- Layout file (backend/world/layout.json)
 
-NodeType = Literal["rack_slot", "zone", "dock", "bay", "charger", "junction", "gate", "exit"]
+NodeType = Literal["rack_slot", "zone", "dock", "bay", "charger", "junction", "gate", "exit", "door", "crossing", "muster"]
 
 
 class Node(BaseModel):
@@ -385,6 +385,7 @@ class Lane(BaseModel):
     b: str
     kinds: list[MoverKind]
     reverse_into: str | None = None  # trucks back into this end of the lane
+    crossing: str | None = None  # pedestrian lane that may cross a vehicle road or lane here (campus crossings X0, X1...)
 
 
 class DockDef(BaseModel):

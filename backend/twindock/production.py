@@ -112,6 +112,7 @@ class Machine:
     data_ms: int | None = None
     last_fault: dict[str, Any] | None = None
     pending_alarm: str | None = None
+    line: int = 1  # production line (campus: line 2 has its own press and packer; zone OEE and "units today" are line 1)
 
 
 class Production:
@@ -126,7 +127,7 @@ class Production:
             self.machines[m["id"]] = Machine(
                 m["id"], dev, m["label"], float(cfg["ideal_cycle_s"][m["id"]]),
                 Baseline(cfg["baseline_s"], cfg["baseline_min_samples"], cfg["window_samples"],
-                         cfg["z_threshold"], cfg["z_clear"]))
+                         cfg["z_threshold"], cfg["z_clear"]), line=int(m.get("line", 1)))
         self.by_device = {m.device_id: m for m in self.machines.values()}
         self.units_per_pallet = int(cfg["units_per_pallet"])
         self.finished_by = cfg["finished_by"]
@@ -204,7 +205,7 @@ class Production:
     # ------------------------------------------------------------------ wire
 
     def zone_oee(self) -> dict[str, float | None]:
-        ms = [oee(m.running_ms, m.planned_ms, m.ideal_cycle_s, m.good, m.rejects) for m in self.machines.values()]
+        ms = [oee(m.running_ms, m.planned_ms, m.ideal_cycle_s, m.good, m.rejects) for m in self.machines.values() if m.line == 1]
         av = [x["availability"] for x in ms if x["availability"] is not None]
         pf = [x["performance"] for x in ms if x["performance"] is not None]
         qs = [x["quality"] for x in ms if x["quality"] is not None]

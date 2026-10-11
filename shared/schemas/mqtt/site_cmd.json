@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "twindock/mqtt/site_cmd.json",
   "title": "twin/<site>/<device>/cmd/<action>",
-  "description": "Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness).",
+  "description": "Backend to the simulator, for simulated devices only (never GW-01). Actions: degrade, restore, maintenance (machine monitors); jam (conveyor monitors); door_open, door_close (door sensors); route (badges); goto, buzz, fall, still, cancel, sos, checkin, skip_checkin (badges, demo); leak, clear (gas detectors, leak sensors); alarm, reset (fire panel bridge); find_me (asset tags, seconds); silence (any sim device stops publishing, to demonstrate staleness).",
   "type": "object",
   "additionalProperties": false,
   "required": [

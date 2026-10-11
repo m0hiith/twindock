@@ -9,11 +9,11 @@
   "bounds": {
     "x": [
       -14,
-      150
+      216
     ],
     "z": [
       -12,
-      62
+      104
     ]
   },
   "buildings": [
@@ -200,7 +200,7 @@
           44
         ],
         [
-          150,
+          215,
           44
         ]
       ],
@@ -236,6 +236,70 @@
       ],
       "width": 4,
       "dashed": true
+    },
+    {
+      "id": "RAW_ROAD",
+      "points": [
+        [
+          158,
+          44
+        ],
+        [
+          158,
+          98
+        ]
+      ],
+      "width": 7,
+      "dashed": true,
+      "campus": true
+    },
+    {
+      "id": "SOUTH_ROAD",
+      "points": [
+        [
+          -10,
+          98
+        ],
+        [
+          215,
+          98
+        ]
+      ],
+      "width": 7,
+      "dashed": true,
+      "campus": true
+    },
+    {
+      "id": "W_LINK",
+      "points": [
+        [
+          -10,
+          44
+        ],
+        [
+          -10,
+          98
+        ]
+      ],
+      "width": 7,
+      "dashed": false,
+      "campus": true
+    },
+    {
+      "id": "E_LINK",
+      "points": [
+        [
+          215,
+          44
+        ],
+        [
+          215,
+          98
+        ]
+      ],
+      "width": 7,
+      "dashed": false,
+      "campus": true
     }
   ],
   "parking": [
@@ -1124,6 +1188,802 @@
         "truck"
       ],
       "label": "Road (inbound)"
+    },
+    {
+      "id": "WEIGH",
+      "type": "junction",
+      "x": 68,
+      "z": 44,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Weighbridge",
+      "campus": true
+    },
+    {
+      "id": "RD_110",
+      "type": "junction",
+      "x": 110,
+      "z": 44,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Service road",
+      "campus": true
+    },
+    {
+      "id": "RD_158",
+      "type": "junction",
+      "x": 158,
+      "z": 44,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Raw material road",
+      "campus": true
+    },
+    {
+      "id": "RD_186",
+      "type": "junction",
+      "x": 186,
+      "z": 44,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Service road",
+      "campus": true
+    },
+    {
+      "id": "RD_215",
+      "type": "junction",
+      "x": 215,
+      "z": 44,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Service road end",
+      "campus": true
+    },
+    {
+      "id": "RR_1",
+      "type": "junction",
+      "x": 158,
+      "z": 56,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Raw material road",
+      "campus": true
+    },
+    {
+      "id": "RR_2",
+      "type": "junction",
+      "x": 158,
+      "z": 62,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Raw dock 1 approach",
+      "campus": true
+    },
+    {
+      "id": "RR_3",
+      "type": "junction",
+      "x": 158,
+      "z": 70,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Raw dock 2 approach",
+      "campus": true
+    },
+    {
+      "id": "RR_4",
+      "type": "junction",
+      "x": 158,
+      "z": 82,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Turning area",
+      "campus": true
+    },
+    {
+      "id": "RAW_BAY_1",
+      "type": "bay",
+      "x": 153,
+      "z": 62,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Raw dock 1 bay",
+      "campus": true
+    },
+    {
+      "id": "RAW_BAY_2",
+      "type": "bay",
+      "x": 153,
+      "z": 70,
+      "kinds": [
+        "truck"
+      ],
+      "label": "Raw dock 2 bay",
+      "campus": true
+    },
+    {
+      "id": "RAW_DOCK_1",
+      "type": "junction",
+      "x": 147,
+      "z": 62,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw store dock 1",
+      "campus": true
+    },
+    {
+      "id": "RAW_DOCK_2",
+      "type": "junction",
+      "x": 147,
+      "z": 70,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw store dock 2",
+      "campus": true
+    },
+    {
+      "id": "RAW_AISLE_E",
+      "type": "junction",
+      "x": 140,
+      "z": 66,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw store east aisle",
+      "campus": true
+    },
+    {
+      "id": "RAW_AISLE_W",
+      "type": "junction",
+      "x": 130,
+      "z": 66,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw store west aisle",
+      "campus": true
+    },
+    {
+      "id": "RAW_N",
+      "type": "junction",
+      "x": 130,
+      "z": 57.5,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw store north door",
+      "campus": true
+    },
+    {
+      "id": "RAW_X1",
+      "type": "junction",
+      "x": 130,
+      "z": 50,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw material route",
+      "campus": true
+    },
+    {
+      "id": "RAW_X2",
+      "type": "junction",
+      "x": 130,
+      "z": 36,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Raw material route",
+      "campus": true
+    },
+    {
+      "id": "FAC_YARD",
+      "type": "junction",
+      "x": 113,
+      "z": 32,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Factory south yard",
+      "campus": true
+    },
+    {
+      "id": "FAC_DOOR_S",
+      "type": "junction",
+      "x": 113,
+      "z": 24,
+      "kinds": [
+        "forklift"
+      ],
+      "label": "Factory south door",
+      "campus": true
+    },
+    {
+      "id": "WALK_WH",
+      "type": "door",
+      "x": -1.5,
+      "z": 26,
+      "kinds": [],
+      "label": "Warehouse staff door",
+      "campus": true
+    },
+    {
+      "id": "P_WH2",
+      "type": "junction",
+      "x": -1.5,
+      "z": 38,
+      "kinds": [],
+      "label": "Warehouse fence walkway",
+      "campus": true
+    },
+    {
+      "id": "XN0",
+      "type": "crossing",
+      "x": -1.5,
+      "z": 39.2,
+      "kinds": [],
+      "label": "Crossing X0 north",
+      "campus": true
+    },
+    {
+      "id": "XS0",
+      "type": "crossing",
+      "x": -1.5,
+      "z": 48.8,
+      "kinds": [],
+      "label": "Crossing X0 south",
+      "campus": true
+    },
+    {
+      "id": "P1_m1",
+      "type": "junction",
+      "x": -1.5,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_10",
+      "type": "junction",
+      "x": 10,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_20",
+      "type": "junction",
+      "x": 20,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_32",
+      "type": "junction",
+      "x": 32,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_43",
+      "type": "junction",
+      "x": 43.5,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_51",
+      "type": "junction",
+      "x": 51,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_68",
+      "type": "junction",
+      "x": 68,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_79",
+      "type": "junction",
+      "x": 79,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_96",
+      "type": "junction",
+      "x": 96,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_110",
+      "type": "junction",
+      "x": 110,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "P1_116",
+      "type": "junction",
+      "x": 116,
+      "z": 52,
+      "kinds": [],
+      "label": "South walkway",
+      "campus": true
+    },
+    {
+      "id": "WALK_CAB",
+      "type": "door",
+      "x": 79,
+      "z": 38,
+      "kinds": [],
+      "label": "Security cabin door",
+      "campus": true
+    },
+    {
+      "id": "XN4",
+      "type": "crossing",
+      "x": 79,
+      "z": 39.2,
+      "kinds": [],
+      "label": "Crossing X4 north",
+      "campus": true
+    },
+    {
+      "id": "XS4",
+      "type": "crossing",
+      "x": 79,
+      "z": 48.8,
+      "kinds": [],
+      "label": "Crossing X4 south",
+      "campus": true
+    },
+    {
+      "id": "WALK_PARK",
+      "type": "door",
+      "x": 20,
+      "z": 55,
+      "kinds": [],
+      "label": "Car park entrance",
+      "campus": true
+    },
+    {
+      "id": "WALK_PARK2",
+      "type": "door",
+      "x": 32,
+      "z": 55,
+      "kinds": [],
+      "label": "Car park east entrance",
+      "campus": true
+    },
+    {
+      "id": "WALK_2W",
+      "type": "door",
+      "x": 51,
+      "z": 55,
+      "kinds": [],
+      "label": "Two-wheeler park",
+      "campus": true
+    },
+    {
+      "id": "WALK_ADMIN",
+      "type": "door",
+      "x": 68,
+      "z": 55,
+      "kinds": [],
+      "label": "Reception",
+      "campus": true
+    },
+    {
+      "id": "WALK_CANTEEN",
+      "type": "door",
+      "x": 96,
+      "z": 55,
+      "kinds": [],
+      "label": "Canteen door",
+      "campus": true
+    },
+    {
+      "id": "WALK_MED",
+      "type": "door",
+      "x": 110,
+      "z": 55,
+      "kinds": [],
+      "label": "First aid door",
+      "campus": true
+    },
+    {
+      "id": "WALK_FAC_OFF",
+      "type": "door",
+      "x": 96,
+      "z": 38.5,
+      "kinds": [],
+      "label": "Factory office south door",
+      "campus": true
+    },
+    {
+      "id": "XN1",
+      "type": "crossing",
+      "x": 96,
+      "z": 39.2,
+      "kinds": [],
+      "label": "Crossing X1 north",
+      "campus": true
+    },
+    {
+      "id": "XS1",
+      "type": "crossing",
+      "x": 96,
+      "z": 48.8,
+      "kinds": [],
+      "label": "Crossing X1 south",
+      "campus": true
+    },
+    {
+      "id": "P0_108",
+      "type": "junction",
+      "x": 108,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway",
+      "campus": true
+    },
+    {
+      "id": "P0_126",
+      "type": "junction",
+      "x": 126,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway (forklift crossing X7)",
+      "campus": true
+    },
+    {
+      "id": "P0_134",
+      "type": "junction",
+      "x": 134,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway (forklift crossing X7)",
+      "campus": true
+    },
+    {
+      "id": "P0_141",
+      "type": "junction",
+      "x": 141.5,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway",
+      "campus": true
+    },
+    {
+      "id": "P0_150",
+      "type": "junction",
+      "x": 150,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway",
+      "campus": true
+    },
+    {
+      "id": "P0_160",
+      "type": "junction",
+      "x": 160,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway",
+      "campus": true
+    },
+    {
+      "id": "P0_172",
+      "type": "junction",
+      "x": 172,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway",
+      "campus": true
+    },
+    {
+      "id": "P0_192",
+      "type": "junction",
+      "x": 192,
+      "z": 38.5,
+      "kinds": [],
+      "label": "North walkway",
+      "campus": true
+    },
+    {
+      "id": "P_Q_N",
+      "type": "junction",
+      "x": 141.5,
+      "z": 2,
+      "kinds": [],
+      "label": "QC lab corridor",
+      "campus": true
+    },
+    {
+      "id": "WALK_QCL",
+      "type": "door",
+      "x": 141.5,
+      "z": 9,
+      "kinds": [],
+      "label": "QC lab door",
+      "campus": true
+    },
+    {
+      "id": "WALK_WS",
+      "type": "door",
+      "x": 141.5,
+      "z": 29,
+      "kinds": [],
+      "label": "Workshop door",
+      "campus": true
+    },
+    {
+      "id": "P_FAC_E",
+      "type": "junction",
+      "x": 139,
+      "z": 10,
+      "kinds": [],
+      "label": "Factory east door",
+      "campus": true
+    },
+    {
+      "id": "P_U_N",
+      "type": "junction",
+      "x": 192,
+      "z": -7,
+      "kinds": [],
+      "label": "Utilities corridor",
+      "campus": true
+    },
+    {
+      "id": "P_U0",
+      "type": "junction",
+      "x": 192,
+      "z": 0,
+      "kinds": [],
+      "label": "Utilities corridor",
+      "campus": true
+    },
+    {
+      "id": "P_U1",
+      "type": "junction",
+      "x": 192,
+      "z": 18,
+      "kinds": [],
+      "label": "Utilities corridor",
+      "campus": true
+    },
+    {
+      "id": "P_U2",
+      "type": "junction",
+      "x": 192,
+      "z": 22,
+      "kinds": [],
+      "label": "Utilities corridor",
+      "campus": true
+    },
+    {
+      "id": "P_U3",
+      "type": "junction",
+      "x": 192,
+      "z": 31,
+      "kinds": [],
+      "label": "Utilities corridor",
+      "campus": true
+    },
+    {
+      "id": "WALK_SUB",
+      "type": "door",
+      "x": 189.5,
+      "z": 0,
+      "kinds": [],
+      "label": "Substation door",
+      "campus": true
+    },
+    {
+      "id": "WALK_GEN",
+      "type": "door",
+      "x": 194.5,
+      "z": 0,
+      "kinds": [],
+      "label": "Generator door",
+      "campus": true
+    },
+    {
+      "id": "WALK_COMP",
+      "type": "door",
+      "x": 189.5,
+      "z": 18,
+      "kinds": [],
+      "label": "Compressor room door",
+      "campus": true
+    },
+    {
+      "id": "WALK_ETP",
+      "type": "door",
+      "x": 194.5,
+      "z": 22,
+      "kinds": [],
+      "label": "ETP door",
+      "campus": true
+    },
+    {
+      "id": "WALK_TANK",
+      "type": "door",
+      "x": 189.5,
+      "z": 31,
+      "kinds": [],
+      "label": "Water tanks and pumps",
+      "campus": true
+    },
+    {
+      "id": "XN3",
+      "type": "crossing",
+      "x": 192,
+      "z": 39.2,
+      "kinds": [],
+      "label": "Crossing X3 north",
+      "campus": true
+    },
+    {
+      "id": "XS3",
+      "type": "crossing",
+      "x": 192,
+      "z": 48.8,
+      "kinds": [],
+      "label": "Crossing X3 south",
+      "campus": true
+    },
+    {
+      "id": "P1e_166",
+      "type": "junction",
+      "x": 166,
+      "z": 52,
+      "kinds": [],
+      "label": "South-east walkway",
+      "campus": true
+    },
+    {
+      "id": "P1e_183",
+      "type": "junction",
+      "x": 183,
+      "z": 52,
+      "kinds": [],
+      "label": "South-east walkway",
+      "campus": true
+    },
+    {
+      "id": "P1e_192",
+      "type": "junction",
+      "x": 192,
+      "z": 52,
+      "kinds": [],
+      "label": "South-east walkway",
+      "campus": true
+    },
+    {
+      "id": "P1e_200",
+      "type": "junction",
+      "x": 200,
+      "z": 52,
+      "kinds": [],
+      "label": "South-east walkway",
+      "campus": true
+    },
+    {
+      "id": "WALK_PUMP",
+      "type": "door",
+      "x": 183,
+      "z": 53,
+      "kinds": [],
+      "label": "Fire pump house door",
+      "campus": true
+    },
+    {
+      "id": "P_V3a",
+      "type": "junction",
+      "x": 166,
+      "z": 69,
+      "kinds": [],
+      "label": "Hazmat walkway",
+      "campus": true
+    },
+    {
+      "id": "WALK_HAZ",
+      "type": "door",
+      "x": 194.5,
+      "z": 69,
+      "kinds": [],
+      "label": "Hazmat store door",
+      "campus": true
+    },
+    {
+      "id": "WALK_RAW",
+      "type": "door",
+      "x": 116,
+      "z": 67,
+      "kinds": [],
+      "label": "Raw store west door",
+      "campus": true
+    },
+    {
+      "id": "P_V1b",
+      "type": "junction",
+      "x": 116,
+      "z": 80,
+      "kinds": [],
+      "label": "Raw store walkway",
+      "campus": true
+    },
+    {
+      "id": "P_V0b",
+      "type": "junction",
+      "x": 43.5,
+      "z": 70,
+      "kinds": [],
+      "label": "Car park walkway",
+      "campus": true
+    },
+    {
+      "id": "PMP1",
+      "type": "muster",
+      "x": 43.5,
+      "z": 90,
+      "kinds": [],
+      "label": "Muster point 1",
+      "campus": true
+    },
+    {
+      "id": "PMP2",
+      "type": "muster",
+      "x": 116,
+      "z": 92,
+      "kinds": [],
+      "label": "Muster point 2",
+      "campus": true
+    },
+    {
+      "id": "PMP3",
+      "type": "muster",
+      "x": 166,
+      "z": 88,
+      "kinds": [],
+      "label": "Muster point 3",
+      "campus": true
     }
   ],
   "lanes": [
@@ -1383,13 +2243,6 @@
       ]
     },
     {
-      "a": "GATE_IN",
-      "b": "ROAD_E",
-      "kinds": [
-        "truck"
-      ]
-    },
-    {
       "a": "MAIN_E",
       "b": "WH_EAST",
       "kinds": [
@@ -1437,6 +2290,625 @@
       "kinds": [
         "truck"
       ]
+    },
+    {
+      "a": "GATE_IN",
+      "b": "WEIGH",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "WEIGH",
+      "b": "ROAD_E",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "ROAD_IN",
+      "b": "RD_110",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RD_110",
+      "b": "RD_158",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RD_158",
+      "b": "RD_186",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RD_186",
+      "b": "RD_215",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RD_158",
+      "b": "RR_1",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RR_1",
+      "b": "RR_2",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RR_2",
+      "b": "RR_3",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RR_3",
+      "b": "RR_4",
+      "kinds": [
+        "truck"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_DOCK_1",
+      "b": "RAW_AISLE_E",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_DOCK_2",
+      "b": "RAW_AISLE_E",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_AISLE_E",
+      "b": "RAW_AISLE_W",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_AISLE_W",
+      "b": "RAW_N",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_N",
+      "b": "RAW_X1",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_X1",
+      "b": "RAW_X2",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RAW_X2",
+      "b": "FAC_YARD",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "FAC_YARD",
+      "b": "FAC_DOOR_S",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "FAC_DOOR_S",
+      "b": "FAC_AISLE_1",
+      "kinds": [
+        "forklift"
+      ],
+      "campus": true
+    },
+    {
+      "a": "RR_2",
+      "b": "RAW_BAY_1",
+      "kinds": [
+        "truck"
+      ],
+      "reverse_into": "RAW_BAY_1",
+      "campus": true
+    },
+    {
+      "a": "RR_3",
+      "b": "RAW_BAY_2",
+      "kinds": [
+        "truck"
+      ],
+      "reverse_into": "RAW_BAY_2",
+      "campus": true
+    },
+    {
+      "a": "WALK_WH",
+      "b": "P_WH2",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_WH2",
+      "b": "XN0",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "XS0",
+      "b": "P1_m1",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_m1",
+      "b": "P1_10",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_10",
+      "b": "P1_20",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_20",
+      "b": "P1_32",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_32",
+      "b": "P1_43",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_43",
+      "b": "P1_51",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_51",
+      "b": "P1_68",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_68",
+      "b": "P1_79",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_79",
+      "b": "P1_96",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_96",
+      "b": "P1_110",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_110",
+      "b": "P1_116",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_CAB",
+      "b": "XN4",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "XS4",
+      "b": "P1_79",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_20",
+      "b": "WALK_PARK",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_32",
+      "b": "WALK_PARK2",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_51",
+      "b": "WALK_2W",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_68",
+      "b": "WALK_ADMIN",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_96",
+      "b": "WALK_CANTEEN",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_110",
+      "b": "WALK_MED",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_FAC_OFF",
+      "b": "XN1",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "XS1",
+      "b": "P1_96",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_FAC_OFF",
+      "b": "P0_108",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_108",
+      "b": "P0_126",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_134",
+      "b": "P0_141",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_141",
+      "b": "P0_150",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_150",
+      "b": "P0_160",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_160",
+      "b": "P0_172",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_172",
+      "b": "P0_192",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_Q_N",
+      "b": "WALK_QCL",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_QCL",
+      "b": "WALK_WS",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_WS",
+      "b": "P0_141",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_FAC_E",
+      "b": "WALK_QCL",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U_N",
+      "b": "P_U0",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U0",
+      "b": "P_U1",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U1",
+      "b": "P_U2",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U2",
+      "b": "P_U3",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U3",
+      "b": "P0_192",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U0",
+      "b": "WALK_SUB",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U0",
+      "b": "WALK_GEN",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U1",
+      "b": "WALK_COMP",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U2",
+      "b": "WALK_ETP",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_U3",
+      "b": "WALK_TANK",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P0_192",
+      "b": "XN3",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "XS3",
+      "b": "P1e_192",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1e_166",
+      "b": "P1e_183",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1e_183",
+      "b": "P1e_192",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1e_192",
+      "b": "P1e_200",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1e_183",
+      "b": "WALK_PUMP",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1e_166",
+      "b": "P_V3a",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_V3a",
+      "b": "PMP3",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_V3a",
+      "b": "WALK_HAZ",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_116",
+      "b": "WALK_RAW",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_RAW",
+      "b": "P_V1b",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_V1b",
+      "b": "PMP2",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P1_43",
+      "b": "P_V0b",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "P_V0b",
+      "b": "PMP1",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_OFFICE",
+      "b": "WALK_FAC_OFF",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_EAST",
+      "b": "P_FAC_E",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_OFFICE",
+      "b": "WALK_STAFF_DOOR",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_STAFF_DOOR",
+      "b": "WALK_QC",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_QC",
+      "b": "WALK_PACKER",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_PACKER",
+      "b": "WALK_PRESS",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_PRESS",
+      "b": "WALK_EAST",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_EAST",
+      "b": "WALK_COLD_DOOR",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_COLD_DOOR",
+      "b": "WALK_COLD",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_STAFF_DOOR",
+      "b": "WALK_DOCK_DOOR",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "WALK_DOCK_DOOR",
+      "b": "WALK_DOCKS",
+      "kinds": [],
+      "campus": true
+    },
+    {
+      "a": "XN0",
+      "b": "XS0",
+      "kinds": [],
+      "campus": true,
+      "crossing": "X0"
+    },
+    {
+      "a": "XN1",
+      "b": "XS1",
+      "kinds": [],
+      "campus": true,
+      "crossing": "X1"
+    },
+    {
+      "a": "XN3",
+      "b": "XS3",
+      "kinds": [],
+      "campus": true,
+      "crossing": "X3"
+    },
+    {
+      "a": "XN4",
+      "b": "XS4",
+      "kinds": [],
+      "campus": true,
+      "crossing": "X4"
+    },
+    {
+      "a": "P0_126",
+      "b": "P0_134",
+      "kinds": [],
+      "campus": true,
+      "crossing": "X7"
     }
   ],
   "docks": [
@@ -1722,6 +3194,28 @@
         "d": 3,
         "h": 2.6,
         "kind": "packer"
+      },
+      {
+        "id": "M-03",
+        "label": "Press 2",
+        "x": 122,
+        "z": 3.5,
+        "w": 4,
+        "d": 3.2,
+        "h": 3.4,
+        "kind": "press",
+        "line": 2
+      },
+      {
+        "id": "M-04",
+        "label": "Packer 2",
+        "x": 111,
+        "z": 3.5,
+        "w": 3.6,
+        "d": 3,
+        "h": 2.6,
+        "kind": "packer",
+        "line": 2
       }
     ],
     "qc": {
@@ -1729,6 +3223,1324 @@
       "z": 9,
       "label": "QC"
     },
-    "outbound_node": "FAC_OUT"
+    "outbound_node": "FAC_OUT",
+    "conveyor2": {
+      "from": [
+        97,
+        3.5
+      ],
+      "to": [
+        128,
+        3.5
+      ],
+      "width": 1.4
+    }
+  },
+  "campus": {
+    "name": "Riverside Campus",
+    "plan": "docs/campus_plan.md",
+    "buildings": [
+      {
+        "id": "SEC_CABIN",
+        "kind": "security",
+        "name": "Security cabin",
+        "x": 76,
+        "z": 33,
+        "w": 6,
+        "d": 4,
+        "h": 3.2,
+        "zone": "WH01_GATE",
+        "door": "WALK_CAB"
+      },
+      {
+        "id": "ADMIN",
+        "kind": "admin",
+        "name": "Admin office and reception",
+        "x": 58,
+        "z": 56,
+        "w": 20,
+        "d": 16,
+        "h": 7.2,
+        "zone": "WH01_ADMIN",
+        "door": "WALK_ADMIN"
+      },
+      {
+        "id": "CANTEEN",
+        "kind": "canteen",
+        "name": "Canteen",
+        "x": 88,
+        "z": 56,
+        "w": 16,
+        "d": 12,
+        "h": 4.5,
+        "zone": "FAC01_CANTEEN",
+        "door": "WALK_CANTEEN"
+      },
+      {
+        "id": "MEDICAL",
+        "kind": "medical",
+        "name": "First aid and medical room",
+        "x": 106,
+        "z": 56,
+        "w": 8,
+        "d": 8,
+        "h": 3.6,
+        "zone": "FAC01_MEDICAL",
+        "door": "WALK_MED"
+      },
+      {
+        "id": "RAW_STORE",
+        "kind": "raw_store",
+        "name": "Raw material store",
+        "x": 118,
+        "z": 56,
+        "w": 32,
+        "d": 22,
+        "h": 8.5,
+        "zone": "FAC01_RAW",
+        "door": "WALK_RAW",
+        "doors": [
+          {
+            "id": "R1",
+            "wall": "east",
+            "at": 62,
+            "w": 4,
+            "node": "RAW_DOCK_1"
+          },
+          {
+            "id": "R2",
+            "wall": "east",
+            "at": 70,
+            "w": 4,
+            "node": "RAW_DOCK_2"
+          },
+          {
+            "id": "RN",
+            "wall": "north",
+            "at": 130,
+            "w": 3.2,
+            "node": "RAW_N"
+          }
+        ]
+      },
+      {
+        "id": "QC_LAB",
+        "kind": "lab",
+        "name": "Quality control lab",
+        "x": 143,
+        "z": 2,
+        "w": 16,
+        "d": 14,
+        "h": 4.0,
+        "zone": "FAC01_QC",
+        "door": "WALK_QCL"
+      },
+      {
+        "id": "WORKSHOP",
+        "kind": "workshop",
+        "name": "Maintenance workshop and spare-parts store",
+        "x": 143,
+        "z": 20,
+        "w": 26,
+        "d": 16,
+        "h": 7.0,
+        "zone": "FAC01_WORKSHOP",
+        "door": "WALK_WS"
+      },
+      {
+        "id": "SUBSTATION",
+        "kind": "substation",
+        "name": "Electrical substation and transformer",
+        "x": 172,
+        "z": -6,
+        "w": 16,
+        "d": 14,
+        "h": 5.0,
+        "zone": "FAC01_SUBSTATION",
+        "door": "WALK_SUB"
+      },
+      {
+        "id": "GENERATOR",
+        "kind": "generator",
+        "name": "Diesel generator",
+        "x": 196,
+        "z": -6,
+        "w": 14,
+        "d": 12,
+        "h": 4.5,
+        "zone": "FAC01_GENERATOR",
+        "door": "WALK_GEN"
+      },
+      {
+        "id": "COMPRESSOR",
+        "kind": "compressor",
+        "name": "Air compressor room",
+        "x": 172,
+        "z": 12,
+        "w": 16,
+        "d": 12,
+        "h": 5.0,
+        "zone": "FAC01_COMPRESSOR",
+        "door": "WALK_COMP"
+      },
+      {
+        "id": "PUMP_HOUSE",
+        "kind": "pump_house",
+        "name": "Water pump house",
+        "x": 173,
+        "z": 26,
+        "w": 6,
+        "d": 4,
+        "h": 3.0,
+        "zone": "FAC01_TANKS",
+        "door": "WALK_TANK"
+      },
+      {
+        "id": "HAZMAT",
+        "kind": "hazmat",
+        "name": "Hazardous materials store (bunded)",
+        "x": 196,
+        "z": 62,
+        "w": 14,
+        "d": 14,
+        "h": 4.0,
+        "zone": "FAC01_HAZMAT",
+        "door": "WALK_HAZ"
+      },
+      {
+        "id": "FIRE_PUMP",
+        "kind": "fire_pump",
+        "name": "Fire pump house",
+        "x": 178,
+        "z": 54,
+        "w": 10,
+        "d": 8,
+        "h": 4.0,
+        "zone": "FAC01_FIREPUMP",
+        "door": "WALK_PUMP"
+      }
+    ],
+    "tanks": [
+      {
+        "id": "WT-1",
+        "x": 177,
+        "z": 32,
+        "r": 3.5,
+        "h": 8,
+        "label": "Water tank 1",
+        "zone": "FAC01_TANKS"
+      },
+      {
+        "id": "WT-2",
+        "x": 184,
+        "z": 32,
+        "r": 3.5,
+        "h": 8,
+        "label": "Water tank 2",
+        "zone": "FAC01_TANKS"
+      },
+      {
+        "id": "FT-1",
+        "x": 194,
+        "z": 59,
+        "r": 4.0,
+        "h": 6,
+        "label": "Fire water tank",
+        "zone": "FAC01_FIREPUMP"
+      },
+      {
+        "id": "DT-1",
+        "x": 205,
+        "z": -8,
+        "r": 1.6,
+        "h": 3,
+        "label": "Diesel day tank",
+        "zone": "FAC01_GENERATOR"
+      }
+    ],
+    "etp": {
+      "id": "ETP",
+      "x": 196,
+      "z": 12,
+      "w": 18,
+      "d": 22,
+      "zone": "FAC01_ETP",
+      "door": "WALK_ETP",
+      "basins": [
+        {
+          "x": 198,
+          "z": 14,
+          "w": 7,
+          "d": 8,
+          "label": "Equalisation"
+        },
+        {
+          "x": 207,
+          "z": 14,
+          "w": 5,
+          "d": 8,
+          "label": "Aeration"
+        },
+        {
+          "x": 198,
+          "z": 24,
+          "w": 14,
+          "d": 7,
+          "label": "Clarifier"
+        }
+      ]
+    },
+    "weighbridge": {
+      "id": "WEIGH",
+      "x": 64,
+      "z": 41,
+      "w": 8,
+      "d": 6,
+      "node": "WEIGH",
+      "label": "Weighbridge"
+    },
+    "barrier": {
+      "id": "BOOM",
+      "x": 84,
+      "z0": 40.5,
+      "z1": 47.5,
+      "node": "ROAD_E",
+      "label": "Boom barrier"
+    },
+    "parking": {
+      "cars": {
+        "x": -10,
+        "z": 56,
+        "w": 52,
+        "d": 22,
+        "rows": 4,
+        "bays_per_row": 12,
+        "label": "Car park"
+      },
+      "two_wheelers": {
+        "x": 46,
+        "z": 56,
+        "w": 10,
+        "d": 8,
+        "label": "Two-wheeler park"
+      },
+      "ev_chargers": [
+        {
+          "id": "EV-1",
+          "x": -8.0,
+          "z": 57.2,
+          "w": 1.0,
+          "d": 1.0
+        },
+        {
+          "id": "EV-2",
+          "x": -4.8,
+          "z": 57.2,
+          "w": 1.0,
+          "d": 1.0
+        },
+        {
+          "id": "EV-3",
+          "x": -1.5999999999999996,
+          "z": 57.2,
+          "w": 1.0,
+          "d": 1.0
+        },
+        {
+          "id": "EV-4",
+          "x": 1.6000000000000014,
+          "z": 57.2,
+          "w": 1.0,
+          "d": 1.0
+        },
+        {
+          "id": "EV-5",
+          "x": 4.800000000000001,
+          "z": 57.2,
+          "w": 1.0,
+          "d": 1.0
+        },
+        {
+          "id": "EV-6",
+          "x": 8.0,
+          "z": 57.2,
+          "w": 1.0,
+          "d": 1.0
+        }
+      ]
+    },
+    "muster_points": [
+      {
+        "id": "MP-1",
+        "name": "Muster point 1 (car park south)",
+        "x": 43.5,
+        "z": 90.0,
+        "radius_m": 6.0,
+        "node": "PMP1"
+      },
+      {
+        "id": "MP-2",
+        "name": "Muster point 2 (raw store west)",
+        "x": 116.0,
+        "z": 92.0,
+        "radius_m": 6.0,
+        "node": "PMP2"
+      },
+      {
+        "id": "MP-3",
+        "name": "Muster point 3 (east fire pump)",
+        "x": 166.0,
+        "z": 88.0,
+        "radius_m": 6.0,
+        "node": "PMP3"
+      }
+    ],
+    "solar": [
+      {
+        "id": "PV-WH",
+        "building": "WAREHOUSE",
+        "kwp": 110.0,
+        "panels": [
+          [
+            2,
+            2,
+            40,
+            11
+          ],
+          [
+            2,
+            14,
+            40,
+            11
+          ]
+        ]
+      },
+      {
+        "id": "PV-FAC",
+        "building": "FACTORY",
+        "kwp": 160.0,
+        "panels": [
+          [
+            90,
+            2,
+            48,
+            10
+          ],
+          [
+            90,
+            14,
+            38,
+            10
+          ]
+        ]
+      },
+      {
+        "id": "PV-RAW",
+        "building": "RAW_STORE",
+        "kwp": 90.0,
+        "panels": [
+          [
+            120,
+            58,
+            28,
+            8.5
+          ],
+          [
+            120,
+            68,
+            28,
+            8.5
+          ]
+        ]
+      }
+    ],
+    "hydrants": {
+      "ring": [
+        [
+          -9,
+          -9
+        ],
+        [
+          214,
+          -9
+        ],
+        [
+          214,
+          102
+        ],
+        [
+          -9,
+          102
+        ]
+      ],
+      "points": [
+        [
+          -9.0,
+          -9.0
+        ],
+        [
+          18.9,
+          -9.0
+        ],
+        [
+          46.8,
+          -9.0
+        ],
+        [
+          74.6,
+          -9.0
+        ],
+        [
+          102.5,
+          -9.0
+        ],
+        [
+          130.4,
+          -9.0
+        ],
+        [
+          158.2,
+          -9.0
+        ],
+        [
+          186.1,
+          -9.0
+        ],
+        [
+          214.0,
+          -9.0
+        ],
+        [
+          214.0,
+          18.8
+        ],
+        [
+          214.0,
+          46.5
+        ],
+        [
+          214.0,
+          74.2
+        ],
+        [
+          214.0,
+          102.0
+        ],
+        [
+          186.1,
+          102.0
+        ],
+        [
+          158.2,
+          102.0
+        ],
+        [
+          130.4,
+          102.0
+        ],
+        [
+          102.5,
+          102.0
+        ],
+        [
+          74.6,
+          102.0
+        ],
+        [
+          46.8,
+          102.0
+        ],
+        [
+          18.9,
+          102.0
+        ],
+        [
+          -9.0,
+          102.0
+        ],
+        [
+          -9.0,
+          74.2
+        ],
+        [
+          -9.0,
+          46.5
+        ],
+        [
+          -9.0,
+          18.8
+        ],
+        [
+          68.0,
+          73.2
+        ],
+        [
+          96.0,
+          69.2
+        ],
+        [
+          110.0,
+          65.2
+        ],
+        [
+          134.0,
+          79.2
+        ],
+        [
+          151.0,
+          0.8
+        ],
+        [
+          156.0,
+          18.8
+        ],
+        [
+          180.0,
+          -7.2
+        ],
+        [
+          203.0,
+          -7.2
+        ],
+        [
+          180.0,
+          10.8
+        ],
+        [
+          176.0,
+          24.8
+        ],
+        [
+          203.0,
+          77.2
+        ],
+        [
+          183.0,
+          63.2
+        ]
+      ]
+    },
+    "crossings": [
+      {
+        "id": "X0",
+        "a": "XN0",
+        "b": "XS0",
+        "over": "road",
+        "x": -1.5,
+        "z": 44.0,
+        "hotspot": {
+          "x": -1.5,
+          "z": 44.0,
+          "radius_m": 4.0
+        }
+      },
+      {
+        "id": "X1",
+        "a": "XN1",
+        "b": "XS1",
+        "over": "road",
+        "x": 96.0,
+        "z": 42.25,
+        "hotspot": {
+          "x": 96.0,
+          "z": 42.25,
+          "radius_m": 4.0
+        }
+      },
+      {
+        "id": "X3",
+        "a": "XN3",
+        "b": "XS3",
+        "over": "road",
+        "x": 192.0,
+        "z": 44.0,
+        "hotspot": {
+          "x": 192.0,
+          "z": 44.0,
+          "radius_m": 4.0
+        }
+      },
+      {
+        "id": "X4",
+        "a": "XN4",
+        "b": "XS4",
+        "over": "road",
+        "x": 79.0,
+        "z": 42.48,
+        "hotspot": {
+          "x": 79.0,
+          "z": 42.48,
+          "radius_m": 4.0
+        }
+      },
+      {
+        "id": "X7",
+        "a": "P0_126",
+        "b": "P0_134",
+        "over": "forklift",
+        "x": 130.0,
+        "z": 38.5,
+        "hotspot": {
+          "x": 130.0,
+          "z": 38.5,
+          "radius_m": 4.0
+        }
+      }
+    ],
+    "walkways": [
+      {
+        "id": "W0",
+        "points": [
+          [
+            -1.5,
+            26
+          ],
+          [
+            -1.5,
+            38
+          ],
+          [
+            -1.5,
+            39.2
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W1",
+        "points": [
+          [
+            -1.5,
+            48.8
+          ],
+          [
+            -1.5,
+            52
+          ],
+          [
+            10,
+            52
+          ],
+          [
+            20,
+            52
+          ],
+          [
+            32,
+            52
+          ],
+          [
+            43.5,
+            52
+          ],
+          [
+            51,
+            52
+          ],
+          [
+            68,
+            52
+          ],
+          [
+            79,
+            52
+          ],
+          [
+            96,
+            52
+          ],
+          [
+            110,
+            52
+          ],
+          [
+            116,
+            52
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W2",
+        "points": [
+          [
+            79,
+            38
+          ],
+          [
+            79,
+            39.2
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W3",
+        "points": [
+          [
+            79,
+            48.8
+          ],
+          [
+            79,
+            52
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W4",
+        "points": [
+          [
+            20,
+            52
+          ],
+          [
+            20,
+            55
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W5",
+        "points": [
+          [
+            32,
+            52
+          ],
+          [
+            32,
+            55
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W6",
+        "points": [
+          [
+            51,
+            52
+          ],
+          [
+            51,
+            55
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W7",
+        "points": [
+          [
+            68,
+            52
+          ],
+          [
+            68,
+            55
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W8",
+        "points": [
+          [
+            96,
+            52
+          ],
+          [
+            96,
+            55
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W9",
+        "points": [
+          [
+            110,
+            52
+          ],
+          [
+            110,
+            55
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W10",
+        "points": [
+          [
+            96,
+            38.5
+          ],
+          [
+            96,
+            39.2
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W11",
+        "points": [
+          [
+            96,
+            48.8
+          ],
+          [
+            96,
+            52
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W12",
+        "points": [
+          [
+            96,
+            38.5
+          ],
+          [
+            108,
+            38.5
+          ],
+          [
+            126,
+            38.5
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W13",
+        "points": [
+          [
+            134,
+            38.5
+          ],
+          [
+            141.5,
+            38.5
+          ],
+          [
+            150,
+            38.5
+          ],
+          [
+            160,
+            38.5
+          ],
+          [
+            172,
+            38.5
+          ],
+          [
+            192,
+            38.5
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W14",
+        "points": [
+          [
+            141.5,
+            2
+          ],
+          [
+            141.5,
+            9
+          ],
+          [
+            141.5,
+            29
+          ],
+          [
+            141.5,
+            38.5
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W15",
+        "points": [
+          [
+            139,
+            10
+          ],
+          [
+            141.5,
+            9
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W16",
+        "points": [
+          [
+            192,
+            -7
+          ],
+          [
+            192,
+            0
+          ],
+          [
+            192,
+            18
+          ],
+          [
+            192,
+            22
+          ],
+          [
+            192,
+            31
+          ],
+          [
+            192,
+            38.5
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W17",
+        "points": [
+          [
+            192,
+            0
+          ],
+          [
+            189.5,
+            0
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W18",
+        "points": [
+          [
+            192,
+            0
+          ],
+          [
+            194.5,
+            0
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W19",
+        "points": [
+          [
+            192,
+            18
+          ],
+          [
+            189.5,
+            18
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W20",
+        "points": [
+          [
+            192,
+            22
+          ],
+          [
+            194.5,
+            22
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W21",
+        "points": [
+          [
+            192,
+            31
+          ],
+          [
+            189.5,
+            31
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W22",
+        "points": [
+          [
+            192,
+            38.5
+          ],
+          [
+            192,
+            39.2
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W23",
+        "points": [
+          [
+            192,
+            48.8
+          ],
+          [
+            192,
+            52
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W24",
+        "points": [
+          [
+            166,
+            52
+          ],
+          [
+            183,
+            52
+          ],
+          [
+            192,
+            52
+          ],
+          [
+            200,
+            52
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W25",
+        "points": [
+          [
+            183,
+            52
+          ],
+          [
+            183,
+            53
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W26",
+        "points": [
+          [
+            166,
+            52
+          ],
+          [
+            166,
+            69
+          ],
+          [
+            166,
+            88
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W27",
+        "points": [
+          [
+            166,
+            69
+          ],
+          [
+            194.5,
+            69
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W28",
+        "points": [
+          [
+            116,
+            52
+          ],
+          [
+            116,
+            67
+          ],
+          [
+            116,
+            80
+          ],
+          [
+            116,
+            92
+          ]
+        ],
+        "width": 1.8
+      },
+      {
+        "id": "W29",
+        "points": [
+          [
+            43.5,
+            52
+          ],
+          [
+            43.5,
+            70
+          ],
+          [
+            43.5,
+            90
+          ]
+        ],
+        "width": 1.8
+      }
+    ],
+    "green_belt": [
+      {
+        "x": -14,
+        "z": -12,
+        "w": 230,
+        "d": 3
+      },
+      {
+        "x": -14,
+        "z": 101,
+        "w": 230,
+        "d": 3
+      },
+      {
+        "x": -14,
+        "z": -12,
+        "w": 3,
+        "d": 116
+      },
+      {
+        "x": 213,
+        "z": -12,
+        "w": 3,
+        "d": 116
+      },
+      {
+        "x": 60,
+        "z": 74,
+        "w": 18,
+        "d": 8
+      },
+      {
+        "x": 86,
+        "z": 70,
+        "w": 26,
+        "d": 10
+      },
+      {
+        "x": 46,
+        "z": 66,
+        "w": 10,
+        "d": 10
+      }
+    ],
+    "fence": {
+      "lines": [
+        [
+          [
+            -13,
+            -11
+          ],
+          [
+            215,
+            -11
+          ],
+          [
+            215,
+            39
+          ],
+          [],
+          [
+            215,
+            49
+          ],
+          [
+            215,
+            103
+          ],
+          [
+            -13,
+            103
+          ],
+          [
+            -13,
+            49
+          ],
+          [],
+          [
+            -13,
+            39
+          ],
+          [
+            -13,
+            -11
+          ]
+        ]
+      ],
+      "gaps": "the main road leaves at both ends (x = -14 and x = 216); the main gate is the boom barrier at x = 84"
+    },
+    "flows": {
+      "trucks": [
+        "ROAD_E",
+        "WEIGH",
+        "GATE_IN",
+        "YARD_E",
+        "BAY_1"
+      ],
+      "raw_material": [
+        "RAW_BAY_1",
+        "RAW_DOCK_1",
+        "RAW_AISLE_E",
+        "RAW_AISLE_W",
+        "RAW_N",
+        "RAW_X1",
+        "RAW_X2",
+        "FAC_YARD",
+        "FAC_DOOR_S",
+        "FAC_AISLE_1"
+      ],
+      "finished_goods": [
+        "FAC_AISLE_1",
+        "FAC_AISLE_2",
+        "FAC_OUT",
+        "FAC_W",
+        "LINK_MID",
+        "WH_EAST",
+        "MAIN_E",
+        "MAIN_1",
+        "DOCK_1"
+      ]
+    }
   }
 }
