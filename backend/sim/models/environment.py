@@ -32,9 +32,10 @@ class Rooms(Model):
         "A small random walk (σ √dt) stands for draughts and loads the model doesn't track.",
         "Humidity relaxes to the room's level: dRH/dt = (RH_set − RH) / τ_rh, plus a small random walk.",
         "CO₂ relaxes to the room's level with τ_co2 and drifts; particles likewise.",
+        "Cold room refrigeration: duty = base + gain × (T − setpoint), between 0 and 1; electrical load = rated kW × duty.",
     )
     reads = ("flags.door_open",)
-    writes = ()
+    writes = ("power_kw",)
     params_prefix = ("rooms",)
 
     def __init__(self, cfg: dict[str, Any]) -> None:
@@ -69,6 +70,13 @@ class Rooms(Model):
             r.co2_ppm += (p.f("rooms.co2.level_ppm") - r.co2_ppm) * dt / p.f("rooms.co2.tau_s") + core.rng.gauss(f"{r.zone}.co2", p.f("rooms.co2.walk_ppm_per_sqrt_s")) * sq
             r.pm25 = max(p.f("rooms.pm25.floor_ugm3"), r.pm25 + (p.f("rooms.pm25.level_ugm3") - r.pm25) * dt / p.f("rooms.pm25.tau_s")
                          + core.rng.gauss(f"{r.zone}.pm", p.f("rooms.pm25.walk_ugm3_per_sqrt_s")) * sq)
+            if r.cold:
+                on = core.q.powered(r.zone)
+                duty = min(1.0, max(0.0, p.f("rooms.refrigeration.base_duty") + p.f("rooms.refrigeration.gain_per_c") * (r.temp_c - p.f("rooms.cold.setpoint_c"))))
+                name = f"Refrigeration {r.zone}"
+                core.q.power_kw[name] = p.f("rooms.refrigeration.rated_kw") * duty if on else 0.0
+                core.q.power_zone[name] = r.zone
+                core.q.power_kind[name] = "motor"
 
 
 class Doors(Model):
@@ -215,6 +223,7 @@ class WaterQuality(Model):
     equations = (
         "Inflow: raw effluent, rough by nature. Outflow: inside the treated band.",
         "pH and turbidity relax to their level with τ; an upset moves the outflow's level out of band until cleared.",
+        "A hydraulically overloaded ETP (equalisation tank at overflow) carries solids over: outflow turbidity rises.",
     )
     params_prefix = ("effluent",)
 
@@ -228,6 +237,8 @@ class WaterQuality(Model):
             return p.f("effluent.inflow.ph"), p.f("effluent.inflow.turbidity_ntu")
         if w["upset"]:
             return p.f("effluent.upset.ph"), p.f("effluent.upset.turbidity_ntu")
+        if self.core.q.flags.get("etp_overload"):
+            return p.f("effluent.outflow.ph"), p.f("effluent.overload.turbidity_ntu")  # hydraulic overload: solids carry over
         return p.f("effluent.outflow.ph"), p.f("effluent.outflow.turbidity_ntu")
 
     def bind(self, core: Any) -> None:

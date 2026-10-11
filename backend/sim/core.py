@@ -27,6 +27,7 @@ class Quantities:
     """The bus. Every value is a true physical quantity at the current step; sensors read these."""
     power_kw: dict[str, float] = field(default_factory=dict)        # consumer -> electrical load (kW)
     power_zone: dict[str, str] = field(default_factory=dict)        # consumer -> zone it is wired in
+    power_kind: dict[str, str] = field(default_factory=dict)        # consumer -> motor | electronic | building | fixed (power factor)
     air_demand_nm3_min: dict[str, float] = field(default_factory=dict)  # consumer -> compressed air (Nm³/min)
     heat_kw: dict[str, float] = field(default_factory=dict)         # zone -> heat released into the room (kW)
     people_in_zone: dict[str, int] = field(default_factory=dict)    # zone -> people there now

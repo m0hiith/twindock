@@ -84,7 +84,8 @@ class SiteSim:
         self.v = load_validators()
         self.t = 0.0  # simulated seconds since start (advanced by step(dt), so tests run fast)
         self.client: Any = None  # paho client when publishing to a broker
-        self.sink: Callable[[str, bytes, bool], None] | None = None  # in-process delivery (backend's embedded mode)
+        self.sink: Callable[[str, bytes, bool], None] | None = None  # in-process delivery as MQTT bytes
+        self.sink_obj: Callable[[str, dict[str, Any], bool], None] | None = None  # in-process delivery of the payload object
         self.sent = 0
         self.verbose = True
         # Schema check before sending. The backend's warm start turns it off while it fast-forwards in-process:
@@ -101,11 +102,14 @@ class SiteSim:
         kind = channel if channel in ("hello", "status") else "reading"
         if self.validate:
             self.v[kind].validate(payload)
-        data = json.dumps(payload, separators=(",", ":"))
-        if self.sink is not None:
-            self.sink(self.topic(m, channel), data.encode(), retain)
-        if self.client is not None:
-            self.client.publish(self.topic(m, channel), data, qos=0, retain=retain)
+        if self.sink_obj is not None:
+            self.sink_obj(self.topic(m, channel), payload, retain)
+        if self.sink is not None or self.client is not None:
+            data = json.dumps(payload, separators=(",", ":"))
+            if self.sink is not None:
+                self.sink(self.topic(m, channel), data.encode(), retain)
+            if self.client is not None:
+                self.client.publish(self.topic(m, channel), data, qos=0, retain=retain)
         self.sent += 1
 
     def on_command(self, topic: str, payload: bytes) -> None:

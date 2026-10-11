@@ -1238,7 +1238,11 @@
         "current_a",
         "run_hours",
         "dew_point_c",
-        "tripped"
+        "tripped",
+        "loaded",
+        "power_kw",
+        "flow_nm3_min",
+        "discharge_c"
       ],
       "label": "Air compressor monitor",
       "kit": "compressor_monitor",
@@ -1354,7 +1358,8 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "Production feeder meter",
       "kit": "energy_meter",
@@ -1387,7 +1392,8 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "EV chargers feeder",
       "kit": "energy_meter",
@@ -1581,7 +1587,8 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "Raw store feeder",
       "kit": "energy_meter",
@@ -1753,7 +1760,8 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "Substation incomer",
       "kit": "energy_meter",
@@ -1806,7 +1814,8 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "Generator output meter",
       "kit": "energy_meter",
@@ -1841,7 +1850,8 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "Compressor feeder",
       "kit": "energy_meter",
@@ -2049,9 +2059,75 @@
       "capabilities": [
         "power_kw",
         "energy_kwh",
-        "voltage_v"
+        "voltage_v",
+        "power_factor"
       ],
       "label": "Fire pump feeder",
+      "kit": "energy_meter",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "CP-02",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_COMPRESSOR",
+      "type": "compressor_monitor",
+      "protocol": "wifi",
+      "x": 184,
+      "z": 18,
+      "capabilities": [
+        "pressure_bar",
+        "current_a",
+        "run_hours",
+        "dew_point_c",
+        "tripped",
+        "loaded",
+        "power_kw",
+        "flow_nm3_min",
+        "discharge_c"
+      ],
+      "label": "Standby air compressor monitor",
+      "kit": "compressor_monitor",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "GS-01",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_GENERATOR",
+      "type": "genset_controller",
+      "protocol": "wifi",
+      "x": 199,
+      "z": -4,
+      "capabilities": [
+        "engine_state",
+        "rpm",
+        "coolant_c",
+        "fuel_lph",
+        "load_kw",
+        "transfer",
+        "mains_ok"
+      ],
+      "label": "Generator controller bridge (read only)",
+      "kit": "genset_bridge",
+      "source": "sim",
+      "campus": true
+    },
+    {
+      "id": "PM-08",
+      "site_id": "FAC-01",
+      "zone_id": "FAC01_SUBSTATION",
+      "type": "power_meter",
+      "protocol": "wifi",
+      "x": 176,
+      "z": -2,
+      "capabilities": [
+        "power_kw",
+        "energy_kwh",
+        "voltage_v",
+        "power_factor"
+      ],
+      "label": "Rooftop solar meter (inverter AC output)",
       "kit": "energy_meter",
       "source": "sim",
       "campus": true
@@ -2540,6 +2616,39 @@
     "_doc": "Campus wiring for the simulator (backend/sim/models/utilities.py) and the energy summary: which meter is the incomer, the generator and each feeder, and which zones are critical (generator-backed). Every physical number is in backend/sim/params/utilities.yaml.",
     "incomer": "PM-04",
     "generator": "PM-05",
+    "genset": "GS-01",
+    "solar_meter": "PM-08",
+    "tanks": {
+      "TL-01": "day",
+      "TL-03": "storage",
+      "TL-04": "etp",
+      "TL-05": "fire",
+      "TL-02": "diesel"
+    },
+    "tariff": {
+      "_doc": "Example time-of-day tariff for the demo (peak +20 %, night −15 %, a common Indian commercial structure); a real site uses its utility's schedule.",
+      "currency": "INR",
+      "bands": [
+        {
+          "label": "Night",
+          "from_h": 22,
+          "to_h": 6,
+          "rate": 6.8
+        },
+        {
+          "label": "Normal",
+          "from_h": 6,
+          "to_h": 18,
+          "rate": 8.0
+        },
+        {
+          "label": "Peak",
+          "from_h": 18,
+          "to_h": 22,
+          "rate": 9.6
+        }
+      ]
+    },
     "diesel_tank": "TL-02",
     "generator_kw": 150,
     "feeders": {

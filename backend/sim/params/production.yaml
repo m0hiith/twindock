@@ -18,7 +18,8 @@ production:
   air:
     slow_below_bar: {value: 6.0, unit: bar, source: "typical industry value: pneumatic tools are rated at 6 bar"}
     factor_per_bar: {value: 0.45, unit: 1/bar, source: "assumption: cylinders stroke slower as supply pressure falls"}
-    max_factor: {value: 2.2, unit: "1", source: "assumption: below this the machine would stop (R1 trips it)"}
+    max_factor: {value: 2.2, unit: "1", source: "assumption: the slowest a machine runs before the trip stops it"}
+    trip_alarm: {value: "Low air pressure", unit: "-", source: "assumption: the machine's alarm text when the air trip stops it"}
   conveyor:
     jam_s: {value: 25.0, unit: s, source: "assumption: an operator clears a jam in about half a minute"}
     run_current_a: {value: 7.5, unit: A, source: "typical industry value: 3-4 kW conveyor drive at 400 V"}

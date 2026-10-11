@@ -8,6 +8,7 @@ surface temperature and vibration RMS are true physical values here; the machine
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -31,6 +32,8 @@ class Machine:
     degrade_rate: float = 0.0    # mm/s per s while degrading (demo command)
     surface_c: float = 0.0
     alarm: str | None = None
+    unpowered: bool = False      # its zone has no mains power (grid failure): stopped, nothing drawn
+    air_stopped: bool = False    # stopped by the low air pressure trip
     events: list[tuple[str, Any]] = field(default_factory=list)  # (channel, value) the monitor reports at once
 
 
@@ -46,8 +49,10 @@ class Production(Model):
         "Surface temperature: dT/dt = (ambient + k_current × I + k_wear × offset − T) / τ.",
         "Vibration RMS = healthy level + wear offset while running; a small residual when stopped.",
         "Electrical load (kW) = √3 × V × I × PF / 1000 per machine; compressed air (Nm³/min) while running.",
+        "Without mains power (a shed zone in a grid failure) a machine stops and draws nothing; it restarts when power returns.",
+        "Below the air trip pressure a pneumatic machine stops with \"Low air pressure\" and restarts when the pressure recovers.",
     )
-    reads = ("air_pressure_bar",)
+    reads = ("air_pressure_bar", "flags.air_trip", "zone_powered")
     writes = ("power_kw", "air_demand_nm3_min")
     params_prefix = ("production",)
 
@@ -73,12 +78,12 @@ class Production(Model):
     def mp(self, m: Machine, name: str) -> Any:
         return self.core.p.v(f"production.machines.{m.id}.{name}")
 
-    def set_state(self, m: Machine, state: str, dwell: float, cause: str) -> None:
+    def set_state(self, m: Machine, state: str, dwell: float, cause: str, alarm: str | None = None) -> None:
         m.state, m.state_until = state, self.core.t + dwell
         m.events.append(("state", state))
         if state == "fault":
             alarms = list(self.mp(m, "alarms"))
-            m.alarm = alarms[int(self.core.rng.stream(f"{m.device}.alarm").random() * len(alarms))]
+            m.alarm = alarm or alarms[int(self.core.rng.stream(f"{m.device}.alarm").random() * len(alarms))]
             m.events.append(("alarm", m.alarm))
         if state == "running":
             m.next_cycle = self.core.t + float(self.mp(m, "ideal_cycle_s"))
@@ -132,7 +137,27 @@ class Production(Model):
         low = p.f("production.air.slow_below_bar")
         self.air_factor = 1.0 if bar >= low else min(p.f("production.air.max_factor"), 1.0 + (low - bar) * p.f("production.air.factor_per_bar"))
         kw_per_a = 3 ** 0.5 * p.f("production.supply_v") * p.f("production.power_factor") / 1000.0
+        trip = bool(core.q.flags.get("air_trip"))
         for m in self.machines.values():
+            core.q.power_zone[m.id] = m.zone
+            core.q.power_kind[m.id] = "motor"
+            if not core.q.powered(m.zone):
+                if not m.unpowered:
+                    m.unpowered = True
+                    core.record(f"{m.id} stopped", "no mains power in the production zone (load shed)")
+                core.q.power_kw[m.id] = 0.0
+                core.q.air_demand_nm3_min[m.id] = 0.0
+                continue
+            if m.unpowered:
+                m.unpowered = False
+                self.set_state(m, "running", core.rng.draw("production.state.running_dwell_s", f"{m.device}.dwell"), "mains power restored")
+            uses_air = float(self.mp(m, "air_nm3_min")) > 0
+            if trip and uses_air and not m.air_stopped and m.state in ("running", "idle"):
+                m.air_stopped = True
+                self.set_state(m, "fault", math.inf, "low air pressure trip", alarm=str(p.v("production.air.trip_alarm")))
+            elif m.air_stopped and not trip:
+                m.air_stopped = False
+                self.set_state(m, "running", core.rng.draw("production.state.running_dwell_s", f"{m.device}.dwell"), "air pressure recovered")
             if t >= m.state_until and m.state != "running":
                 self.set_state(m, "running", core.rng.draw("production.state.running_dwell_s", f"{m.device}.dwell"), f"{m.state} spell ended")
             elif t >= m.state_until:
@@ -160,8 +185,9 @@ class Production(Model):
             target = p.f("production.ambient_c") + p.f("production.thermal.k_current_c_per_a") * i + p.f("production.thermal.k_wear_c_per_mm_s") * m.vib_offset
             m.surface_c += (target - m.surface_c) * min(1.0, dt / p.f("production.thermal.tau_s"))
             core.q.power_kw[m.id] = kw_per_a * i
-            core.q.power_zone[m.id] = m.zone
             core.q.air_demand_nm3_min[m.id] = float(self.mp(m, "air_nm3_min")) if m.state == "running" else 0.0
         for dev, cv in self.conveyors.items():
-            core.q.power_kw[dev] = kw_per_a * self.conveyor_current_a(dev)
+            on = core.q.powered(cv["zone"])
+            core.q.power_kw[dev] = kw_per_a * self.conveyor_current_a(dev) if on else 0.0
             core.q.power_zone[dev] = cv["zone"]
+            core.q.power_kind[dev] = "motor"

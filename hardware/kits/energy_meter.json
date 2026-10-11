@@ -36,6 +36,10 @@
         "channel": "voltage_v",
         "unit": "V",
         "description": "Line voltage"
+      },
+      {
+        "channel": "power_factor",
+        "description": "Total power factor"
       }
     ],
     "power_budget": {

@@ -130,6 +130,9 @@ class DeviceRegistry:
         self.real_history: dict[str, dict[str, deque[tuple[int, float]]]] = {i: {} for i in self.real_ids}
         self._warned: set[tuple[str, str]] = set()
         self.zone_by_id = {z["id"]: z for s in self.sites for z in s["zones"]}
+        # Bounding box per zone polygon, so a position is only tested against the zones it could be in.
+        self._bbox = {z["id"]: (min(p[0] for p in z["polygon"]), max(p[0] for p in z["polygon"]),
+                                min(p[1] for p in z["polygon"]), max(p[1] for p in z["polygon"])) for z in self.zone_by_id.values()}
         self.layout_nodes: dict[str, tuple[float, float]] = {}  # set by the engine (real badge zones)
         self.real_tags = {d["ble_tag"]: i for i, d in self.defs.items() if d.get("ble_tag")}
 
@@ -142,7 +145,8 @@ class DeviceRegistry:
             if site_id and s["id"] != site_id:
                 continue
             for zn in s["zones"]:
-                if point_in_polygon(x, z, zn["polygon"]):
+                x0, x1, z0, z1 = self._bbox[zn["id"]]
+                if x0 <= x <= x1 and z0 <= z <= z1 and point_in_polygon(x, z, zn["polygon"]):
                     hit = zn
         return hit
 
@@ -153,7 +157,7 @@ class DeviceRegistry:
             self._warned.add((dev, key))
             notes.append(Note("warn", text))
 
-    def on_mqtt(self, topic: str, payload: bytes, now: int) -> tuple[list[Note], str | None]:
+    def on_mqtt(self, topic: str, payload: bytes | dict[str, Any], now: int) -> tuple[list[Note], str | None]:
         """Handle a twin/<site>/<device>/<channel> message. Returns (notes, changed device id)."""
         notes: list[Note] = []
         parsed = parse_site_topic(topic)
@@ -179,7 +183,8 @@ class DeviceRegistry:
                 return notes, dev
             return notes, None
         try:
-            data = json.loads(payload)
+            # The embedded simulator hands over the payload object itself (no JSON round trip); it is checked the same way.
+            data = payload if isinstance(payload, dict) else json.loads(payload)
         except ValueError:
             self._warn_once(notes, dev, "json", f"Dropped {topic}: not JSON")
             return notes, None

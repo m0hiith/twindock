@@ -8,6 +8,10 @@ rooms:
   tau_rh_s: {value: 100.0, unit: s, source: "assumption: humidity settles in minutes"}
   rh_walk_pct_per_sqrt_s: {value: 0.2, unit: "%RH/√s", source: "assumption: moisture from people and doors the model does not track"}
   initial_offset_c: {dist: uniform, low: -0.3, high: 0.3, unit: °C, source: "assumption: rooms are not all exactly at setpoint"}
+  refrigeration:
+    rated_kw: {value: 7.5, unit: kW, source: "typical industry value: condensing unit for a ~60 m² chilled room"}
+    base_duty: {value: 0.45, unit: "1", source: "typical industry value: refrigeration duty cycle 40-60 % at steady state"}
+    gain_per_c: {value: 0.25, unit: 1/°C, source: "assumption: the controller runs harder by a quarter per °C above setpoint"}
   cold:
     setpoint_c: {value: 3.0, unit: °C, source: "typical industry value: chilled storage 0-5 °C"}
     rh_pct: {value: 82.0, unit: "%RH", source: "typical industry value: chilled store humidity 80-90 %"}
@@ -46,6 +50,8 @@ effluent:
   outflow:
     ph: {value: 7.3, unit: pH, source: "typical industry value: treated effluent inside a 6.5-8.5 permit band"}
     turbidity_ntu: {value: 12.0, unit: NTU, source: "typical industry value: clarified effluent < 25 NTU"}
+  overload:
+    turbidity_ntu: {value: 45.0, unit: NTU, source: "typical industry value: a clarifier past its hydraulic load carries solids over"}
   upset:
     ph: {value: 9.4, unit: pH, source: "assumption: an over-dosed neutraliser for the demo"}
     turbidity_ntu: {value: 60.0, unit: NTU, source: "assumption: solids carry-over for the demo"}

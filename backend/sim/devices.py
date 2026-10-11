@@ -14,11 +14,14 @@ FW = {"gateway": "sim-1.0", "machine_monitor": "sim-2.3", "env_sensor": "sim-1.4
       "occupancy_sensor": "sim-1.2", "badge": "sim-3.0", "asset_tag": "sim-1.0", "power_meter": "sim-1.0",
       "light": "sim-1.0", "air_quality": "sim-1.3", "truck_telematics": "sim-1.0", "dock_bay": "sim-1.0",
       "conveyor_monitor": "sim-1.0", "compressor_monitor": "sim-1.0", "helmet_clip": "sim-1.0", "gas_detector": "sim-1.0",
-      "leak_sensor": "sim-1.0", "tank_level": "sim-1.0", "fire_panel": "sim-1.0", "water_quality": "sim-1.0"}
+      "leak_sensor": "sim-1.0", "tank_level": "sim-1.0", "fire_panel": "sim-1.0", "water_quality": "sim-1.0",
+      "genset_controller": "sim-1.0"}
 
 # Mains-powered devices report no battery and go quiet when their zone loses power.
 MAINS = {"machine_monitor", "air_quality", "power_meter", "light", "gateway", "dock_bay", "conveyor_monitor", "compressor_monitor",
          "gas_detector", "fire_panel", "tank_level", "truck_telematics", "water_quality"}
+# Powered from the generator's own 24 V control battery: keeps reporting through a grid failure.
+BATTERY_BACKED = {"genset_controller"}
 
 Payload = dict[str, Any]
 Out = list[tuple[str, Payload]]
@@ -40,7 +43,7 @@ class Device:
         p = core.p
         self.silent = False
         self.battery: float | None = None
-        if self.type not in MAINS:
+        if self.type not in MAINS and self.type not in BATTERY_BACKED:
             self.battery = float(d.get("sim", {}).get("battery_pct", core.rng.draw("devices.initial_battery_pct", f"{self.id}.battery")))
         self.rssi = float(d.get("sim", {}).get("rssi_dbm", core.rng.draw("devices.rssi_dbm", f"{self.id}.rssi")))
         self.status_sensor = Sensor(SensorSpec("status", None, p.f("devices.status_period_s"), 0, 0, None, None, 0, "", ""),
@@ -246,18 +249,44 @@ class CompressorMonitor(Device):
     def readings(self, t: float, ts_ms: int) -> Out:
         air = self.core.get("air")
         c = air.compressors[self.id]
+        p = self.core.p
         out: Out = []
         if self.id in air.forced:
             air.forced.discard(self.id)
             self.sensor("pressure_bar").force(t)
         if self.sensor("pressure_bar").due(t):
-            p = self.core.p
-            i = c.power_kw * 1000.0 / (3 ** 0.5 * p.f("production.supply_v") * p.f("air.compressor.power_factor"))
-            for ch, v in (("pressure_bar", air.bar), ("current_a", i), ("run_hours", c.run_hours), ("dew_point_c", p.f("air.dryer.pressure_dew_point_c"))):
+            amps = c.power_kw * 1000.0 / (3 ** 0.5 * p.f("power.nominal_v") * p.f("air.power_factor"))
+            caps = set(self.d["capabilities"])
+            for ch, v in (("pressure_bar", air.bar), ("current_a", amps), ("run_hours", c.run_hours),
+                          ("dew_point_c", p.f("air.dryer.pressure_dew_point_c")), ("power_kw", c.power_kw),
+                          ("flow_nm3_min", c.delivery_nm3_min), ("discharge_c", c.discharge_c)):
+                if ch in caps:
+                    r = self.sensor(ch).read(v)
+                    if r is not None:
+                        out.append(self.reading(ts_ms, ch, r))
+            out.append(self.reading(ts_ms, "tripped", c.tripped))
+            if "loaded" in caps:
+                out.append(self.reading(ts_ms, "loaded", c.loaded))
+        return out
+
+
+class GensetController(Device):
+    """The generator's AMF controller, read over Modbus: engine state and speed, coolant, fuel rate, load, transfer."""
+
+    def readings(self, t: float, ts_ms: int) -> Out:
+        pw = self.core.get("power")
+        out: Out = []
+        s = self.sensor("engine_state")
+        if self.id in pw.forced:
+            pw.forced.discard(self.id)
+            s.force(t)
+        if s.due(t):
+            out += [self.reading(ts_ms, "engine_state", pw.gen_state), self.reading(ts_ms, "transfer", pw.transfer),
+                    self.reading(ts_ms, "mains_ok", not pw.grid_down)]
+            for ch, v in (("rpm", pw.rpm), ("coolant_c", pw.coolant_c), ("fuel_lph", pw.fuel_lph), ("load_kw", pw.gen_kw)):
                 r = self.sensor(ch).read(v)
                 if r is not None:
                     out.append(self.reading(ts_ms, ch, r))
-            out.append(self.reading(ts_ms, "tripped", c.tripped))
         return out
 
 
@@ -301,7 +330,7 @@ class LeakSensor(Device):
 
 class TankLevel(Device):
     def readings(self, t: float, ts_ms: int) -> Out:
-        tk = self.core.get("tanks").tanks[self.id]
+        tk = self.core.get("water").tanks[self.id]
         out: Out = []
         if self.sensor("level_pct").due(t):
             r = self.sensors["level_pct"].read(tk.level_pct)
@@ -343,6 +372,11 @@ class PowerMeter(Device):
                 r = self.sensor(ch).read(v)
                 if r is not None:
                     out.append(self.reading(ts_ms, ch, r))
+            pf = power.meter_pf(self.id)
+            if pf is not None and "power_factor" in self.d["capabilities"]:  # the meter shows no PF without load
+                r = self.sensor("power_factor").read(pf)
+                if r is not None:
+                    out.append(self.reading(ts_ms, "power_factor", r))
         return out
 
 
@@ -379,7 +413,7 @@ DEVICES: dict[str, type[Device]] = {
     "machine_monitor": MachineMonitor, "badge": Badge, "truck_telematics": TruckTelematics, "dock_bay": DockBay,
     "conveyor_monitor": ConveyorMonitor, "compressor_monitor": CompressorMonitor, "helmet_clip": HelmetClip,
     "gas_detector": GasDetector, "leak_sensor": LeakSensor, "tank_level": TankLevel, "fire_panel": FirePanel,
-    "power_meter": PowerMeter, "water_quality": WaterQuality, "asset_tag": AssetTag,
+    "power_meter": PowerMeter, "water_quality": WaterQuality, "asset_tag": AssetTag, "genset_controller": GensetController,
 }
 
 

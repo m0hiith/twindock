@@ -38,10 +38,13 @@ sensors:
     motor_current_a: {value: {period_s: 2, sigma: 0.25, resolution: 0.01, range: [0, 30], dropout_p: 0.002, part: "YHDC SCT-013-030"}, unit: A, source: "datasheet: YHDC SCT-013-030, 30 A full scale"}
     belt_speed_m_s: {value: {period_s: 2, sigma: 0.01, resolution: 0.001, range: [0, 5], dropout_p: 0.002, part: "Hall roller pulse sensor"}, unit: m/s, source: "assumption: roller pulses over 2 s"}
   compressor_monitor:
-    pressure_bar: {value: {period_s: 2, sigma: 0.01, resolution: 0.01, range: [0, 10], dropout_p: 0.002, part: "0-10 bar ratiometric transducer + 16-bit ADC"}, unit: bar, source: "datasheet: 0–10 bar 0.5–4.5 V transducer, ±0.5 % FS typical"}
-    current_a: {value: {period_s: 2, sigma: 0.3, resolution: 0.1, range: [0, 30], dropout_p: 0.002, part: "YHDC SCT-013-030"}, unit: A, source: "datasheet: YHDC SCT-013-030, 30 A full scale"}
-    run_hours: {value: {period_s: 2, resolution: 0.01, range: [0, 200000], part: "hour meter"}, unit: h, source: "assumption: loaded-hours counter"}
-    dew_point_c: {value: {period_s: 2, sigma: 0.3, resolution: 0.1, range: [-60, 20], dropout_p: 0.002, part: "dew-point transmitter 4-20 mA"}, unit: °C, source: "datasheet: pressure dew-point transmitter −60…+20 °C, ±2 °C"}
+    pressure_bar: {value: {period_s: 5, sigma: 0.01, resolution: 0.01, range: [0, 10], dropout_p: 0.002, part: "0-10 bar ratiometric transducer + 16-bit ADC"}, unit: bar, source: "datasheet: 0–10 bar 0.5–4.5 V transducer, ±0.5 % FS typical"}
+    current_a: {value: {period_s: 5, sigma: 0.3, resolution: 0.1, range: [0, 30], dropout_p: 0.002, part: "YHDC SCT-013-030"}, unit: A, source: "datasheet: YHDC SCT-013-030, 30 A full scale"}
+    run_hours: {value: {period_s: 5, resolution: 0.01, range: [0, 200000], part: "hour meter"}, unit: h, source: "assumption: loaded-hours counter"}
+    dew_point_c: {value: {period_s: 5, sigma: 0.3, resolution: 0.1, range: [-60, 20], dropout_p: 0.002, part: "dew-point transmitter 4-20 mA"}, unit: °C, source: "datasheet: pressure dew-point transmitter −60…+20 °C, ±2 °C"}
+    power_kw: {value: {period_s: 5, sigma: 0.05, resolution: 0.1, range: [0, 21], dropout_p: 0.002, part: "computed from the SCT-013-030 current"}, unit: kW, source: "datasheet: 30 A clamp at 400 V, PF 0.88 → about 18 kW full scale; ±1 % plus PF assumption"}
+    flow_nm3_min: {value: {period_s: 5, resolution: 0.01, range: [0, 5], part: "estimated: rated FAD while loaded"}, unit: Nm³/min, source: "assumption: no flow meter; delivery estimated from the load state and the rated FAD"}
+    discharge_c: {value: {period_s: 5, sigma: 0.1, resolution: 0.25, range: [-200, 1350], dropout_p: 0.002, part: "MAX31855K + type K thermocouple"}, unit: °C, source: "datasheet: Maxim MAX31855K (0.25 °C resolution, ±2 °C)"}
   helmet_clip:
     worn: {value: {period_s: 30, part: "VCNL4040 proximity"}, unit: "-", source: "assumption: reported on change and every 30 s"}
     impact_g: {value: {sigma: 0.5, resolution: 0.1, range: [0, 200], period_s: 1, part: "ADXL372"}, unit: g, source: "datasheet: Analog Devices ADXL372 (±200 g)"}
@@ -58,8 +61,17 @@ sensors:
     power_kw: {value: {period_s: 5, sigma: 0.15, resolution: 0.01, range: [0, 277], dropout_p: 0.002, part: "Eastron SDM630MCT + 400/5 A CTs"}, unit: kW, source: "datasheet: Eastron SDM630MCT (class 1, CT-operated); with 400/5 A CTs at 400 V full scale is √3 × 400 V × 400 A ≈ 277 kW"}
     energy_kwh: {value: {period_s: 5, resolution: 0.01, range: [0, 9999999], part: "Eastron SDM630MCT register"}, unit: kWh, source: "datasheet: Eastron SDM630MCT import energy register"}
     voltage_v: {value: {period_s: 5, sigma: 1.2, resolution: 0.1, range: [0, 500], dropout_p: 0.002, part: "Eastron SDM630MCT"}, unit: V, source: "datasheet: Eastron SDM630MCT, 3 × 230/400 V"}
+    power_factor: {value: {period_s: 5, sigma: 0.003, resolution: 0.001, range: [0, 1], dropout_p: 0.002, part: "Eastron SDM630MCT"}, unit: "1", source: "datasheet: Eastron SDM630MCT total power factor register (class 1)"}
   water_quality:
     ph: {value: {period_s: 10, sigma: 0.02, resolution: 0.01, range: [0, 14], dropout_p: 0.005, part: "industrial pH electrode"}, unit: pH, source: "typical industry value: pH electrode ±0.1 pH, 0–14"}
     turbidity_ntu: {value: {period_s: 10, sigma: 0.5, resolution: 0.1, range: [0, 1000], dropout_p: 0.005, part: "optical turbidity module"}, unit: NTU, source: "typical industry value: analog optical turbidity module, 0–1000 NTU"}
   asset_tag:
     find_me: {value: {period_s: 20, part: "EFR32BG22 tag"}, unit: "-", source: "assumption: heartbeat every 20 s"}
+  genset_controller:
+    engine_state: {value: {period_s: 5, part: "DSE7320 MKII register"}, unit: "-", source: "assumption: the bridge polls every 5 s and reports state changes at once"}
+    rpm: {value: {period_s: 5, sigma: 2.0, resolution: 1, range: [0, 3000], dropout_p: 0.002, part: "DSE7320 MKII (magnetic pickup)"}, unit: rpm, source: "datasheet: AMF controllers report engine speed from a magnetic pickup or the alternator frequency"}
+    coolant_c: {value: {period_s: 5, sigma: 0.2, resolution: 1, range: [-40, 150], dropout_p: 0.002, part: "DSE7320 MKII (coolant sender)"}, unit: °C, source: "datasheet: engine coolant temperature sender, 1 °C resolution"}
+    fuel_lph: {value: {period_s: 5, sigma: 0.05, resolution: 0.1, range: [0, 100], dropout_p: 0.002, part: "DSE7320 MKII (ECU fuel rate)"}, unit: L/h, source: "typical industry value: fuel rate from the engine ECU over J1939, ~±1 L/h"}
+    load_kw: {value: {period_s: 5, sigma: 0.1, resolution: 0.1, range: [0, 200], dropout_p: 0.002, part: "DSE7320 MKII (generator power)"}, unit: kW, source: "datasheet: AMF controllers meter generator kW, class 1-2"}
+    transfer: {value: {period_s: 5, part: "DSE7320 MKII (breaker auxiliaries)"}, unit: "-", source: "assumption: reported with each 5 s poll"}
+    mains_ok: {value: {period_s: 5, part: "DSE7320 MKII (mains sensing)"}, unit: "-", source: "assumption: reported with each 5 s poll"}

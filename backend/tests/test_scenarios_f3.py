@@ -155,28 +155,35 @@ def test_fire_alarm_in_the_warehouse_chain(h: Harness) -> None:
 
 
 def test_compressor_fault_chain(h: Harness) -> None:
-    b = Bridge(h, ["CP-01", "MM-01", "MM-02", "PM-06", "PM-04", "PM-05", "TL-02", "PM-01", "PM-02", "PM-03", "PM-07"])
+    """R1: the duty compressor trips -> pressure falls -> below 6 bar the low-pressure alert, below 5 bar the line
+    stops on low air -> the standby compressor starts after its sequencer delay and loads -> pressure recovers and
+    the line restarts. Every step is a consequence of the one before, through the air header."""
+    b = Bridge(h, ["CP-01", "CP-02", "MM-01", "MM-02", "PM-06", "PM-04", "PM-05", "TL-02", "PM-01", "PM-02", "PM-03", "PM-07"])
     e = h.engine
     b.run(80)
-    base = e.production.machines["M-01"].cycle_time_s
-    assert base is not None and "compressor_fault" not in b.open_alerts()
+    assert e.production.machines["M-01"].cycle_time_s is not None and "compressor_fault" not in b.open_alerts()
     b.beat("compressor_fault")
-    b.run(70)
+    b.run(40)  # 7.5 → 6 bar takes ~25 s at the line's demand, then the 10 s the rule waits
     alerts = b.open_alerts()
     assert [a["severity"] for a in alerts["compressor_fault"]] == ["critical"]
-    assert "low_air_pressure" in alerts  # pressure fell below 6 bar for 10 s
-    cp = e.devices.sim["CP-01"].readings
-    assert cp["pressure_bar"].value < 6.0 and cp["current_a"].value < 1.0
-    assert b.sim.core.get("production").air_factor > 1.2  # machines slow when the air is short
-    slow = e.production.machines["M-01"].cycle_time_s
-    assert slow is not None and slow > base * 1.15, (base, slow)
+    assert "low_air_pressure" in alerts  # pressure stayed below 6 bar for 10 s
+    cp1, cp2 = e.devices.sim["CP-01"].readings, e.devices.sim["CP-02"].readings
+    assert cp1["current_a"].value < 1.0 and cp1["loaded"].value is False  # a tripped compressor draws nothing
+    stopped = [m for m in e.production.machines.values() if m.last_fault and m.last_fault["text"] == "Low air pressure"]
+    assert stopped, "the air trip stopped the pneumatic machines"
+    b.run(10)
+    assert cp2["loaded"].value is True  # the standby started (sequencer delay + star-delta) and took over
+    b.run(80)
+    assert e.devices.sim["CP-01"].readings["tripped"].value is True
+    assert e.devices.sim["CP-02"].readings["pressure_bar"].value > 6.0
+    assert "low_air_pressure" not in b.open_alerts()
+    assert all(e.production.machines[m].state in ("running", "idle", "fault") for m in ("M-01", "M-02"))
+    assert e.production.machines["M-01"].state != "fault" or e.production.machines["M-01"].last_fault["text"] != "Low air pressure"
     pm06 = next(z for z in e.power_summary()["by_zone"] if z["meter"] == "PM-06")["kw"]
-    assert pm06 < 5  # a tripped compressor draws nothing
+    assert 1 < pm06 < 25  # one 15 kW compressor (loaded or unloaded) carries the load, never two
     b.beat("reset")
-    # One compressor with ~0.6 Nm³/min to spare refills the header slowly (R1 adds the standby compressor).
-    b.run(240)
+    b.run(30)
     assert "compressor_fault" not in b.open_alerts()
-    assert b.sim.core.get("production").air_factor == 1.0 or b.sim.core.get("air").bar > 6.0
 
 
 def test_energy_dashboard_numbers_and_peak_warning(h: Harness) -> None:

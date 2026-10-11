@@ -21,8 +21,8 @@ from site_sim import SITES, SiteSim, select_devices  # noqa: E402
 SIM = Path(__file__).resolve().parents[1] / "sim"
 CFG = json.loads(SITES.read_text())
 # Numbers that are arithmetic, not model parameters: 0, 1, 2 (halves, √ via **0.5), unit conversions (60 s, 3600 s,
-# 1000 W, 100 %), and tiny tolerances for float comparisons.
-ALLOWED = {0, 1, 2, 3, 0.5, 60, 100, 1000, 3600, 1e-9, 1e-6}
+# 1000 W, 100 %, 24 h a day), and tiny tolerances for float comparisons.
+ALLOWED = {0, 1, 2, 3, 0.5, 24, 60, 100, 1000, 3600, 1e-9, 1e-6}
 
 
 def test_every_parameter_has_a_value_unit_and_source() -> None:

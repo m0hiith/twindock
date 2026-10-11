@@ -7,7 +7,7 @@
   when:
     - {field: grid_ok, op: eq, value: false}
   severity: critical
-  message: "Grid failure: the campus is on {generator_state} generator; critical zones stay on"
+  message: "Grid failure: generator {generator_state}; critical zones stay on"
 
 - id: devices_without_power
   name: Devices without power

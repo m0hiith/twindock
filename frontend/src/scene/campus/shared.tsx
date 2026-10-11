@@ -44,7 +44,7 @@ export function gapsOf(b: CampusBuilding, layout: Layout): Gap[] {
 export const MOUNT_HEIGHT: Record<string, number> = {
   env_sensor: 1.6, door_sensor: 1.1, dock_bay: 4.0, machine_monitor: 1.4, conveyor_monitor: 1.2, compressor_monitor: 1.4, power_meter: 1.5,
   gas_detector: 1.5, leak_sensor: 0.05, tank_level: 6.5, fire_panel: 1.4, truck_telematics: 2.2, helmet_clip: 1.9, asset_tag: 0.6, air_quality: 2.0,
-  occupancy_sensor: 2.8, badge: 1.3, light: 3, gateway: 0,
+  occupancy_sensor: 2.8, badge: 1.3, light: 3, gateway: 0, genset_controller: 1.4,
 };
 
 /** Hooks the building's group up to picking: click selects it (inspect card), hover changes the cursor. */

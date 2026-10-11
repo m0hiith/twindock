@@ -16,7 +16,7 @@
       "description": "24 V DC from the compressor's control supply, stepped down to 3.3 V and 5 V."
     },
     "mounting": "Board in a small box on the compressor room wall; pressure transducer on the receiver tank; dew-point transmitter after the dryer; clamp on the motor.",
-    "purpose": "Line pressure, motor current, run hours and dew point.",
+    "purpose": "Line pressure, motor current and power, load state, delivered air (estimated), run hours, discharge temperature and dew point.",
     "captions": [
       "Shows the air pressure the factory gets, and when the compressor loads and unloads.",
       "A leak shows up as the compressor running more often.",
@@ -46,6 +46,25 @@
       {
         "channel": "tripped",
         "description": "Compressor tripped (the controller's fault contact)"
+      },
+      {
+        "channel": "loaded",
+        "description": "Loaded or unloaded (from motor current: loaded current is well above unloaded)"
+      },
+      {
+        "channel": "power_kw",
+        "unit": "kW",
+        "description": "Electrical power, computed on the node from current (√3 × 400 V × I × PF)"
+      },
+      {
+        "channel": "flow_nm3_min",
+        "unit": "Nm³/min",
+        "description": "Delivered air, estimated: the compressor's rated FAD while loaded (no flow meter)"
+      },
+      {
+        "channel": "discharge_c",
+        "unit": "°C",
+        "description": "Discharge air temperature (thermocouple on the outlet pipe)"
       }
     ],
     "power_budget": {
@@ -97,6 +116,14 @@
       "controller": null,
       "voltage_v": 5.0,
       "evidence": "unverified"
+    },
+    {
+      "id": "spi",
+      "name": "SPI (pads 4/6/8/10)",
+      "kind": "spi",
+      "controller": "ULP_SSI",
+      "voltage_v": 3.3,
+      "evidence": "unverified"
     }
   ],
   "parts": [
@@ -115,7 +142,7 @@
       "sdk_example": null,
       "measures": "",
       "forklift_use": "",
-      "caption": "Reads three analog sensors through the ADC and reports over Wi-Fi.",
+      "caption": "Reads three analog sensors through the ADC and the discharge thermocouple over SPI, and reports over Wi-Fi.",
       "topics": [],
       "outline_pct": null,
       "status": "planned",
@@ -219,6 +246,36 @@
           "side": "left",
           "evidence": "user-guide",
           "source": "UG581 Table 3.2 pad 15 (ULP_GPIO_7)"
+        },
+        {
+          "name": "pad6",
+          "signal": "MISO",
+          "gpio": "ULP_GPIO_2",
+          "x_mm": 27.66,
+          "y_mm": 19.57,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 6 (ULP_GPIO_2)"
+        },
+        {
+          "name": "pad8",
+          "signal": "SCK",
+          "gpio": "ULP_GPIO_8",
+          "x_mm": 27.66,
+          "y_mm": 22.07,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 8 (ULP_GPIO_8)"
+        },
+        {
+          "name": "pad10",
+          "signal": "CS",
+          "gpio": "ULP_GPIO_10",
+          "x_mm": 27.66,
+          "y_mm": 24.57,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 10 (ULP_GPIO_10)"
         }
       ],
       "drawing": {
@@ -1093,6 +1150,191 @@
         "h_mm": 2.4,
         "dims_evidence": "typical"
       }
+    },
+    {
+      "id": "tc_amp",
+      "name": "Thermocouple amplifier",
+      "part_number": "MAX31855K breakout",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "spi",
+      "address": null,
+      "supplied_from": "vmcu",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Temperature",
+      "forklift_use": "",
+      "caption": "Reads the thermocouple and turns it into a temperature the board can read over SPI.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VIN",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 7.62,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 10.16,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "DO",
+          "signal": "MISO",
+          "gpio": null,
+          "x_mm": 12.7,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "CS",
+          "signal": "CS",
+          "gpio": null,
+          "x_mm": 15.24,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "CLK",
+          "signal": "SCK",
+          "gpio": null,
+          "x_mm": 17.78,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "TC+",
+          "signal": "TC+",
+          "gpio": null,
+          "x_mm": 10.1,
+          "y_mm": 21.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "TC-",
+          "signal": "TC-",
+          "gpio": null,
+          "x_mm": 15.2,
+          "y_mm": 21.6,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 25.4,
+        "h_mm": 22.0,
+        "pcb_color": "blue",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 18.2,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 21.6,
+            "y_mm": 18.2,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "MAX31855",
+            "x_mm": 10.25,
+            "y_mm": 8.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "screw_2",
+            "x_mm": 7.6,
+            "y_mm": 14.0,
+            "w_mm": 10.16,
+            "h_mm": 7.5
+          },
+          {
+            "family": "connector",
+            "variant": "header_5",
+            "x_mm": 6.35,
+            "y_mm": 0.3,
+            "w_mm": 12.7,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 3.0,
+        "max_v": 3.6
+      }
+    },
+    {
+      "id": "thermocouple",
+      "name": "Discharge thermocouple",
+      "part_number": "Type K thermocouple, pipe-clamp probe",
+      "quantity": 1,
+      "location": "external",
+      "kind": "transducer",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Discharge temperature",
+      "forklift_use": "",
+      "caption": "Clamped to the discharge pipe; a hotter discharge than usual means a cooling or oil problem.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "TC+",
+          "signal": "TC+",
+          "gpio": null,
+          "x_mm": 46.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "TC-",
+          "signal": "TC-",
+          "gpio": null,
+          "x_mm": 48.0,
+          "y_mm": 1.0,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "probe",
+        "w_mm": 50.0,
+        "h_mm": 6.0,
+        "dims_evidence": "typical"
+      }
     }
   ],
   "connections": [
@@ -1293,6 +1535,83 @@
       "wire_color": "red",
       "status": "planned",
       "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_tc_amp_vin",
+      "from": "mcu.pad20",
+      "to": "tc_amp.VIN",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad26_tc_amp_gnd",
+      "from": "mcu.pad26",
+      "to": "tc_amp.GND",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "tc_amp_do_mcu_pad6",
+      "from": "tc_amp.DO",
+      "to": "mcu.pad6",
+      "signal": "MISO",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "green",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad10_tc_amp_cs",
+      "from": "mcu.pad10",
+      "to": "tc_amp.CS",
+      "signal": "CS",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad8_tc_amp_clk",
+      "from": "mcu.pad8",
+      "to": "tc_amp.CLK",
+      "signal": "SCK",
+      "bus": "spi",
+      "medium": "wire",
+      "wire_color": "yellow",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "thermocouple_tcp_tc_amp_tcp",
+      "from": "thermocouple.TC+",
+      "to": "tc_amp.TC+",
+      "signal": "TC+",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "yellow",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "thermocouple_tcn_tc_amp_tcn",
+      "from": "thermocouple.TC-",
+      "to": "tc_amp.TC-",
+      "signal": "TC-",
+      "bus": "analog",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
     }
   ],
   "bom": [
@@ -1412,10 +1731,43 @@
       "covers": [
         "shunt"
       ]
+    },
+    {
+      "id": "tc_amp",
+      "part_number": "MAX31855K breakout",
+      "manufacturer": "unverified",
+      "description": "Analog Devices MAX31855K thermocouple-to-digital breakout",
+      "quantity": 1,
+      "unit_cost_usd": 15.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "tc_amp"
+      ]
+    },
+    {
+      "id": "thermocouple",
+      "part_number": "Type K thermocouple, pipe-clamp probe",
+      "manufacturer": "unverified",
+      "description": "Type K thermocouple, pipe-clamp",
+      "quantity": 1,
+      "unit_cost_usd": 9.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "thermocouple"
+      ]
     }
   ],
   "boot_sequence": [],
   "open_questions": [
+    {
+      "id": "spi_share",
+      "question": "Pads 4-10 are the on-board IMU/flash SPI; confirm the MAX31855 can share the bus with its own chip select.",
+      "blocks": [
+        "tc_amp"
+      ]
+    },
     {
       "id": "five_volt",
       "question": "Pad 18 (5 V) is only live on USB power; give the pressure transducer its own 5 V regulator from the 24 V supply.",
@@ -1430,7 +1782,8 @@
         "pressure",
         "dewpoint",
         "adc",
-        "clamp"
+        "clamp",
+        "tc_amp"
       ]
     }
   ]

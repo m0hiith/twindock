@@ -600,16 +600,22 @@ def compressor_monitor():
                     ("wifi", WIFI, "Mains-powered in the compressor room; Wi-Fi reaches the utilities block without a mesh."),
                     ("mains", "24 V DC from the compressor's control supply, stepped down to 3.3 V and 5 V."),
                     "Board in a small box on the compressor room wall; pressure transducer on the receiver tank; dew-point transmitter after the dryer; clamp on the motor.",
-                    "Line pressure, motor current, run hours and dew point.",
+                    "Line pressure, motor current and power, load state, delivered air (estimated), run hours, discharge temperature and dew point.",
                     ["Shows the air pressure the factory gets, and when the compressor loads and unloads.", "A leak shows up as the compressor running more often.",
                      "Wet air damages tools: the dew point says how dry it is."],
                     [("pressure_bar", "bar", "Receiver pressure"), ("current_a", "A", "Motor current"), ("run_hours", "h", "Loaded hours (from current)"),
-                     ("dew_point_c", "°C", "Pressure dew point after the dryer"), ("tripped", None, "Compressor tripped (the controller's fault contact)")],
+                     ("dew_point_c", "°C", "Pressure dew point after the dryer"), ("tripped", None, "Compressor tripped (the controller's fault contact)"),
+                     ("loaded", None, "Loaded or unloaded (from motor current: loaded current is well above unloaded)"),
+                     ("power_kw", "kW", "Electrical power, computed on the node from current (√3 × 400 V × I × PF)"),
+                     ("flow_nm3_min", "Nm³/min", "Delivered air, estimated: the compressor's rated FAD while loaded (no flow meter)"),
+                     ("discharge_c", "°C", "Discharge air temperature (thermocouple on the outlet pipe)")],
                     budget=(110, 260, 24.0, "SiWx917 connected (~60 mA), 4-20 mA loop (up to 20 mA at 24 V), pressure transducer (~5 mA at 5 V). Estimate."),
                     ), "siwx917"))
-    std_buses_wifi(k, [("analog", "Analog inputs", "analog", None), ("v24", "24 V DC", "power", 24.0), ("v5", "5 V (from pad 18)", "power", 5.0)])
+    std_buses_wifi(k, [("analog", "Analog inputs", "analog", None), ("v24", "24 V DC", "power", 24.0), ("v5", "5 V (from pad 18)", "power", 5.0),
+                       ("spi", "SPI (pads 4/6/8/10)", "spi", 3.3, "ULP_SSI")])
     k.mcu({"qwiic.GND": "GND", "qwiic.3V3": "3V3", "qwiic.SDA": "SDA", "qwiic.SCL": "SCL", "pad2": "VMCU_IN", "pad1": "GND", "pad26": "GND", "pad20": "3V3",
-           "pad16": "SDA", "pad15": "SCL"}, "Reads three analog sensors through the ADC and reports over Wi-Fi.")
+           "pad16": "SDA", "pad15": "SCL", "pad6": "MISO", "pad8": "SCK", "pad10": "CS"},
+          "Reads three analog sensors through the ADC and the discharge thermocouple over SPI, and reports over Wi-Fi.")
     buck(k, "v24", 24.0, "vmcu", 3.3, (4.5, 36.0))
     clamp(k)
     bias(k)
@@ -634,6 +640,20 @@ def compressor_monitor():
            [{"name": "A", "signal": "AIN_DEW", "gpio": None, "x_mm": 0.3, "y_mm": 1.2, "side": "left", "evidence": UNV},
             {"name": "B", "signal": "GND", "gpio": None, "x_mm": 5.7, "y_mm": 1.2, "side": "right", "evidence": UNV}],
            "Turns the 4-20 mA loop into 0.6-3.0 V for the ADC.", bom={"desc": "150 Ω precision resistor", "cost": 0.5})
+    d, p = breakout(25.4, 22.0, "blue", ("MAX31855", "soic", 4.9, 3.9, 8.0),
+                    extra=[{"family": "connector", "variant": "screw_2", "x_mm": 7.6, "y_mm": 14.0, "w_mm": 10.16, "h_mm": 7.5}],
+                    header=[("VIN", "3V3"), ("GND", "GND"), ("DO", "MISO"), ("CS", "CS"), ("CLK", "SCK")])
+    p += [{"name": "TC+", "signal": "TC+", "gpio": None, "x_mm": 10.1, "y_mm": 21.6, "side": "bottom", "evidence": UNV},
+          {"name": "TC-", "signal": "TC-", "gpio": None, "x_mm": 15.2, "y_mm": 21.6, "side": "bottom", "evidence": UNV}]
+    k.part("tc_amp", "Thermocouple amplifier", "MAX31855K breakout", "module", d, p,
+           "Reads the thermocouple and turns it into a temperature the board can read over SPI.", bus="spi", supply=(3.0, 3.6),
+           supplied_from="vmcu", measures="Temperature", bom={"desc": "Analog Devices MAX31855K thermocouple-to-digital breakout", "cost": 15.0})
+    k.part("thermocouple", "Discharge thermocouple", "Type K thermocouple, pipe-clamp probe", "transducer",
+           {"family": "probe", "w_mm": 50.0, "h_mm": 6.0, "dims_evidence": "typical"},
+           [{"name": "TC+", "signal": "TC+", "gpio": None, "x_mm": 46.0, "y_mm": 1.0, "side": "top", "evidence": UNV},
+            {"name": "TC-", "signal": "TC-", "gpio": None, "x_mm": 48.0, "y_mm": 1.0, "side": "top", "evidence": UNV}],
+           "Clamped to the discharge pipe; a hotter discharge than usual means a cooling or oil problem.", measures="Discharge temperature",
+           bom={"desc": "Type K thermocouple, pipe-clamp", "cost": 9.0})
     k.wire("buck.VOUT", "mcu.pad2", "3V3", "red", bus="vmcu")
     k.wire("buck.GND", "mcu.pad1", "GND", "black", bus="vmcu")
     k.wire("mcu.pad20", "adc.VDD", "3V3", "red", bus="vmcu")
@@ -653,8 +673,16 @@ def compressor_monitor():
     k.wire("shunt.B", "mcu.pad1", "GND", "black", bus="analog")
     # 5 V for the transducer and 24 V for the loop come from the supply side (drawn to the regulator input).
     k.wire("buck.VIN", "dewpoint.LOOP+", "V24", "red", bus="v24")
+    k.wire("mcu.pad20", "tc_amp.VIN", "3V3", "red", bus="vmcu")
+    k.wire("mcu.pad26", "tc_amp.GND", "GND", "black", bus="vmcu")
+    k.wire("tc_amp.DO", "mcu.pad6", "MISO", "green", bus="spi")
+    k.wire("mcu.pad10", "tc_amp.CS", "CS", "white", bus="spi")
+    k.wire("mcu.pad8", "tc_amp.CLK", "SCK", "yellow", bus="spi")
+    k.wire("thermocouple.TC+", "tc_amp.TC+", "TC+", "yellow", bus="analog")
+    k.wire("thermocouple.TC-", "tc_amp.TC-", "TC-", "red", bus="analog")
+    k.question("spi_share", "Pads 4-10 are the on-board IMU/flash SPI; confirm the MAX31855 can share the bus with its own chip select.", ["tc_amp"])
     k.question("five_volt", "Pad 18 (5 V) is only live on USB power; give the pressure transducer its own 5 V regulator from the 24 V supply.", ["pressure"])
-    k.question("parts_tbc", "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.", ["pressure", "dewpoint", "adc", "clamp"])
+    k.question("parts_tbc", "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.", ["pressure", "dewpoint", "adc", "clamp", "tc_amp"])
     k.save()
 
 
@@ -931,7 +959,8 @@ def energy_meter():
                     "DIN-rail meter on the feeder; the bridge board in a DIN-rail enclosure next to it, antenna through the cabinet gland.",
                     "Power, energy and voltage of one feeder, read from a certified meter over Modbus.",
                     ["Shows how much power each building uses right now and today.", "The certified meter does the measuring; the bridge only reads it."],
-                    [("power_kw", "kW", "Active power"), ("energy_kwh", "kWh", "Imported energy register"), ("voltage_v", "V", "Line voltage")],
+                    [("power_kw", "kW", "Active power"), ("energy_kwh", "kWh", "Imported energy register"), ("voltage_v", "V", "Line voltage"),
+                     ("power_factor", None, "Total power factor")],
                     budget=(70, 200, 5.0, "SiWx917 connected (~60 mA), RS-485 transceiver (~1 mA idle). Estimate."),
                     ), "siwx917"))
     k.bus("vmcu", "3.3 V (VMCU)", "power", 3.3, None, "user-guide")
@@ -1050,6 +1079,63 @@ def tank_level_node():
     k.save()
 
 
+def genset_bridge():
+    """Reads the standby generator's existing auto-mains-failure controller over Modbus. The controller (not this kit)
+    detects the mains failure, starts the engine and switches the transfer switch; the bridge only reads its registers."""
+    k = reg(Kit(kit("genset_bridge", "Generator controller bridge", "energy",
+                    ("wifi", WIFI, "In the generator room's control cabinet; Wi-Fi reaches the utilities block, and the controller already speaks Modbus."),
+                    ("din_rail", "24 V DC from the generator's battery-backed control supply through a DIN-rail step-down to 5 V, into the dev kit's USB-C."),
+                    "Bridge in a DIN-rail enclosure in the generator control cabinet, on the controller's spare RS-485 port.",
+                    "Engine state, speed, coolant temperature, fuel use, load and the transfer switch position, read from the existing AMF controller.",
+                    ["Shows the generator starting, taking the critical load and cooling down after the grid returns.",
+                     "Only reads the controller: starting, stopping and switching stay with the certified generator controller."],
+                    [("engine_state", None, "Engine state: off, start_delay, cranking, accelerating, running, cooldown"), ("rpm", "rpm", "Engine speed"),
+                     ("coolant_c", "°C", "Coolant temperature"), ("fuel_lph", "L/h", "Fuel rate"), ("load_kw", "kW", "Generator load"),
+                     ("transfer", None, "Transfer switch position: mains, generator or open"), ("mains_ok", None, "Controller sees healthy mains")],
+                    budget=(70, 200, 5.0, "SiWx917 connected (~60 mA), RS-485 transceiver (~1 mA idle). Estimate."),
+                    ), "siwx917"))
+    k.bus("vmcu", "3.3 V (VMCU)", "power", 3.3, None, "user-guide")
+    k.bus("uart", "UART (pads 12/14)", "gpio", 3.3, "ULP_UART")
+    k.bus("rs485", "RS-485 Modbus RTU", "gpio", None)
+    k.bus("gpio", "GPIO", "gpio", 3.3)
+    k.bus("v5", "5 V DIN supply", "power", 5.0)
+    k.mcu({"pad1": "GND", "pad26": "GND", "pad20": "3V3", "pad12": "UART_TX", "pad14": "UART_RX", "pad3": "RS485_DE", "pad18": "5V"},
+          "Polls the generator controller's registers over Modbus every 5 s (state changes at once) and publishes them over Wi-Fi.")
+    d, p = breakout(25.4, 17.8, "blue", ("MAX3485", "soic", 4.9, 3.9, 7.0),
+                    extra=[{"family": "connector", "variant": "screw_3", "x_mm": 6.0, "y_mm": 11.5, "w_mm": 13.0, "h_mm": 6.0}],
+                    header=[("VCC", "3V3"), ("GND", "GND"), ("DI", "TXD"), ("RO", "RXD"), ("DE", "RS485_DE")])
+    p += [{"name": "A", "signal": "RS485_A", "gpio": None, "x_mm": 9.0, "y_mm": 17.4, "side": "bottom", "evidence": UNV},
+          {"name": "B", "signal": "RS485_B", "gpio": None, "x_mm": 13.0, "y_mm": 17.4, "side": "bottom", "evidence": UNV}]
+    k.part("rs485", "RS-485 transceiver", "MAX3485 breakout (3.3 V)", "module", d, p,
+           "Turns the board's serial port into the two-wire RS-485 line the controller speaks.", bus="uart", supply=(3.0, 3.6), supplied_from="vmcu",
+           bom={"desc": "MAX3485 3.3 V RS-485 transceiver breakout", "cost": 5.0})
+    k.part("amf", "Generator AMF controller (existing)", "Deep Sea Electronics DSE7320 MKII auto mains failure controller (already on the generator)", "module",
+           {"family": "din_meter", "label": "DSE7320", "w_mm": 240.0, "h_mm": 172.0, "dims_evidence": "typical"},
+           [{"name": "A", "signal": "RS485_A", "gpio": None, "x_mm": 110.0, "y_mm": 0.4, "side": "top", "evidence": UNV},
+            {"name": "B", "signal": "RS485_B", "gpio": None, "x_mm": 120.0, "y_mm": 0.4, "side": "top", "evidence": UNV}],
+           "The generator's own controller: it detects the mains failure, starts the engine and switches the load. The bridge only reads it.",
+           bus="rs485", measures="Engine state, speed, coolant temperature, fuel, load, transfer switch", bom={"desc": "Existing on the generator (not bought)", "cost": 0.0})
+    k.part("psu", "DIN-rail 5 V supply", "Mean Well DDR-15G-5 (9-36 V in)", "module",
+           {"family": "din_meter", "label": "5V", "w_mm": 18.0, "h_mm": 90.0, "dims_evidence": "typical"},
+           [{"name": "V+", "signal": "5V", "gpio": None, "x_mm": 6.0, "y_mm": 0.4, "side": "top", "evidence": UNV},
+            {"name": "V-", "signal": "GND", "gpio": None, "x_mm": 12.0, "y_mm": 0.4, "side": "top", "evidence": UNV}],
+           "Powers the bridge from the generator's 24 V control battery, so it keeps reporting while the mains is down.", supply=(9.0, 36.0), measures="",
+           bom={"desc": "15 W DC-DC DIN-rail converter, 9-36 V in, 5 V out", "cost": 18.0})
+    k.wire("psu.V+", "mcu.pad18", "5V", "red", bus="v5")
+    k.wire("psu.V-", "mcu.pad1", "GND", "black", bus="v5")
+    k.wire("mcu.pad20", "rs485.VCC", "3V3", "red", bus="vmcu")
+    k.wire("mcu.pad26", "rs485.GND", "GND", "black", bus="vmcu")
+    k.wire("mcu.pad12", "rs485.DI", "UART_TX", "green", bus="uart")
+    k.wire("rs485.RO", "mcu.pad14", "UART_RX", "white", bus="uart")
+    k.wire("mcu.pad3", "rs485.DE", "RS485_DE", "orange", bus="gpio")
+    k.wire("rs485.A", "amf.A", "RS485_A", "orange", bus="rs485")
+    k.wire("rs485.B", "amf.B", "RS485_B", "white", bus="rs485")
+    k.question("five_in", "Pad 18 is 5 V on USB power; check feeding 5 V into it is allowed (UG581) or power the kit through USB-C from the supply.", ["psu"])
+    k.question("registers", "Map the controller's Modbus registers (engine state, rpm, coolant, fuel rate, load, transfer) from its GenComm register document; read-only access only.", ["amf"])
+    k.question("parts_tbc", "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.", ["amf", "rs485", "psu"])
+    k.save()
+
+
 def fire_panel_bridge():
     k = reg(Kit(kit("fire_panel_bridge", "Fire panel bridge", "fire",
                     ("wifi", WIFI, "Mains/battery-backed panel room; Wi-Fi delivers an alarm to the monitoring room in about a second."),
@@ -1131,7 +1217,7 @@ def water_quality_node():
 
 if __name__ == "__main__":
     for fn in (truck_telematics, dock_bay, pallet_asset_tag, machine_monitor, conveyor_monitor, compressor_monitor, worker_badge,
-               smart_helmet_clip, env_node, gas_detector_node, door_access, energy_meter, water_leak_node, tank_level_node, fire_panel_bridge,
+               smart_helmet_clip, env_node, gas_detector_node, door_access, energy_meter, genset_bridge, water_leak_node, tank_level_node, fire_panel_bridge,
                water_quality_node):
         fn()
     print("wrote", len(ALL), "kits", file=sys.stderr)

@@ -24,7 +24,8 @@ export type DeviceType =
   | "leak_sensor"
   | "tank_level"
   | "fire_panel"
-  | "water_quality";
+  | "water_quality"
+  | "genset_controller";
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "protocol".

@@ -227,9 +227,11 @@ HOME = {"WH-01": [32, 27], "FAC-01": [150, 30]}
 # Devices (sensible counts, kits from K2). (id, type, protocol, zone, x, z, capabilities, label, kit, extras)
 # ---------------------------------------------------------------------------------------------------------------
 ENV4 = ["temperature", "humidity", "co2_ppm", "pm25_ugm3"]
+COMPRESSOR_CAPS = ["pressure_bar", "current_a", "run_hours", "dew_point_c", "tripped", "loaded", "power_kw", "flow_nm3_min", "discharge_c"]
+
 DEVICES = [
     ("DR-02", "door_sensor", "thread", "WH01_GATE", 79, 36.5, ["open"], "Security cabin door", "door_access", {}),
-    ("PM-02", "power_meter", "wifi", "WH01_PARKING", 4, 58, ["power_kw", "energy_kwh", "voltage_v"], "EV chargers feeder", "energy_meter", {}),
+    ("PM-02", "power_meter", "wifi", "WH01_PARKING", 4, 58, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "EV chargers feeder", "energy_meter", {}),
     ("EN-05", "env_sensor", "thread", "WH01_ADMIN", 68, 64, ENV4, "Admin block air", "env_node", {}),
     ("DR-04", "door_sensor", "thread", "WH01_ADMIN", 68, 56.6, ["open"], "Reception door", "door_access", {}),
     ("FP-02", "fire_panel", "wifi", "WH01_ADMIN", 60, 58, ["alarm", "trouble"], "Admin fire panel bridge (read only)", "fire_panel_bridge", {}),
@@ -240,7 +242,7 @@ DEVICES = [
     ("DB-03", "dock_bay", "wifi", "FAC01_RAW", 149, 62, ["occupied", "door_position", "leveler", "dock_light"], "Raw dock 1 monitor", "dock_bay", {}),
     ("DB-04", "dock_bay", "wifi", "FAC01_RAW", 149, 70, ["occupied", "door_position", "leveler", "dock_light"], "Raw dock 2 monitor", "dock_bay", {}),
     ("EN-07", "env_sensor", "thread", "FAC01_RAW", 134, 68, ENV4, "Raw store air", "env_node", {}),
-    ("PM-03", "power_meter", "wifi", "FAC01_RAW", 122, 60, ["power_kw", "energy_kwh", "voltage_v"], "Raw store feeder", "energy_meter", {}),
+    ("PM-03", "power_meter", "wifi", "FAC01_RAW", 122, 60, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "Raw store feeder", "energy_meter", {}),
     ("MM-03", "machine_monitor", "wifi", "FAC01_PRODUCTION", 122, 3.5, ["state", "cycle_time_s", "current_a", "vibration_rms", "temperature_c", "units", "rejects", "alarm"],
      "Press 2 monitor", "machine_monitor", {"attached_to": "M-03"}),
     ("MM-04", "machine_monitor", "wifi", "FAC01_PRODUCTION", 111, 3.5, ["state", "cycle_time_s", "current_a", "vibration_rms", "temperature_c", "units", "rejects", "alarm"],
@@ -251,12 +253,12 @@ DEVICES = [
     ("EN-09", "env_sensor", "thread", "FAC01_WORKSHOP", 156, 28, ENV4, "Workshop air", "env_node", {}),
     ("DR-08", "door_sensor", "thread", "FAC01_WORKSHOP", 144, 29, ["open"], "Workshop door", "door_access", {}),
     ("GD-02", "gas_detector", "wifi", "FAC01_WORKSHOP", 162, 34, ["co_ppm", "o2_pct", "alarm"], "Workshop gas detector", "gas_detector_node", {}),
-    ("PM-04", "power_meter", "wifi", "FAC01_SUBSTATION", 180, -2, ["power_kw", "energy_kwh", "voltage_v"], "Substation incomer", "energy_meter", {}),
+    ("PM-04", "power_meter", "wifi", "FAC01_SUBSTATION", 180, -2, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "Substation incomer", "energy_meter", {}),
     ("DR-09", "door_sensor", "thread", "FAC01_SUBSTATION", 187.5, 0, ["open"], "Substation door", "door_access", {}),
     ("EN-10", "env_sensor", "thread", "FAC01_SUBSTATION", 176, 4, ENV4, "Substation air", "env_node", {}),
-    ("PM-05", "power_meter", "wifi", "FAC01_GENERATOR", 203, 2, ["power_kw", "energy_kwh", "voltage_v"], "Generator output meter", "energy_meter", {}),
+    ("PM-05", "power_meter", "wifi", "FAC01_GENERATOR", 203, 2, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "Generator output meter", "energy_meter", {}),
     ("TL-02", "tank_level", "thread", "FAC01_GENERATOR", 205, -8, ["level_pct", "pump_on"], "Diesel day tank", "tank_level_node", {}),
-    ("PM-06", "power_meter", "wifi", "FAC01_COMPRESSOR", 176, 16, ["power_kw", "energy_kwh", "voltage_v"], "Compressor feeder", "energy_meter", {}),
+    ("PM-06", "power_meter", "wifi", "FAC01_COMPRESSOR", 176, 16, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "Compressor feeder", "energy_meter", {}),
     ("EN-11", "env_sensor", "thread", "FAC01_COMPRESSOR", 184, 20, ENV4, "Compressor room air", "env_node", {}),
     ("TL-03", "tank_level", "thread", "FAC01_TANKS", 184, 32, ["level_pct", "pump_on"], "Water tank 2", "tank_level_node", {}),
     ("TL-04", "tank_level", "thread", "FAC01_ETP", 205, 18, ["level_pct", "pump_on"], "ETP equalisation tank", "tank_level_node", {}),
@@ -268,7 +270,12 @@ DEVICES = [
     ("EN-13", "env_sensor", "thread", "FAC01_HAZMAT", 206, 73, ENV4, "Hazmat store air", "env_node", {}),
     ("FP-03", "fire_panel", "wifi", "FAC01_FIREPUMP", 182, 58, ["alarm", "trouble"], "Fire pump house panel bridge (read only)", "fire_panel_bridge", {}),
     ("TL-05", "tank_level", "thread", "FAC01_FIREPUMP", 194, 59, ["level_pct", "pump_on"], "Fire water tank", "tank_level_node", {}),
-    ("PM-07", "power_meter", "wifi", "FAC01_FIREPUMP", 185, 56, ["power_kw", "energy_kwh", "voltage_v"], "Fire pump feeder", "energy_meter", {}),
+    ("PM-07", "power_meter", "wifi", "FAC01_FIREPUMP", 185, 56, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "Fire pump feeder", "energy_meter", {}),
+    # R1: standby compressor, the generator's AMF controller (read over Modbus), and a meter on the solar AC output.
+    ("CP-02", "compressor_monitor", "wifi", "FAC01_COMPRESSOR", 184, 18, COMPRESSOR_CAPS, "Standby air compressor monitor", "compressor_monitor", {}),
+    ("GS-01", "genset_controller", "wifi", "FAC01_GENERATOR", 199, -4, ["engine_state", "rpm", "coolant_c", "fuel_lph", "load_kw", "transfer", "mains_ok"],
+     "Generator controller bridge (read only)", "genset_bridge", {}),
+    ("PM-08", "power_meter", "wifi", "FAC01_SUBSTATION", 176, -2, ["power_kw", "energy_kwh", "voltage_v", "power_factor"], "Rooftop solar meter (inverter AC output)", "energy_meter", {}),
     ("WQ-01", "water_quality", "wifi", "FAC01_ETP", 199, 16, ["ph", "turbidity_ntu"], "ETP inflow quality", "water_quality_node", {"sim": {"inflow": True}}),
     ("WQ-02", "water_quality", "wifi", "FAC01_ETP", 208, 28, ["ph", "turbidity_ntu"], "ETP outflow quality", "water_quality_node", {}),
 ]
@@ -276,6 +283,12 @@ UTILITIES = {
     "_doc": "Campus wiring for the simulator (backend/sim/models/utilities.py) and the energy summary: which meter is the incomer, the generator and each feeder, and which zones are critical (generator-backed). Every physical number is in backend/sim/params/utilities.yaml.",
     "incomer": "PM-04",
     "generator": "PM-05",
+    "genset": "GS-01",
+    "solar_meter": "PM-08",
+    "tanks": {"TL-01": "day", "TL-03": "storage", "TL-04": "etp", "TL-05": "fire", "TL-02": "diesel"},
+    "tariff": {"_doc": "Example time-of-day tariff for the demo (peak +20 %, night −15 %, a common Indian commercial structure); a real site uses its utility's schedule.",
+               "currency": "INR", "bands": [{"label": "Night", "from_h": 22, "to_h": 6, "rate": 6.8}, {"label": "Normal", "from_h": 6, "to_h": 18, "rate": 8.0},
+                                            {"label": "Peak", "from_h": 18, "to_h": 22, "rate": 9.6}]},
     "diesel_tank": "TL-02",
     "generator_kw": 150,
     "feeders": {
@@ -455,8 +468,10 @@ def build_sites(s: dict, l: dict) -> None:
             z.update(attrs.get(z["id"], {}))
     s["utilities"] = UTILITIES
     for d in s["devices"]:
-        if d["id"] == "CP-01" and "tripped" not in d["capabilities"]:
-            d["capabilities"].append("tripped")
+        if d["id"] == "CP-01":
+            d["capabilities"] = d["capabilities"] + [c for c in COMPRESSOR_CAPS if c not in d["capabilities"]]
+        if d["type"] == "power_meter" and "power_factor" not in d["capabilities"]:
+            d["capabilities"].append("power_factor")
     s["muster_points"] = [dict(m) for m in MUSTER]  # `node` is the walkway node the route ends on
     # devices
     s["devices"] = [d for d in s["devices"] if not d.get("campus")]

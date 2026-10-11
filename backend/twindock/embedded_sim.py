@@ -51,13 +51,13 @@ class EmbeddedSim:
         cfg = engine.devices.cfg
         self.sim = ss.SiteSim(cfg, ss.select_devices(cfg, None, None), seed)
         self.sim.verbose = False
-        self.sim.sink = self._deliver
+        self.sim.sink_obj = self._deliver
         if engine.sim_clock is not None:
             self.sim.local_hour = engine.sim_clock.hour  # solar, shifts and tariffs follow simulated time
 
-    def _deliver(self, topic: str, payload: bytes, retain: bool) -> None:
+    def _deliver(self, topic: str, payload: dict[str, Any], retain: bool) -> None:
         assert not topic.startswith("twin/gateway/"), "the embedded simulator never speaks for the board"
-        self.engine.on_mqtt(topic, payload, retain)
+        self.engine.on_site_payload(topic, payload)
 
     def start(self) -> None:
         self.engine.sim_attached = True

@@ -8,6 +8,9 @@ export interface PowerSummary {
   available: boolean; sim?: true; grid_ok: boolean | null; grid_kw: number | null; generator_kw: number | null; generator_state: string | null;
   solar_kw: number; solar_note: string; demand_kw: number | null; other_kw: number | null; solar_share: number | null; peak_kw: number; peak_exceeded: boolean;
   diesel_pct: number | null; units_today: number; production_kwh_today: number | null; kwh_per_unit: number | null; kwh_per_unit_note: string;
+  solar_measured?: boolean; power_factor?: number | null; demand_15min_kw?: number | null; demand_15min_peak_kw?: number | null;
+  tariff?: { label: string; rate: number; currency: string } | null; import_kwh_today?: number; cost_today?: number;
+  genset?: { engine_state: string | null; rpm: number | null; coolant_c: number | null; fuel_lph: number | null; load_kw: number | null; transfer: string | null; mains_ok: boolean | null } | null;
   by_zone: { meter: string; zone_id: string; name: string; kw: number | null }[];
 }
 export interface MonitorData {

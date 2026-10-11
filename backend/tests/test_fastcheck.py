@@ -65,6 +65,12 @@ def test_fastcheck_agrees_with_jsonschema() -> None:
             inbound.append((topic, json.loads(payload)))
         real(topic, payload, retained)
     h.engine.on_mqtt = spy  # type: ignore[method-assign]
+    real_obj = h.engine.on_site_payload
+
+    def spy_obj(topic: str, data: dict) -> None:  # type: ignore[type-arg]
+        inbound.append((topic, json.loads(json.dumps(data))))
+        real_obj(topic, data)
+    h.engine.on_site_payload = spy_obj  # type: ignore[method-assign]
     sim = EmbeddedSim(h.engine, seed=3)
     sim.start()
     h.board_online()

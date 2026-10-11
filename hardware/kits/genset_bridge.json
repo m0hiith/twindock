@@ -1,0 +1,921 @@
+{
+  "version": 1,
+  "kit": {
+    "id": "genset_bridge",
+    "name": "Generator controller bridge",
+    "asset_type": "energy",
+    "status": "reference",
+    "radio": {
+      "protocol": "wifi",
+      "chip": "SiWG917M111MGTBA",
+      "reason": "In the generator room's control cabinet; Wi-Fi reaches the utilities block, and the controller already speaks Modbus.",
+      "evidence": "silabs.com"
+    },
+    "power_source": {
+      "type": "din_rail",
+      "description": "24 V DC from the generator's battery-backed control supply through a DIN-rail step-down to 5 V, into the dev kit's USB-C."
+    },
+    "mounting": "Bridge in a DIN-rail enclosure in the generator control cabinet, on the controller's spare RS-485 port.",
+    "purpose": "Engine state, speed, coolant temperature, fuel use, load and the transfer switch position, read from the existing AMF controller.",
+    "captions": [
+      "Shows the generator starting, taking the critical load and cooling down after the grid returns.",
+      "Only reads the controller: starting, stopping and switching stay with the certified generator controller."
+    ],
+    "publishes": [
+      {
+        "channel": "engine_state",
+        "description": "Engine state: off, start_delay, cranking, accelerating, running, cooldown"
+      },
+      {
+        "channel": "rpm",
+        "unit": "rpm",
+        "description": "Engine speed"
+      },
+      {
+        "channel": "coolant_c",
+        "unit": "°C",
+        "description": "Coolant temperature"
+      },
+      {
+        "channel": "fuel_lph",
+        "unit": "L/h",
+        "description": "Fuel rate"
+      },
+      {
+        "channel": "load_kw",
+        "unit": "kW",
+        "description": "Generator load"
+      },
+      {
+        "channel": "transfer",
+        "description": "Transfer switch position: mains, generator or open"
+      },
+      {
+        "channel": "mains_ok",
+        "description": "Controller sees healthy mains"
+      }
+    ],
+    "power_budget": {
+      "average_ma": 70,
+      "peak_ma": 200,
+      "supply_v": 5.0,
+      "assumptions": "SiWx917 connected (~60 mA), RS-485 transceiver (~1 mA idle). Estimate."
+    }
+  },
+  "board": "BRD2605A",
+  "sdk": "reference design (not built)",
+  "buses": [
+    {
+      "id": "vmcu",
+      "name": "3.3 V (VMCU)",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 3.3,
+      "evidence": "user-guide"
+    },
+    {
+      "id": "uart",
+      "name": "UART (pads 12/14)",
+      "kind": "gpio",
+      "controller": "ULP_UART",
+      "voltage_v": 3.3,
+      "evidence": "unverified"
+    },
+    {
+      "id": "rs485",
+      "name": "RS-485 Modbus RTU",
+      "kind": "gpio",
+      "controller": null,
+      "voltage_v": null,
+      "evidence": "unverified"
+    },
+    {
+      "id": "gpio",
+      "name": "GPIO",
+      "kind": "gpio",
+      "controller": null,
+      "voltage_v": 3.3,
+      "evidence": "unverified"
+    },
+    {
+      "id": "v5",
+      "name": "5 V DIN supply",
+      "kind": "power",
+      "controller": null,
+      "voltage_v": 5.0,
+      "evidence": "unverified"
+    }
+  ],
+  "parts": [
+    {
+      "id": "mcu",
+      "name": "SiWx917 dev kit (BRD2605A)",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "soc",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Polls the generator controller's registers over Modbus every 5 s (state changes at once) and publishes them over Wi-Fi.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "pad1",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 2.04,
+          "y_mm": 14.58,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 1 (GND)"
+        },
+        {
+          "name": "pad26",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 44.55,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 26 (GND)"
+        },
+        {
+          "name": "pad20",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 37.06,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 20 (3V3)"
+        },
+        {
+          "name": "pad12",
+          "signal": "UART_TX",
+          "gpio": "ULP_GPIO_11",
+          "x_mm": 27.66,
+          "y_mm": 27.06,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 12 (ULP_GPIO_11)"
+        },
+        {
+          "name": "pad14",
+          "signal": "UART_RX",
+          "gpio": "ULP_GPIO_9",
+          "x_mm": 27.66,
+          "y_mm": 29.56,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 14 (ULP_GPIO_9)"
+        },
+        {
+          "name": "pad3",
+          "signal": "RS485_DE",
+          "gpio": "GPIO_25",
+          "x_mm": 2.04,
+          "y_mm": 17.07,
+          "side": "left",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 3 (GPIO_25)"
+        },
+        {
+          "name": "pad18",
+          "signal": "5V",
+          "gpio": null,
+          "x_mm": 27.66,
+          "y_mm": 34.56,
+          "side": "right",
+          "evidence": "user-guide",
+          "source": "UG581 Table 3.2 pad 18 (5V)"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 30.4,
+        "h_mm": 55.0,
+        "pcb_color": "black",
+        "dims_evidence": "datasheet",
+        "label": "SiWx917",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.24,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 13.78,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 16.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 18.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 21.27,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 23.77,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 26.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 28.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 31.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 33.76,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 36.26,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 38.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 41.25,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 26.86,
+            "y_mm": 43.75,
+            "w_mm": 1.6,
+            "h_mm": 1.6
+          },
+          {
+            "family": "connector",
+            "variant": "qwiic",
+            "x_mm": 0.3,
+            "y_mm": 3.5,
+            "w_mm": 4.4,
+            "h_mm": 7.4,
+            "rot": 90
+          },
+          {
+            "family": "antenna",
+            "variant": "chip",
+            "x_mm": 13.6,
+            "y_mm": 0.8,
+            "w_mm": 3.2,
+            "h_mm": 1.6
+          },
+          {
+            "family": "chip",
+            "variant": "qfn",
+            "label": "SiWx917",
+            "x_mm": 11.7,
+            "y_mm": 16.5,
+            "w_mm": 7.0,
+            "h_mm": 7.0
+          },
+          {
+            "family": "crystal",
+            "label": "40M",
+            "x_mm": 20.5,
+            "y_mm": 18.0,
+            "w_mm": 2.5,
+            "h_mm": 2.0
+          },
+          {
+            "family": "button",
+            "x_mm": 8.0,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "button",
+            "x_mm": 18.8,
+            "y_mm": 38.5,
+            "w_mm": 3.6,
+            "h_mm": 3.6
+          },
+          {
+            "family": "led",
+            "color": "#2BB673",
+            "x_mm": 6.2,
+            "y_mm": 46.8,
+            "w_mm": 1.6,
+            "h_mm": 0.8
+          },
+          {
+            "family": "connector",
+            "variant": "usb_c",
+            "x_mm": 10.7,
+            "y_mm": 47.4,
+            "w_mm": 9.0,
+            "h_mm": 7.3
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "SiWx917",
+            "x_mm": 16.5,
+            "y_mm": 5.2,
+            "w_mm": 6.944000000000001,
+            "h_mm": 1.6
+          },
+          {
+            "family": "pcb",
+            "variant": "silk",
+            "label": "BRD2605A",
+            "x_mm": 16.5,
+            "y_mm": 7.4,
+            "w_mm": 5.456,
+            "h_mm": 1.1
+          }
+        ]
+      }
+    },
+    {
+      "id": "rs485",
+      "name": "RS-485 transceiver",
+      "part_number": "MAX3485 breakout (3.3 V)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "uart",
+      "address": null,
+      "supplied_from": "vmcu",
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Turns the board's serial port into the two-wire RS-485 line the controller speaks.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "VCC",
+          "signal": "3V3",
+          "gpio": null,
+          "x_mm": 7.62,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "GND",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 10.16,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "DI",
+          "signal": "TXD",
+          "gpio": null,
+          "x_mm": 12.7,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "RO",
+          "signal": "RXD",
+          "gpio": null,
+          "x_mm": 15.24,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "DE",
+          "signal": "RS485_DE",
+          "gpio": null,
+          "x_mm": 17.78,
+          "y_mm": 1.57,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "A",
+          "signal": "RS485_A",
+          "gpio": null,
+          "x_mm": 9.0,
+          "y_mm": 17.4,
+          "side": "bottom",
+          "evidence": "unverified"
+        },
+        {
+          "name": "B",
+          "signal": "RS485_B",
+          "gpio": null,
+          "x_mm": 13.0,
+          "y_mm": 17.4,
+          "side": "bottom",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "pcb",
+        "w_mm": 25.4,
+        "h_mm": 17.8,
+        "pcb_color": "blue",
+        "dims_evidence": "typical",
+        "features": [
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 1.0,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "pcb",
+            "variant": "hole",
+            "x_mm": 21.6,
+            "y_mm": 14.0,
+            "w_mm": 2.8,
+            "h_mm": 2.8
+          },
+          {
+            "family": "chip",
+            "variant": "soic",
+            "label": "MAX3485",
+            "x_mm": 10.25,
+            "y_mm": 7.0,
+            "w_mm": 4.9,
+            "h_mm": 3.9
+          },
+          {
+            "family": "connector",
+            "variant": "screw_3",
+            "x_mm": 6.0,
+            "y_mm": 11.5,
+            "w_mm": 13.0,
+            "h_mm": 6.0
+          },
+          {
+            "family": "connector",
+            "variant": "header_5",
+            "x_mm": 6.35,
+            "y_mm": 0.3,
+            "w_mm": 12.7,
+            "h_mm": 2.54
+          }
+        ]
+      },
+      "supply": {
+        "min_v": 3.0,
+        "max_v": 3.6
+      }
+    },
+    {
+      "id": "amf",
+      "name": "Generator AMF controller (existing)",
+      "part_number": "Deep Sea Electronics DSE7320 MKII auto mains failure controller (already on the generator)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": "rs485",
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "Engine state, speed, coolant temperature, fuel, load, transfer switch",
+      "forklift_use": "",
+      "caption": "The generator's own controller: it detects the mains failure, starts the engine and switches the load. The bridge only reads it.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "A",
+          "signal": "RS485_A",
+          "gpio": null,
+          "x_mm": 110.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "B",
+          "signal": "RS485_B",
+          "gpio": null,
+          "x_mm": 120.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "din_meter",
+        "label": "DSE7320",
+        "w_mm": 240.0,
+        "h_mm": 172.0,
+        "dims_evidence": "typical"
+      }
+    },
+    {
+      "id": "psu",
+      "name": "DIN-rail 5 V supply",
+      "part_number": "Mean Well DDR-15G-5 (9-36 V in)",
+      "quantity": 1,
+      "location": "external",
+      "kind": "module",
+      "bus": null,
+      "address": null,
+      "supplied_from": null,
+      "enable_pin": null,
+      "sdk_driver": null,
+      "sdk_example": null,
+      "measures": "",
+      "forklift_use": "",
+      "caption": "Powers the bridge from the generator's 24 V control battery, so it keeps reporting while the mains is down.",
+      "topics": [],
+      "outline_pct": null,
+      "status": "planned",
+      "pins": [
+        {
+          "name": "V+",
+          "signal": "5V",
+          "gpio": null,
+          "x_mm": 6.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        },
+        {
+          "name": "V-",
+          "signal": "GND",
+          "gpio": null,
+          "x_mm": 12.0,
+          "y_mm": 0.4,
+          "side": "top",
+          "evidence": "unverified"
+        }
+      ],
+      "drawing": {
+        "family": "din_meter",
+        "label": "5V",
+        "w_mm": 18.0,
+        "h_mm": 90.0,
+        "dims_evidence": "typical"
+      },
+      "supply": {
+        "min_v": 9.0,
+        "max_v": 36.0
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "psu_vp_mcu_pad18",
+      "from": "psu.V+",
+      "to": "mcu.pad18",
+      "signal": "5V",
+      "bus": "v5",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "psu_vn_mcu_pad1",
+      "from": "psu.V-",
+      "to": "mcu.pad1",
+      "signal": "GND",
+      "bus": "v5",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad20_rs485_vcc",
+      "from": "mcu.pad20",
+      "to": "rs485.VCC",
+      "signal": "3V3",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "red",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad26_rs485_gnd",
+      "from": "mcu.pad26",
+      "to": "rs485.GND",
+      "signal": "GND",
+      "bus": "vmcu",
+      "medium": "wire",
+      "wire_color": "black",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad12_rs485_di",
+      "from": "mcu.pad12",
+      "to": "rs485.DI",
+      "signal": "UART_TX",
+      "bus": "uart",
+      "medium": "wire",
+      "wire_color": "green",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "rs485_ro_mcu_pad14",
+      "from": "rs485.RO",
+      "to": "mcu.pad14",
+      "signal": "UART_RX",
+      "bus": "uart",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "mcu_pad3_rs485_de",
+      "from": "mcu.pad3",
+      "to": "rs485.DE",
+      "signal": "RS485_DE",
+      "bus": "gpio",
+      "medium": "wire",
+      "wire_color": "orange",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "rs485_a_amf_a",
+      "from": "rs485.A",
+      "to": "amf.A",
+      "signal": "RS485_A",
+      "bus": "rs485",
+      "medium": "wire",
+      "wire_color": "orange",
+      "status": "planned",
+      "evidence": "unverified"
+    },
+    {
+      "id": "rs485_b_amf_b",
+      "from": "rs485.B",
+      "to": "amf.B",
+      "signal": "RS485_B",
+      "bus": "rs485",
+      "medium": "wire",
+      "wire_color": "white",
+      "status": "planned",
+      "evidence": "unverified"
+    }
+  ],
+  "bom": [
+    {
+      "id": "mcu",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "manufacturer": "Silicon Labs",
+      "description": "SiWx917 Wi-Fi 6 + Bluetooth LE dev kit (SiWG917M111MGTBA SoC, Qwiic connector, 26 breakout pads).",
+      "quantity": 1,
+      "unit_cost_usd": 40.0,
+      "link": "https://www.silabs.com/development-tools/wireless/wi-fi/siwx917-dk2605a-wifi-6-bluetooth-le-soc-dev-kit",
+      "source": "silabs.com",
+      "covers": [
+        "mcu"
+      ]
+    },
+    {
+      "id": "rs485",
+      "part_number": "MAX3485 breakout (3.3 V)",
+      "manufacturer": "unverified",
+      "description": "MAX3485 3.3 V RS-485 transceiver breakout",
+      "quantity": 1,
+      "unit_cost_usd": 5.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "rs485"
+      ]
+    },
+    {
+      "id": "amf",
+      "part_number": "Deep Sea Electronics DSE7320 MKII auto mains failure controller (already on the generator)",
+      "manufacturer": "unverified",
+      "description": "Existing on the generator (not bought)",
+      "quantity": 1,
+      "unit_cost_usd": 0.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "amf"
+      ]
+    },
+    {
+      "id": "psu",
+      "part_number": "Mean Well DDR-15G-5 (9-36 V in)",
+      "manufacturer": "unverified",
+      "description": "15 W DC-DC DIN-rail converter, 9-36 V in, 5 V out",
+      "quantity": 1,
+      "unit_cost_usd": 18.0,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "psu"
+      ]
+    }
+  ],
+  "boot_sequence": [],
+  "open_questions": [
+    {
+      "id": "five_in",
+      "question": "Pad 18 is 5 V on USB power; check feeding 5 V into it is allowed (UG581) or power the kit through USB-C from the supply.",
+      "blocks": [
+        "psu"
+      ]
+    },
+    {
+      "id": "registers",
+      "question": "Map the controller's Modbus registers (engine state, rpm, coolant, fuel rate, load, transfer) from its GenComm register document; read-only access only.",
+      "blocks": [
+        "amf"
+      ]
+    },
+    {
+      "id": "parts_tbc",
+      "question": "All third-party part numbers, sizes, supply ranges and costs are from memory: check each datasheet before ordering.",
+      "blocks": [
+        "amf",
+        "rs485",
+        "psu"
+      ]
+    }
+  ]
+}

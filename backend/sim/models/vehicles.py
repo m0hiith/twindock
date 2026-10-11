@@ -80,3 +80,4 @@ class DockBays(Model):
                 core.record(f"{did} {'trailer in' if b['occupied'] else 'trailer out'}", "drawn dock dwell ended")
             core.q.power_kw[did] = core.p.f("docks.occupied_kw") if b["occupied"] else 0.0
             core.q.power_zone[did] = b["zone"]
+            core.q.power_kind[did] = "motor"

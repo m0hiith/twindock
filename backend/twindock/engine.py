@@ -12,6 +12,7 @@ import math
 import os
 import random
 import time
+from collections import deque
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -101,6 +102,10 @@ class Engine:
         self._routes_key: tuple[Any, ...] | None = None
         self._fire_evac = False
         self._energy: dict[str, dict[str, Any]] = {}
+        # Grid import from the incomer's kWh register: (time, kWh) over the last 15 min for the demand charge, today's
+        # 15-min peak, and today's cost on the time-of-day tariff. All from meter readings, nothing modelled here.
+        self._import_kwh: deque[tuple[int, float]] = deque()
+        self._demand = {"day": "", "peak_kw": None, "cost": 0.0, "kwh": 0.0, "last": None}
         self._energy_acc = 0.0
         self._gw_was_online = False
         graph = Graph(layout)
@@ -329,6 +334,46 @@ class Engine:
                 self._energy[did] = {"day": day, "start": float(r.value), "yesterday": None, "since_ms": now}
             elif e["day"] != day:
                 e.update(yesterday=float(r.value) - e["start"], day=day, start=float(r.value))
+        self._tick_demand(now, day)
+
+    def _tariff(self, now_ms: int) -> dict[str, Any] | None:
+        t = (self.devices.cfg.get("utilities") or {}).get("tariff")
+        if not t:
+            return None
+        lt = time.localtime(now_ms / 1000)
+        h = lt.tm_hour + lt.tm_min / 60
+        for b in t["bands"]:
+            a, z = b["from_h"], b["to_h"]
+            if (a <= h < z) if a < z else (h >= a or h < z):
+                return {**b, "currency": t["currency"]}
+        return None
+
+    def _tick_demand(self, now: int, day: str) -> None:
+        """15-minute demand (what utilities bill as maximum demand) and today's energy cost, from the incomer's
+        kWh register: demand = ΔkWh over the last 15 min ÷ 0.25 h; cost = Σ ΔkWh × the tariff rate at that time."""
+        u = self.devices.cfg.get("utilities") or {}
+        st = self.devices.sim.get(u.get("incomer", ""))
+        r = st.readings.get("energy_kwh") if st else None
+        if r is None or st is None or st.last_seen_ms is None or now - st.last_seen_ms > 15_000:
+            return
+        kwh = float(r.value)
+        d = self._demand
+        if d["day"] != day:
+            d.update(day=day, peak_kw=None, cost=0.0, kwh=0.0)
+        if d["last"] is not None and kwh >= d["last"]:
+            band = self._tariff(now)
+            d["kwh"] += kwh - d["last"]
+            d["cost"] += (kwh - d["last"]) * (band["rate"] if band else 0.0)
+        d["last"] = kwh
+        q = self._import_kwh
+        q.append((now, kwh))
+        while q and now - q[0][0] > 15 * 60_000:
+            q.popleft()
+        span_h = (q[-1][0] - q[0][0]) / 3_600_000
+        if span_h * 60 >= 5:  # at least 5 min of register history before quoting a demand figure
+            dem = (q[-1][1] - q[0][1]) / span_h
+            d["kw15"] = dem
+            d["peak_kw"] = dem if d["peak_kw"] is None else max(d["peak_kw"], dem)
 
     # ------------------------------------------------------------------ campus power (F3)
 
@@ -339,30 +384,43 @@ class Engine:
         return 0.0 if h <= 6 or h >= 18 else math.sin(math.pi * (h - 6) / 12)
 
     def power_summary(self) -> dict[str, Any]:
-        """kW by building from the feeder meters, the incomer (grid import), the generator, solar (computed from the
-        time of day and the design size, never measured) and what each unit made costs in energy."""
+        """kW by building from the feeder meters, the incomer (grid import), the rooftop solar meter, the generator and
+        its controller, the incomer's power factor, 15-minute demand, today's energy cost, and energy per unit made.
+        Every number is a (SIM) meter reading or arithmetic on readings; solar is computed only when no solar meter reports."""
         u = self.devices.cfg.get("utilities")
         if not u:
             return {"available": False}
         now = self.clock()
 
+        def fresh(did: str | None) -> Any:
+            st = self.devices.sim.get(did or "")
+            return st if st is not None and st.last_seen_ms is not None and now - st.last_seen_ms <= 15_000 else None
+
+        def reading(did: str | None, ch: str) -> Any:
+            st = fresh(did)
+            r = st.readings.get(ch) if st else None
+            return None if r is None else r.value
+
         def kw(mid: str) -> float | None:
-            st = self.devices.sim.get(mid)
-            r = st.readings.get("power_kw") if st else None
-            return float(r.value) if r is not None and st is not None and st.last_seen_ms is not None and now - st.last_seen_ms <= 15_000 else None
+            v = reading(mid, "power_kw")
+            return None if v is None else float(v)
 
         inc, gen = kw(u["incomer"]), kw(u["generator"])
-        ist = self.devices.sim.get(u["incomer"])
-        volts = ist.readings.get("voltage_v") if ist else None
-        grid_ok = None if volts is None or ist is None or ist.last_seen_ms is None or now - ist.last_seen_ms > 15_000 else float(volts.value) > 300
-        solar = sum(s["kwp"] for s in u["solar"]) * 0.8 * self._sun(now) if grid_ok else 0.0
+        volts = reading(u["incomer"], "voltage_v")
+        grid_ok = None if volts is None else float(volts) > 300
+        solar_meas = kw(u.get("solar_meter", ""))
+        if solar_meas is not None:
+            solar = solar_meas
+            solar_note = "Measured by the rooftop solar meter (inverter AC output, SIM). A zero-export limiter curtails the inverters so the site never exports."
+        else:
+            solar = sum(s["kwp"] for s in u["solar"]) * 0.8 * self._sun(now) if grid_ok else 0.0
+            solar_note = "Computed from the time of day and the design size (360 kWp); not measured (no solar meter reporting)."
         zones = []
         for mid, zid in u["feeders"].items():
-            v = kw(mid)
-            zones.append({"meter": mid, "zone_id": zid, "name": self.devices.zone_by_id.get(zid, {}).get("name", zid), "kw": v})
+            zones.append({"meter": mid, "zone_id": zid, "name": self.devices.zone_by_id.get(zid, {}).get("name", zid), "kw": kw(mid)})
         metered = sum(z["kw"] or 0.0 for z in zones)
-        demand = (inc or 0.0) + solar if grid_ok else (gen or 0.0)
-        tank = self.devices.sim.get("TL-02")
+        demand = (inc or 0.0) + solar + (gen or 0.0) if grid_ok else (gen or 0.0)
+        tank = self.devices.sim.get(u.get("diesel_tank", "TL-02"))
         diesel = tank.readings.get("level_pct") if tank else None
         prod_meter = next((m for m, z in u["feeders"].items() if z == "FAC01_PRODUCTION"), None)
         e = self._energy.get(prod_meter or "")
@@ -370,13 +428,24 @@ class Engine:
         kwh_today = (float(st.readings["energy_kwh"].value) - e["start"]) if e and st and "energy_kwh" in st.readings else None
         fin = self.production.machines.get(self.production.finished_by)
         units = fin.good if fin else 0
-        gen_state = "running" if (gen or 0) > 1 else ("starting" if grid_ok is False else "off")
+        gs = u.get("genset")
+        gen_state = reading(gs, "engine_state")
+        if gen_state is None and grid_ok is not None:
+            gen_state = "running" if (gen or 0) > 1 else ("starting" if grid_ok is False else "off")
+        genset = None if fresh(gs) is None else {k: reading(gs, k) for k in ("engine_state", "rpm", "coolant_c", "fuel_lph", "load_kw", "transfer", "mains_ok")}
+        pf = reading(u["incomer"], "power_factor")
+        band = self._tariff(now)
+        d = self._demand
         return {
             "available": True, "sim": True, "grid_ok": grid_ok, "grid_kw": inc, "generator_kw": gen, "generator_state": gen_state if grid_ok is not None else None,
-            "solar_kw": round(solar, 1), "solar_note": "Computed from the time of day and the design size (360 kWp); not measured.",
+            "genset": genset, "solar_kw": round(solar, 1), "solar_measured": solar_meas is not None, "solar_note": solar_note,
             "demand_kw": None if grid_ok is None else round(demand, 1), "by_zone": zones, "other_kw": None if inc is None else round(max(0.0, (inc + solar) - metered), 1),
             "solar_share": None if not grid_ok or demand <= 0 else round(min(1.0, solar / demand), 3), "peak_kw": u["peak_kw"],
             "peak_exceeded": bool(inc is not None and inc > u["peak_kw"]), "diesel_pct": None if diesel is None else float(diesel.value),
+            "power_factor": None if pf is None else float(pf),
+            "demand_15min_kw": None if "kw15" not in d else round(d["kw15"], 1), "demand_15min_peak_kw": None if d["peak_kw"] is None else round(d["peak_kw"], 1),
+            "tariff": None if band is None else {"label": band["label"], "rate": band["rate"], "currency": band["currency"]},
+            "import_kwh_today": round(d["kwh"], 2), "cost_today": round(d["cost"], 2),
             "units_today": units, "production_kwh_today": None if kwh_today is None else round(kwh_today, 2),
             "kwh_per_unit": None if not kwh_today or units <= 0 else round(kwh_today / units, 3),
             "kwh_per_unit_note": "Production feeder energy since the backend started, divided by units made in the same time.",
@@ -387,7 +456,11 @@ class Engine:
         kw = today = None
         yesterday = None
         since = None
+        u = self.devices.cfg.get("utilities") or {}
+        supply = {u.get("incomer"), u.get("solar_meter"), u.get("generator")} - {None}
         for did, e in self._energy.items():
+            if supply and did not in supply:
+                continue  # campus energy is what came in (grid + solar + generator); feeders are already inside it
             st = self.devices.sim[did]
             r, p = st.readings.get("energy_kwh"), st.readings.get("power_kw")
             if p is not None and st.last_seen_ms is not None and now - st.last_seen_ms <= 15_000:
@@ -399,7 +472,7 @@ class Engine:
             since = e["since_ms"] if since is None else min(since, e["since_ms"])
         return {"power": self.power_summary(), "energy": {"kw_now": None if kw is None else round(kw, 2), "today_kwh": None if today is None else round(today, 2),
                            "yesterday_kwh": None if yesterday is None else round(yesterday, 1), "counting_since_ms": since,
-                           "source": "sim", "meters": sorted(self._energy)},
+                           "source": "sim", "meters": sorted(d for d in self._energy if not supply or d in supply)},
                 "incidents": self.rules.incidents(now),
                 "evacuation_last": None if self.safety.last_evacuation is None else {
                     "started_ms": self.safety.last_evacuation.started_ms, "ended_ms": self.safety.last_evacuation.ended_ms,
@@ -914,7 +987,11 @@ class Engine:
         if kind == "hello":
             self._sync_rule_leds()
 
-    def _on_site_mqtt(self, topic: str, payload: bytes) -> None:
+    def on_site_payload(self, topic: str, data: dict[str, Any]) -> None:
+        """A simulator message delivered in-process (embedded simulator): same path as MQTT, minus the JSON bytes."""
+        self._on_site_mqtt(topic, data)
+
+    def _on_site_mqtt(self, topic: str, payload: bytes | dict[str, Any]) -> None:
         """twin/<site>/<device>/<channel> from the simulator. Only the device registry is touched:
         never self.gw, never an LED, never MQTT out."""
         if not topic.startswith("twin/"):

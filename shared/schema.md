@@ -149,6 +149,13 @@ dew_point_c), `helmet_clip` (worn, impact_g), `gas_detector` (co_ppm, o2_pct, al
 energy_kwh, voltage_v) and `asset_tag` (find_me) now have simulator models. Simulator commands:
 `jam`, `leak`/`clear`, `alarm`/`reset`, `find_me` (see `mqtt/site_cmd.json`). All `source: "sim"`.
 
+R1 (utilities): `compressor_monitor` adds `loaded`, `power_kw` (computed from current), `flow_nm3_min` (estimated:
+rated FAD while loaded) and `discharge_c`; CP-02 is the standby compressor. `power_meter` adds `power_factor`
+(omitted while the meter sees no load); PM-08 meters the rooftop solar. New type `genset_controller` (GS-01, kit
+`genset_bridge`, reads the generator's existing AMF controller): `engine_state` (off, start_delay, cranking,
+accelerating, running, cooldown), `rpm`, `coolant_c`, `fuel_lph`, `load_kw`, `transfer` (mains, open, generator),
+`mains_ok`. New simulator commands for the air system: `fix_leaks`, `service` (used by work orders, R5).
+
 ### Worker safety (FACTORY_PROMPTS.md K3)
 
 `safety_update` now also carries per worker: `prealert` (fall / no_motion, with the cancel deadline), `man_down`,

@@ -28,21 +28,26 @@ def test_incident_log_has_ack_and_resolution_times() -> None:
 def test_energy_today_vs_yesterday_is_not_invented(h: Harness) -> None:
     e = h.engine
     now = h.clock.ms
-    st = e.devices.sim["PM-01"]
+    st = e.devices.sim["PM-04"]
     from twindock.devices import Reading
     st.last_seen_ms = now
     st.readings["energy_kwh"] = Reading(5200.0, now, "kWh")
     st.readings["power_kw"] = Reading(40.0, now, "kW")
+    feeder = e.devices.sim["PM-01"]  # a feeder is already inside the incomer's reading: never added on top
+    feeder.last_seen_ms = now
+    feeder.readings["energy_kwh"] = Reading(900.0, now, "kWh")
+    feeder.readings["power_kw"] = Reading(25.0, now, "kW")
     e._tick_energy()
     s = e.monitor_summary()["energy"]
     assert s["kw_now"] == 40.0 and s["today_kwh"] == 0.0 and s["yesterday_kwh"] is None
+    assert s["meters"] == ["PM-04"]
     st.readings["energy_kwh"] = Reading(5210.5, now, "kWh")
     assert e.monitor_summary()["energy"]["today_kwh"] == 10.5
     # a day later the old total becomes yesterday
     day = time.strftime("%Y-%m-%d", time.localtime(now / 1000))
-    e._energy["PM-01"]["day"] = "2000-01-01"
+    e._energy["PM-04"]["day"] = "2000-01-01"
     st.readings["energy_kwh"] = Reading(5300.0, now, "kWh")
     e._tick_energy()
-    assert e._energy["PM-01"]["day"] == day
+    assert e._energy["PM-04"]["day"] == day
     s = e.monitor_summary()["energy"]
     assert s["yesterday_kwh"] == 100.0 and s["today_kwh"] == 0.0
