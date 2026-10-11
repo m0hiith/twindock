@@ -52,7 +52,10 @@ export interface Geometry {
 
 export function layoutBreadboard(ix: WiringIndex, photo: boolean): Geometry {
   const bd = ix.w.board_drawing;
-  const board: Box = { ...BOARD_ORIGIN, w: bd.width_mm * PX_PER_MM, h: bd.height_mm * PX_PER_MM };
+  // Kits without a photographed dev board have no board outline: the processor is an ordinary module
+  // at the top of a tree and every other part hangs below what it connects to.
+  const tree = !bd;
+  const board: Box = { ...BOARD_ORIGIN, w: (bd?.width_mm ?? 0) * PX_PER_MM, h: (bd?.height_mm ?? 0) * PX_PER_MM };
   const onBoardBox = (pct: { x: number; y: number; w: number; h: number }): Box => ({
     x: board.x + (pct.x / 100) * board.w, y: board.y + (pct.y / 100) * board.h,
     w: (pct.w / 100) * board.w, h: (pct.h / 100) * board.h,
@@ -80,9 +83,9 @@ export function layoutBreadboard(ix: WiringIndex, photo: boolean): Geometry {
   for (const [d, row] of rows) {
     row.forEach((p, i) => {
       const size = p.kind === "transducer" ? TRANSDUCER : MODULE;
-      const cx = MODULE_COL_X + (i - (row.length - 1) / 2) * (MODULE.w + 40);
+      const cx = (tree ? CANVAS.w / 2 : MODULE_COL_X) + (i - (row.length - 1) / 2) * (MODULE.w + 40);
       parts.set(p.id, {
-        part: p, box: { x: cx - size.w / 2, y: 130 + (d - 1) * ROW_GAP, ...size }, onBoard: false, approx: false, connectors: [],
+        part: p, box: { x: cx - size.w / 2, y: 60 + (tree ? d : d - 1) * ROW_GAP, ...size }, onBoard: false, approx: false, connectors: [],
       });
     });
   }
@@ -97,7 +100,7 @@ export function layoutBreadboard(ix: WiringIndex, photo: boolean): Geometry {
       const group = pinGroup(pin.name);
       const conns = ix.w.connections.filter((c) => c.from === `${p.id}.${pin.name}` || c.to === `${p.id}.${pin.name}`);
       const towardsBoard = conns.some((c) => (ix.depth.get(ix.otherEnd(c, p.id)) ?? 99) < depth);
-      const side: Side = towardsBoard ? (depth === 1 ? "right" : "top") : "bottom";
+      const side: Side = towardsBoard ? (depth === 1 && !tree ? "right" : "top") : "bottom";
       const groups = bySide.get(side) ?? new Map<string, Pin[]>();
       groups.set(group, [...(groups.get(group) ?? []), pin]);
       bySide.set(side, groups);
@@ -180,7 +183,7 @@ export function layoutBreadboard(ix: WiringIndex, photo: boolean): Geometry {
       if (gpio) usedNets.add(gpio);
     }
   }
-  const pads: Pad[] = bd.pad_columns.flatMap((col) =>
+  const pads: Pad[] = (bd?.pad_columns ?? []).flatMap((col) =>
     col.pads.map((pad, i) => ({
       number: pad.number, net: pad.net, fn: pad.function,
       x: board.x + (col.x / 100) * board.w,

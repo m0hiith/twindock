@@ -1,5 +1,27 @@
 {
   "version": 1,
+  "kit": {
+    "id": "fl01_sensor_pack",
+    "name": "Forklift sensor pack (FL-01)",
+    "asset_type": "forklift",
+    "status": "built",
+    "radio": {
+      "protocol": "wifi",
+      "chip": "SiWG917M111MGTBA",
+      "reason": "Wi-Fi 6 + BLE on one SoC: the forklift is in Wi-Fi range of the warehouse and the pack sends readings every few seconds.",
+      "evidence": "datasheet"
+    },
+    "power_source": {
+      "type": "usb",
+      "description": "USB Type-C (5 V) on the dev kit; on a real forklift this becomes the vehicle supply through a regulator."
+    },
+    "mounting": "Board and Qwiic modules on the forklift overhead guard; load cell on the fork carriage.",
+    "purpose": "Real board on the bench: buttons, LED, Wi-Fi, BLE scan and on-board sensors; Qwiic fork sensors are planned.",
+    "captions": [
+      "The one kit built on real hardware: its numbers come from the board itself.",
+      "The board talks Wi-Fi to the laptop; the sensors plug in with a four-wire cable."
+    ]
+  },
   "board": "BRD2605A",
   "sdk": "WiSeConnect 3.5.3",
   "board_drawing": {
@@ -1181,6 +1203,64 @@
       "status": "planned",
       "evidence": "unverified",
       "source": "Common load cell colour convention; varies by model"
+    }
+  ],
+  "bom": [
+    {
+      "id": "dev_kit",
+      "part_number": "SIWX917-DK2605A (board BRD2605A)",
+      "manufacturer": "Silicon Labs",
+      "description": "SiWx917 Wi-Fi 6 + BLE dev kit board: SoC, Qwiic connector, Si7021, VEML6035, ICM-40627, buttons, RGB LED.",
+      "quantity": 1,
+      "unit_cost_usd": 40.0,
+      "link": "https://www.silabs.com/development-tools/wireless/wi-fi/siwx917-dk2605a-wifi-6-bluetooth-le-soc-dev-kit",
+      "source": "silabs.com",
+      "covers": [
+        "soc",
+        "qwiic",
+        "si7021",
+        "veml6035",
+        "icm40627"
+      ]
+    },
+    {
+      "id": "tof_breakout",
+      "part_number": "VL53L1X Qwiic breakout (model TBD)",
+      "manufacturer": "unverified",
+      "description": "Time-of-flight distance module with two Qwiic connectors.",
+      "quantity": 1,
+      "unit_cost_usd": null,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "vl53l1x"
+      ]
+    },
+    {
+      "id": "scale_breakout",
+      "part_number": "NAU7802 Qwiic breakout (model TBD)",
+      "manufacturer": "unverified",
+      "description": "24-bit load-cell amplifier with two Qwiic connectors.",
+      "quantity": 1,
+      "unit_cost_usd": null,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "nau7802"
+      ]
+    },
+    {
+      "id": "load_cell_bar",
+      "part_number": "4-wire bar load cell (model TBD)",
+      "manufacturer": "unverified",
+      "description": "Strain-gauge bar load cell for the fork load demo.",
+      "quantity": 1,
+      "unit_cost_usd": null,
+      "link": null,
+      "source": "unverified",
+      "covers": [
+        "load_cell"
+      ]
     }
   ],
   "boot_sequence": [

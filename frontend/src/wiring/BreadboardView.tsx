@@ -108,8 +108,10 @@ export function BreadboardView({ ix, photo, readings, online, selected, onSelect
             onClick={select(p.part.id)} hoverable={hoverable} />
         ))}
 
-        <Board geo={geo} ix={ix} photo={photo} focus={focus} selected={selected} onSelect={select}
-          hoverable={hoverable} wireInfo={wireInfo} refPath={refPath} />
+        {ix.w.board_drawing && (
+          <Board geo={geo} ix={ix} photo={photo} focus={focus} selected={selected} onSelect={select}
+            hoverable={hoverable} wireInfo={wireInfo} refPath={refPath} />
+        )}
 
         {geo.callouts.map((c) => {
           const placed = geo.parts.get(c.partId);
@@ -138,7 +140,7 @@ function Board({ geo, ix, photo, focus, selected, onSelect, hoverable, wireInfo,
   wireInfo: (c: Connection) => Omit<HoverInfo, "x" | "y">; refPath: (id: string) => (el: SVGPathElement | null) => void;
 }) {
   const b = geo.board;
-  const bd = ix.w.board_drawing;
+  const bd = ix.w.board_drawing!; // Board is only rendered for kits that have one
   const usedBy = (net: string) =>
     [...new Set(ix.w.connections.flatMap((c) => [c.from, c.to]).filter((r) => ix.pin(r)?.pin.gpio === net)
       .map((r) => ix.pin(r)!.part).filter((p) => p.kind !== "soc").map((p) => p.part_number))];

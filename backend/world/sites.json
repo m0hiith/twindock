@@ -301,6 +301,7 @@
         "ble"
       ],
       "label": "Dock gateway (SiWx917)",
+      "kit": "fl01_sensor_pack",
       "source": "device"
     },
     {

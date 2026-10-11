@@ -23,6 +23,7 @@ from typing import Any
 from .contract import def_validator, first_error, validator
 from .ble_tracker import BleTracker
 from .gateway import GatewayStore
+from .wiring import kit_ids
 
 SITES_FILE = Path(__file__).resolve().parents[1] / "world" / "sites.json"
 
@@ -69,6 +70,8 @@ def load_sites(path: Path = SITES_FILE) -> dict[str, Any]:
         seen.add(d["id"])
         if d["zone_id"] not in zones:
             raise ValueError(f"sites.json: device {d['id']} in unknown zone {d['zone_id']}")
+        if d.get("kit") and d["kit"] not in kit_ids():
+            raise ValueError(f"sites.json: device {d['id']} uses unknown kit {d['kit']} (hardware/kits)")
     return cfg
 
 
@@ -244,8 +247,9 @@ class DeviceRegistry:
     @staticmethod
     def _base(d: dict[str, Any]) -> dict[str, Any]:  # noqa: D102
         out = {k: d[k] for k in ("id", "site_id", "zone_id", "type", "protocol", "capabilities", "source", "label")}
-        if d.get("attached_to"):
-            out["attached_to"] = d["attached_to"]
+        for opt in ("attached_to", "kit"):
+            if d.get(opt):
+                out[opt] = d[opt]
         return out
 
     def _real_badge(self, d: dict[str, Any], ble: BleTracker | None, now: int) -> dict[str, Any]:

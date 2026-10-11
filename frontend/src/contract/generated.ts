@@ -146,6 +146,13 @@ export type WiringStatus = "planned" | "wired" | "verified";
  */
 export type WiringPinRef = string;
 /**
+ * Where a part number or spec came from. datasheet: the manufacturer datasheet or product page. silabs.com: the Silicon Labs product page. unverified: not checked yet, shown as such everywhere.
+ *
+ * This interface was referenced by `TwinDockContract`'s JSON-Schema
+ * via the `definition` "wiring_source".
+ */
+export type WiringSource = "datasheet" | "silabs.com" | "unverified";
+/**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "forklift_state".
  */
@@ -556,6 +563,10 @@ export interface Device {
   readings: {
     [k: string]: Reading | undefined;
   };
+  /**
+   * Id of the device kit (hardware/kits/<id>.json) this device is built from. One kit design, many devices.
+   */
+  kit?: string;
 }
 /**
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
@@ -1008,7 +1019,7 @@ export interface Zone {
   restricted_roles?: string[];
 }
 /**
- * Single source of truth for how the forklift sensor pack is connected. Firmware pins (tools/gen_pins.py), the /wiring page and docs/hardware_sheet.pdf are all generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is "unverified".
+ * One device kit: the parts, pins, wires and bill of materials for one kind of asset. FL-01's sensor pack (status "built") is the only kit on real hardware; every other kit is a reference design (status "reference"): real, buyable parts with a correct wiring plan whose data is simulated. Firmware pins (tools/gen_pins.py), the /wiring/:kit_id page and docs/hardware_sheet.pdf are generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is "unverified".
  *
  * This interface was referenced by `TwinDockContract`'s JSON-Schema
  * via the `definition` "wiring".
@@ -1018,9 +1029,9 @@ export interface Wiring {
   board: string;
   sdk: string;
   /**
-   * Outline of the bare board for the /wiring page, used until frontend/public/board/top.jpg exists (and for parts whose outline_pct is still null). Positions are % of board width/height, top view, 0,0 = top-left.
+   * Outline of the bare board for the /wiring page, used until frontend/public/board/top.jpg exists (and for parts whose outline_pct is still null). Positions are % of board width/height, top view, 0,0 = top-left. Optional: kits without a photographed dev board omit it and the page lays parts out from their own drawings.
    */
-  board_drawing: {
+  board_drawing?: {
     width_mm: number;
     height_mm: number;
     evidence: WiringEvidence;
@@ -1213,6 +1224,111 @@ export interface Wiring {
      */
     blocks: string[];
   }[];
+  kit: {
+    id: WiringId;
+    name: string;
+    /**
+     * Groups kits in the /wiring picker and on /kits.
+     */
+    asset_type:
+      | "forklift"
+      | "truck"
+      | "dock"
+      | "pallet"
+      | "machine"
+      | "conveyor"
+      | "utility"
+      | "worker"
+      | "building"
+      | "environment"
+      | "energy"
+      | "fire";
+    /**
+     * built: real hardware, verified on the bench. reference: parts and wiring plan are real and buyable, data is simulated.
+     */
+    status: "built" | "reference";
+    radio: {
+      protocol: "wifi" | "ble" | "thread" | "matter" | "zigbee" | "wired";
+      /**
+       * Silicon Labs part or family, e.g. SiWG917 or EFR32MG24.
+       */
+      chip: string;
+      /**
+       * One line: why this radio for this job.
+       */
+      reason: string;
+      evidence: WiringSource;
+    };
+    power_source: {
+      type: "mains" | "vehicle" | "battery" | "din_rail" | "usb";
+      description: string;
+    };
+    /**
+     * An estimate, shown as one, with the assumptions behind it.
+     */
+    power_budget?: {
+      average_ma: number;
+      peak_ma?: number;
+      supply_v?: number;
+      assumptions: string;
+    };
+    mounting: string;
+    purpose: string;
+    /**
+     * Estimate only, with its assumptions.
+     */
+    est_battery_life?: {
+      days: number;
+      assumptions: string;
+    };
+    /**
+     * 2-3 plain-language sentences for non-engineers.
+     */
+    captions?: string[];
+  };
+  /**
+   * @minItems 1
+   */
+  bom: [
+    {
+      id: WiringId;
+      part_number: string;
+      manufacturer: string;
+      description: string;
+      quantity: number;
+      /**
+       * Approximate, for budgeting. null when unknown.
+       */
+      unit_cost_usd: number | null;
+      link: string | null;
+      source: WiringSource;
+      /**
+       * Ids of the `parts` entries this line supplies (a dev kit covers its on-board parts too).
+       *
+       * @minItems 1
+       */
+      covers: [WiringId, ...WiringId[]];
+    },
+    ...{
+      id: WiringId;
+      part_number: string;
+      manufacturer: string;
+      description: string;
+      quantity: number;
+      /**
+       * Approximate, for budgeting. null when unknown.
+       */
+      unit_cost_usd: number | null;
+      link: string | null;
+      source: WiringSource;
+      /**
+       * Ids of the `parts` entries this line supplies (a dev kit covers its on-board parts too).
+       *
+       * @minItems 1
+       */
+      covers: [WiringId, ...WiringId[]];
+    }[]
+  ];
 }
 /**
  * Allowed supply range from the datasheet.

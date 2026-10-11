@@ -211,3 +211,12 @@ east of it, same metre grid and waypoint graph). Sites, zones and commissioned d
   comment every non-obvious choice (scan interval, publish rate, buffer size) with the reason.
 - Small commits with clear messages after each working step.
 - When something is uncertain about the hardware or SDK, stop and ask instead of guessing.
+
+## Device kits
+
+`hardware/kits/<kit_id>.json` (schema `shared/schemas/hardware/wiring.json`) describes one asset's
+sensor pack. Only `fl01_sensor_pack` (SiWx917 BRD2605A) is **built**; every other kit is a
+**reference design** (real, buyable parts, correct wiring, simulated data with `source: "sim"`).
+Wiring pages show "Built and verified" or "Reference design · simulated". Pages: `/kits`, `/wiring/:kit_id`.
+Silicon Labs radios first (SiWx917 for mains/vehicle Wi-Fi, EFR32BG for coin-cell BLE, EFR32MG24 for
+Thread/Matter/Zigbee); anything unconfirmed is `unverified`. Plan: `docs/kits_plan.md`.

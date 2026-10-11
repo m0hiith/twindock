@@ -22,7 +22,7 @@ from .engine import Engine, MqttOut, WsOut
 from .graph import DEFAULT_LAYOUT, load_layout
 from .hub import Hub
 from .mqtt_bridge import MqttBridge
-from .wiring import WiringInvalid, load_wiring
+from .wiring import KitNotFound, WiringInvalid, kit_summary, load_kit, load_kits, load_wiring
 
 log = logging.getLogger("twindock")
 
@@ -97,6 +97,30 @@ def wiring() -> dict[str, Any]:
     """hardware/wiring.json for the /wiring page (parts, buses, connections, board drawing)."""
     try:
         return load_wiring()
+    except WiringInvalid as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.get("/api/kits")
+def kits() -> list[dict[str, Any]]:
+    """One summary per device kit (hardware/kits/*.json) with the devices built from it, for /kits and the picker."""
+    by_kit: dict[str, list[str]] = {}
+    for d in state.engine.devices.defs.values():
+        if d.get("kit"):
+            by_kit.setdefault(d["kit"], []).append(d["id"])
+    try:
+        return [kit_summary(k, by_kit.get(k["kit"]["id"])) for k in load_kits()]
+    except WiringInvalid as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.get("/api/kits/{kit_id}")
+def kit(kit_id: str) -> dict[str, Any]:
+    """One full kit file for /wiring/:kit_id."""
+    try:
+        return load_kit(kit_id)
+    except KitNotFound as e:
+        raise HTTPException(status_code=404, detail=f"No kit {kit_id}") from e
     except WiringInvalid as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

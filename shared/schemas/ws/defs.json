@@ -779,6 +779,11 @@
             "$ref": "#/$defs/reading"
           },
           "description": "Latest value per channel, each with its own receive time."
+        },
+        "kit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Id of the device kit (hardware/kits/<id>.json) this device is built from. One kit design, many devices."
         }
       }
     }

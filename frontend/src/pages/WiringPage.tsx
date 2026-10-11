@@ -1,5 +1,5 @@
-// /wiring: how the forklift sensor pack is connected, generated entirely from GET /api/wiring
-// (hardware/wiring.json). Three views, hover and click details, Export PNG / PDF.
+// /wiring/:kit_id: how one device kit is connected, generated entirely from GET /api/kits/:id
+// (hardware/kits/<id>.json). Three views, hover and click details, Export PNG / PDF, kit picker.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Wiring } from "../contract";
 import { Brand } from "../hud/Brand";
@@ -11,7 +11,8 @@ import { useWorld } from "../store/world";
 import { BreadboardView } from "../wiring/BreadboardView";
 import { useBoardPhoto } from "../wiring/photo";
 import { exportPdf, exportPng, renderView } from "../wiring/export";
-import { fetchWiring, statusLabel, WiringIndex, type Status } from "../wiring/model";
+import { DEFAULT_KIT, fetchKits, fetchWiring, statusLabel, WiringIndex, type KitSummary, type Status } from "../wiring/model";
+import { KitBanner, KitPicker, kitPath } from "../wiring/kits";
 import { PartPanel } from "../wiring/PartPanel";
 import { PartsList } from "../wiring/PartsList";
 import { useAllReadings } from "../wiring/readings";
@@ -29,7 +30,15 @@ function initialView(): View {
   return v === "schematic" || v === "parts" ? v : "breadboard";
 }
 
+/** /wiring/<kit_id> -> kit_id; bare /wiring is the FL-01 sensor pack. */
+function kitFromPath(): string {
+  const id = location.pathname.split("/")[2];
+  return id ? decodeURIComponent(id) : DEFAULT_KIT;
+}
+
 export function WiringPage() {
+  const [kitId, setKitId] = useState(kitFromPath);
+  const [kits, setKits] = useState<KitSummary[]>([]);
   const [wiring, setWiring] = useState<Wiring | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setViewState] = useState<View>(initialView);
@@ -40,15 +49,25 @@ export function WiringPage() {
   const online = useWorld((s) => s.gateway?.online ?? false);
 
   useEffect(() => {
-    fetchWiring().then(setWiring).catch((e: unknown) => setError(String(e)));
+    const onNav = () => { setKitId(kitFromPath()); setSelected(null); };
+    addEventListener("popstate", onNav);
+    return () => removeEventListener("popstate", onNav);
   }, []);
+  useEffect(() => {
+    fetchKits().then(setKits).catch((e: unknown) => setError(String(e)));
+  }, []);
+  useEffect(() => {
+    setWiring(null);
+    setError(null);
+    fetchWiring(kitId).then(setWiring).catch((e: unknown) => setError(String(e)));
+  }, [kitId]);
 
   const setView = (v: View) => {
     setViewState(v);
     const q = new URLSearchParams(location.search);
     if (v === "breadboard") q.delete("view");
     else q.set("view", v);
-    history.replaceState(null, "", `/wiring${q.size ? `?${q}` : ""}`);
+    history.replaceState(null, "", `${kitPath(kitId)}${q.size ? `?${q}` : ""}`);
   };
 
   const ix = useMemo(() => (wiring ? new WiringIndex(wiring) : null), [wiring]);
@@ -61,9 +80,10 @@ export function WiringPage() {
     try {
       const label = VIEWS.find((v) => v.id === view)!.label;
       const stamp = new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
-      const canvas = await renderView(svg.current, `Sensor pack wiring · ${label}`,
-        `Forklift FL-01 · ${wiring.board} (${wiring.sdk}) · from hardware/wiring.json · exported ${stamp}`, view === "breadboard");
-      const name = `twindock-wiring-${view}`;
+      const k = wiring.kit;
+      const canvas = await renderView(svg.current, `${k.name} wiring · ${label}`,
+        `${k.status === "built" ? "Built and verified" : "Reference design · simulated"} · ${wiring.board} · from hardware/kits/${k.id}.json · exported ${stamp}`, view === "breadboard");
+      const name = `twindock-wiring-${k.id}-${view}`;
       if (kind === "png") await exportPng(canvas, `${name}.png`);
       else exportPdf(canvas, `${name}.pdf`);
     } catch (e) {
@@ -85,14 +105,15 @@ export function WiringPage() {
       <header className="flex flex-wrap items-center gap-3">
         <Brand compact title="" />
         <div className="min-w-0 flex-1">
-          <div className="text-[20px] font-semibold leading-tight">Sensor pack wiring</div>
-          <div className="text-[13px] text-ink-2">How the sensors on forklift FL-01 connect to the {wiring?.board ?? "board"}</div>
+          <div className="text-[20px] font-semibold leading-tight">{wiring ? `${wiring.kit.name} wiring` : "Wiring"}</div>
+          <div className="text-[13px] text-ink-2">{wiring ? wiring.kit.purpose : "Loading the kit…"}</div>
         </div>
+        <KitPicker kits={kits} current={kitId} />
         <LivePill />
-        <span className={`flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-medium ${online ? "bg-[#F3EDFF] text-live" : "bg-idle-bg text-idle"}`}>
+        {wiring?.kit.status === "built" && <span className={`flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-medium ${online ? "bg-[#F3EDFF] text-live" : "bg-idle-bg text-idle"}`}>
           <span className={`h-2 w-2 rounded-full ${online ? "bg-live" : "bg-idle"}`} />
           {online ? "Board online" : "Board offline"}
-        </span>
+        </span>}
         <PageTabs />
       </header>
       <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
@@ -118,6 +139,8 @@ export function WiringPage() {
           {busy === "pdf" ? "Exporting…" : "Export PDF"}
         </button>
       </div>
+
+      {wiring && <KitBanner kit={wiring.kit} devices={kits.find((k) => k.id === wiring.kit.id)?.devices ?? []} />}
 
       {error && <div role="alert" className="rounded-xl bg-crit-bg px-4 py-2 text-[13px] text-crit">{error}</div>}
 
@@ -179,7 +202,7 @@ function Intro({ wiring }: { wiring: Wiring | null }) {
         </div>
       )}
       <p className="mt-auto text-[12px] text-ink-2">
-        Generated from hardware/wiring.json. Readings appear only from real messages sent by the board; until then a part shows “Waiting for firmware”.
+        Generated from the kit file in hardware/kits. Readings appear only from real messages sent by the board; until then a part shows “Waiting for firmware”.
       </p>
     </div>
   );

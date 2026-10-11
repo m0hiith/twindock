@@ -7,14 +7,43 @@ import type { Tone } from "../status";
 export type Part = Wiring["parts"][number];
 export type Connection = Wiring["connections"][number];
 export type Bus = Wiring["buses"][number];
-export type Feature = Wiring["board_drawing"]["features"][number];
-export type PadColumn = Wiring["board_drawing"]["pad_columns"][number];
+export type BoardDrawing = NonNullable<Wiring["board_drawing"]>;
+export type Feature = BoardDrawing["features"][number];
+export type PadColumn = BoardDrawing["pad_columns"][number];
+export type KitInfo = Wiring["kit"];
+/** One entry of GET /api/kits. */
+export interface KitSummary extends KitInfo {
+  board: string;
+  part_count: number;
+  bom_lines: number;
+  bom_cost_usd: number | null;
+  bom_cost_complete: boolean;
+  devices: string[];
+}
+
+export const DEFAULT_KIT = "fl01_sensor_pack";
+export const ASSET_LABEL: Record<KitInfo["asset_type"], string> = {
+  forklift: "Forklifts", truck: "Trucks", dock: "Docks", pallet: "Pallets", machine: "Machines", conveyor: "Conveyors",
+  utility: "Utilities", worker: "People", building: "Buildings", environment: "Environment", energy: "Energy", fire: "Fire safety",
+};
+export const RADIO_LABEL: Record<KitInfo["radio"]["protocol"], string> = {
+  wifi: "Wi-Fi", ble: "Bluetooth LE", thread: "Thread", matter: "Matter", zigbee: "Zigbee", wired: "Wired",
+};
+export const POWER_LABEL: Record<KitInfo["power_source"]["type"], string> = {
+  mains: "Mains", vehicle: "Vehicle supply", battery: "Battery", din_rail: "DIN rail", usb: "USB",
+};
+
+export async function fetchKits(): Promise<KitSummary[]> {
+  const r = await fetch("/api/kits");
+  if (!r.ok) throw new Error(`GET /api/kits: ${r.status}`);
+  return (await r.json()) as KitSummary[];
+}
 export type Pin = WiringPin;
 export type Status = WiringStatus;
 
-export async function fetchWiring(): Promise<Wiring> {
-  const r = await fetch("/api/wiring");
-  if (!r.ok) throw new Error(`GET /api/wiring: ${r.status}`);
+export async function fetchWiring(kitId: string = DEFAULT_KIT): Promise<Wiring> {
+  const r = await fetch(`/api/kits/${encodeURIComponent(kitId)}`);
+  if (!r.ok) throw new Error(r.status === 404 ? `No kit called ${kitId}` : `GET /api/kits/${kitId}: ${r.status}`);
   return checkWiring(await r.json());
 }
 
@@ -40,7 +69,8 @@ export class WiringIndex {
     this.w = w;
     for (const p of w.parts) this.parts.set(p.id, p);
     for (const b of w.buses) this.buses.set(b.id, b);
-    const queue = w.parts.filter((p) => p.location === "on-board").map((p) => p.id);
+    // Distance from the processor: on-board parts when the kit has a photographed board, else the SoC/module itself.
+    const queue = w.parts.filter((p) => (w.board_drawing ? p.location === "on-board" : p.kind === "soc")).map((p) => p.id);
     for (const id of queue) this.depth.set(id, 0);
     while (queue.length) {
       const id = queue.shift()!;
@@ -75,7 +105,7 @@ export class WiringIndex {
   }
 
   feature(partId: string): Feature | undefined {
-    return this.w.board_drawing.features.find((f) => f.part === partId);
+    return this.w.board_drawing?.features.find((f) => f.part === partId);
   }
 
   busName(id: string | null | undefined): string {

@@ -67,10 +67,10 @@ microphones have their own enable (MIC_ENABLE = UULP_VBAT GPIO 0, UG581 3.4.2).
 The IMU and light sensor share one interrupt line (UULP_VBAT GPIO 3). The IMU CS (ULP_GPIO_10) is also on
 breakout pad 10.
 
-## Forklift sensor pack: `hardware/wiring.json`
+## Forklift sensor pack: `hardware/kits/fl01_sensor_pack.json`
 
 The sensor pack (Si7021, VEML6035, ICM-40627 on board, plus VL53L1X and NAU7802 with a load cell over
-Qwiic) is described in **`hardware/wiring.json`**, validated by **`shared/schemas/hardware/wiring.json`**.
+Qwiic) is described in **`hardware/kits/fl01_sensor_pack.json`** (the only kit with status `built`; all other kits in `hardware/kits/` are reference designs, see docs/kits_plan.md), validated by **`shared/schemas/hardware/wiring.json`**.
 It is the single source of truth for parts, buses, addresses, pins, wires and the boot sequence.
 Firmware pins (`tools/gen_pins.py`), the `/wiring` page and the hardware sheet are generated from it.
 Every value carries `evidence` (`sdk-verified`, `user-guide`, `datasheet`, `confirmed`, `unverified`);
@@ -140,7 +140,7 @@ Decided by the developer on 2026-10-07, extended on 2026-10-10. Nothing else may
 | `fork_load` (g, demo scale) | NAU7802 + load cell (Qwiic) | `twin/gateway/sensor/fork_load` | approved, gated |
 
 **Gated** = approved on 2026-10-10, but it appears in the UI and in `hello.sensors` only once its part
-has `status: "verified"` in `hardware/wiring.json` (firmware has read real values from it).
+has `status: "verified"` in `hardware/kits/fl01_sensor_pack.json` (firmware has read real values from it).
 
 The red channel and the microphones are **not** exposed.
 

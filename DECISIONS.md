@@ -81,3 +81,12 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - Layout changes for traffic: ROAD_IN (90, 41.5) so returning and waiting trucks stand on the inbound side, not on the exit lane; CHG_J moved east so a charging forklift doesn't block the charger lane; rack slots moved deeper into the racks so a forklift picking there leaves the aisle free; idle forklifts park only in zones, never on aisle junctions; one forklift per docked truck at a time.
 - Verified: 60 random 10-minute auto-mode runs with no overlap > 0.15 m and no unit blocked for a minute (5 seeds are in the test suite). Some tests got longer timeouts because vehicles now wait for each other.
 - README.md was found reverted to an old copy (no WareTrack credit, firmware "Not started"), changed outside this run on 2026-10-10 22:23. It was restored from git and the Stage 6 edits re-applied; the overwritten copy was not kept.
+
+## Factory extension: K0 kit framework
+- One schema (`shared/schemas/hardware/wiring.json`) extended with `kit` and `bom` instead of a second file; `board_drawing` became optional so kits on other boards need no photographed dev board.
+- FL-01 moved to `hardware/kits/fl01_sensor_pack.json`; the content is unchanged apart from `kit` and `bom`. `/api/wiring` still serves it. `tools/gen_pins.py` does not exist in the repo, so nothing needed repointing.
+- BOM lines `covers` the part ids they supply (a dev kit covers its on-board parts); validation requires every part covered exactly once and every covered id to exist.
+- "Pin driven twice": a pin may fan out only for bus/ground/power/INT signals and only with one signal; one SoC GPIO may not carry two functions. The dev kit's shared interrupt line (INT on UULP_VBAT_GPIO_3) passes.
+- BOM costs are `null` where not confirmed (FL-01 breakouts and load cell are still "model TBD"); the dev kit is $40 MSRP from the Silicon Labs page.
+- The kit status badge is green BUILT / grey REFERENCE, not violet: violet is for real device data, and a kit's status is not a reading.
+- `.venv` did not exist on this machine; created with Python 3.13 (3.14 failed in ensurepip).

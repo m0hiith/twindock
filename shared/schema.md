@@ -45,15 +45,28 @@ banner. Development only, never in the demo.
 
 ### Hardware wiring
 
-`schemas/hardware/wiring.json` validates `hardware/wiring.json`, the single source of truth for the
-forklift sensor pack (parts, buses, I2C addresses, pins, wires, evidence and status). It is not a
-message; `GET /api/wiring` serves it as-is (validated) to the `/wiring` page. See HARDWARE.md.
+`schemas/hardware/wiring.json` validates every device kit, `hardware/kits/<kit_id>.json`: the single
+source of truth for one asset's sensor pack (parts, buses, I2C addresses, pins, wires, evidence,
+status and bill of materials). It is not a message. `GET /api/kits` lists the kits (summary with the
+devices built from each), `GET /api/kits/<id>` serves one validated file to `/wiring/<id>`, and
+`GET /api/wiring` is the FL-01 kit (`fl01_sensor_pack`). See HARDWARE.md.
+
+- `kit {id, name, asset_type, status, radio, power_source, mounting, purpose, ...}`: `status` is
+  `built` (real hardware: only the FL-01 pack) or `reference` (real parts and a correct wiring plan,
+  simulated data). Every wiring page shows "Built and verified" or "Reference design · simulated".
+- `bom[]`: part number, manufacturer, quantity, approximate unit cost, link and `source`
+  (`datasheet`, `silabs.com`, `unverified`); `covers` lists the `parts` ids each line supplies.
+- A device in `backend/world/sites.json` names its kit with `kit` (one design, many devices); it
+  also appears on the `device` object in snapshots.
+- `backend/twindock/wiring.py::validate_kit` checks every kit: no pin driven twice, no I2C address
+  clash per bus (runtime address when firmware moves a part), supply voltage inside each part's
+  range, and every BOM line used in the wiring and every part in the BOM.
 
 - Parts and connections each carry `status`: `planned`, `wired` (on-board parts and PCB traces are
   wired by the board itself), `verified` (firmware has read a plausible value; never set by hand
   before that).
 - Each part has a plain-language `caption` for non-engineers.
-- `board_drawing` is the board outline from UG581 Figure 1.1 (30.4 × 55.0 mm, feature boxes and the
+- `board_drawing` (optional; kits without a photographed dev board omit it) is the board outline from UG581 Figure 1.1 (30.4 × 55.0 mm, feature boxes and the
   26 breakout pads as % of the board). The page draws it until `frontend/public/board/top.jpg`
   exists, then overlays the photo; a part's `outline_pct` (measured on the photo) wins over it.
 - Live readings are not in this file: the page takes them from `gateway.sensors` (gateway_update).

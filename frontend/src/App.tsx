@@ -5,6 +5,7 @@ import { DevicePage } from "./pages/DevicePage";
 import { FleetPage } from "./pages/FleetPage";
 import { RulesPage } from "./pages/RulesPage";
 import { TwinPage } from "./pages/TwinPage";
+import { KitsPage } from "./pages/KitsPage";
 import { WiringPage } from "./pages/WiringPage";
 import { connect } from "./store/ws";
 import { useWorld } from "./store/world";
@@ -38,6 +39,7 @@ export default function App() {
   if (path.startsWith("/fleet")) return <FleetPage />;
   if (path.startsWith("/rules")) return <RulesPage />;
   if (path.startsWith("/wiring")) return <WiringPage />;
+  if (path.startsWith("/kits")) return <KitsPage />;
   if (path !== "/twin") history.replaceState(null, "", "/twin" + location.search);
   return <TwinPage />;
 }

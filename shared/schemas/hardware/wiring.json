@@ -1,17 +1,39 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "twindock/hardware/wiring.json",
-  "title": "hardware/wiring.json",
-  "description": "Single source of truth for how the forklift sensor pack is connected. Firmware pins (tools/gen_pins.py), the /wiring page and docs/hardware_sheet.pdf are all generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is \"unverified\".",
+  "title": "hardware/kits/<kit_id>.json",
+  "description": "One device kit: the parts, pins, wires and bill of materials for one kind of asset. FL-01's sensor pack (status \"built\") is the only kit on real hardware; every other kit is a reference design (status \"reference\"): real, buyable parts with a correct wiring plan whose data is simulated. Firmware pins (tools/gen_pins.py), the /wiring/:kit_id page and docs/hardware_sheet.pdf are generated from it. Nothing here may be guessed: a value that is not confirmed from the SDK, a datasheet or the developer is null and its `evidence` is \"unverified\".",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "board", "sdk", "board_drawing", "buses", "parts", "connections", "boot_sequence", "open_questions"],
+  "required": [
+    "version",
+    "kit",
+    "board",
+    "sdk",
+    "buses",
+    "parts",
+    "connections",
+    "bom",
+    "boot_sequence",
+    "open_questions"
+  ],
   "$defs": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-    "pct": { "type": "number", "minimum": 0, "maximum": 100 },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
     "status": {
       "description": "planned: not connected or not read yet. wired: physically connected (on-board parts and PCB traces are wired by the board itself). verified: firmware has read a plausible value from it.",
-      "enum": ["planned", "wired", "verified"]
+      "enum": [
+        "planned",
+        "wired",
+        "verified"
+      ]
     },
     "pin_ref": {
       "description": "<part id>.<pin name>, e.g. soc.ULP_GPIO_6 or vl53l1x.qwiic_in.SDA",
@@ -20,59 +42,181 @@
     },
     "evidence": {
       "description": "sdk-verified: found in the SDK board config (cite `source`). user-guide: from the board user guide UG581. datasheet: from the part's datasheet or a published spec (Qwiic). confirmed: also checked by the developer on the hardware. unverified: not confirmed, must not be used by firmware.",
-      "enum": ["sdk-verified", "user-guide", "datasheet", "confirmed", "unverified"]
+      "enum": [
+        "sdk-verified",
+        "user-guide",
+        "datasheet",
+        "confirmed",
+        "unverified"
+      ]
     },
     "voltage_range": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["min_v", "max_v"],
+      "required": [
+        "min_v",
+        "max_v"
+      ],
       "properties": {
-        "min_v": { "type": "number" },
-        "max_v": { "type": "number" }
+        "min_v": {
+          "type": "number"
+        },
+        "max_v": {
+          "type": "number"
+        }
       }
     },
     "pin": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "signal", "evidence"],
+      "required": [
+        "name",
+        "signal",
+        "evidence"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1, "description": "Pin name on this part (SDA, MOSI, qwiic_in.SDA, ULP_GPIO_6)." },
-        "signal": { "type": "string", "minLength": 1, "description": "Function: SDA, SCL, MOSI, MISO, SCK, CS, INT, 3V3, GND, EN, ..." },
-        "gpio": { "type": ["string", "null"], "description": "SoC GPIO name when this pin is on the SoC or wired to it, else null." },
-        "x_pct": { "type": ["number", "null"], "minimum": 0, "maximum": 100, "description": "Position on frontend/public/board/top.jpg (on-board parts and board pads only)." },
-        "y_pct": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
-        "evidence": { "$ref": "#/$defs/evidence" },
-        "source": { "type": "string", "description": "File or document the value came from." }
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Pin name on this part (SDA, MOSI, qwiic_in.SDA, ULP_GPIO_6)."
+        },
+        "signal": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Function: SDA, SCL, MOSI, MISO, SCK, CS, INT, 3V3, GND, EN, ..."
+        },
+        "gpio": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "SoC GPIO name when this pin is on the SoC or wired to it, else null."
+        },
+        "x_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Position on frontend/public/board/top.jpg (on-board parts and board pads only)."
+        },
+        "y_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "source": {
+          "type": "string",
+          "description": "File or document the value came from."
+        }
       }
+    },
+    "source": {
+      "description": "Where a part number or spec came from. datasheet: the manufacturer datasheet or product page. silabs.com: the Silicon Labs product page. unverified: not checked yet, shown as such everywhere.",
+      "enum": [
+        "datasheet",
+        "silabs.com",
+        "unverified"
+      ]
     }
   },
   "properties": {
-    "version": { "const": 1 },
-    "board": { "type": "string", "minLength": 1 },
-    "sdk": { "type": "string", "minLength": 1 },
+    "version": {
+      "const": 1
+    },
+    "board": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sdk": {
+      "type": "string",
+      "minLength": 1
+    },
     "board_drawing": {
-      "description": "Outline of the bare board for the /wiring page, used until frontend/public/board/top.jpg exists (and for parts whose outline_pct is still null). Positions are % of board width/height, top view, 0,0 = top-left.",
+      "description": "Outline of the bare board for the /wiring page, used until frontend/public/board/top.jpg exists (and for parts whose outline_pct is still null). Positions are % of board width/height, top view, 0,0 = top-left. Optional: kits without a photographed dev board omit it and the page lays parts out from their own drawings.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["width_mm", "height_mm", "evidence", "source", "features", "pad_columns"],
+      "required": [
+        "width_mm",
+        "height_mm",
+        "evidence",
+        "source",
+        "features",
+        "pad_columns"
+      ],
       "properties": {
-        "width_mm": { "type": "number", "exclusiveMinimum": 0 },
-        "height_mm": { "type": "number", "exclusiveMinimum": 0 },
-        "evidence": { "$ref": "#/$defs/evidence" },
-        "source": { "type": "string" },
+        "width_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "source": {
+          "type": "string"
+        },
         "features": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "part", "label", "kind", "x", "y", "w", "h"],
+            "required": [
+              "id",
+              "part",
+              "label",
+              "kind",
+              "x",
+              "y",
+              "w",
+              "h"
+            ],
             "properties": {
-              "id": { "$ref": "#/$defs/id" },
-              "part": { "type": ["string", "null"], "description": "Part id when the feature is in `parts`; null for landmarks drawn only for orientation." },
-              "label": { "type": "string" },
-              "kind": { "enum": ["chip", "connector", "button", "led", "switch", "other"] },
-              "x": { "$ref": "#/$defs/pct" }, "y": { "$ref": "#/$defs/pct" },
-              "w": { "$ref": "#/$defs/pct" }, "h": { "$ref": "#/$defs/pct" }
+              "id": {
+                "$ref": "#/$defs/id"
+              },
+              "part": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Part id when the feature is in `parts`; null for landmarks drawn only for orientation."
+              },
+              "label": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "chip",
+                  "connector",
+                  "button",
+                  "led",
+                  "switch",
+                  "other"
+                ]
+              },
+              "x": {
+                "$ref": "#/$defs/pct"
+              },
+              "y": {
+                "$ref": "#/$defs/pct"
+              },
+              "w": {
+                "$ref": "#/$defs/pct"
+              },
+              "h": {
+                "$ref": "#/$defs/pct"
+              }
             }
           }
         },
@@ -81,29 +225,59 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["side", "x", "y_first", "y_last", "pads"],
+            "required": [
+              "side",
+              "x",
+              "y_first",
+              "y_last",
+              "pads"
+            ],
             "properties": {
-              "side": { "enum": ["left", "right"] },
-              "x": { "$ref": "#/$defs/pct" },
-              "y_first": { "$ref": "#/$defs/pct" },
-              "y_last": { "$ref": "#/$defs/pct" },
+              "side": {
+                "enum": [
+                  "left",
+                  "right"
+                ]
+              },
+              "x": {
+                "$ref": "#/$defs/pct"
+              },
+              "y_first": {
+                "$ref": "#/$defs/pct"
+              },
+              "y_last": {
+                "$ref": "#/$defs/pct"
+              },
               "pads": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["number", "net"],
+                  "required": [
+                    "number",
+                    "net"
+                  ],
                   "properties": {
-                    "number": { "type": "integer", "minimum": 1 },
-                    "net": { "type": "string", "minLength": 1 },
-                    "function": { "type": "string" }
+                    "number": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "net": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "function": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           }
         },
-        "pads_source": { "type": "string" }
+        "pads_source": {
+          "type": "string"
+        }
       }
     },
     "buses": {
@@ -111,16 +285,53 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "kind", "controller", "voltage_v", "evidence"],
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "controller",
+          "voltage_v",
+          "evidence"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "name": { "type": "string" },
-          "kind": { "enum": ["i2c", "spi", "i2s", "gpio", "power", "analog"] },
-          "controller": { "type": ["string", "null"], "description": "SoC peripheral, e.g. I2C2 (ULP_I2C). null when not known." },
-          "voltage_v": { "type": ["number", "null"] },
-          "evidence": { "$ref": "#/$defs/evidence" },
-          "source": { "type": "string" },
-          "notes": { "type": "string" }
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "i2c",
+              "spi",
+              "i2s",
+              "gpio",
+              "power",
+              "analog"
+            ]
+          },
+          "controller": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SoC peripheral, e.g. I2C2 (ULP_I2C). null when not known."
+          },
+          "voltage_v": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/$defs/evidence"
+          },
+          "source": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
         }
       }
     },
@@ -130,52 +341,162 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "part_number", "quantity", "location", "kind", "bus", "address", "caption", "status", "pins"],
+        "required": [
+          "id",
+          "name",
+          "part_number",
+          "quantity",
+          "location",
+          "kind",
+          "bus",
+          "address",
+          "caption",
+          "status",
+          "pins"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "name": { "type": "string", "minLength": 1 },
-          "part_number": { "type": "string", "minLength": 1 },
-          "quantity": { "type": "integer", "minimum": 1 },
-          "location": { "enum": ["on-board", "external"] },
-          "kind": { "enum": ["soc", "sensor", "connector", "module", "transducer"] },
-          "bus": { "type": ["string", "null"], "description": "Bus id from `buses`, or null (SoC, connectors, analog parts)." },
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "part_number": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "location": {
+            "enum": [
+              "on-board",
+              "external"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "soc",
+              "sensor",
+              "connector",
+              "module",
+              "transducer"
+            ]
+          },
+          "bus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Bus id from `buses`, or null (SoC, connectors, analog parts)."
+          },
           "address": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "pattern": "^0x[0-9A-F]{2}$",
             "description": "7-bit I2C address as 0xNN, or null for non-I2C parts."
           },
-          "address_evidence": { "$ref": "#/$defs/evidence" },
+          "address_evidence": {
+            "$ref": "#/$defs/evidence"
+          },
           "runtime_address": {
             "type": "string",
             "pattern": "^0x[0-9A-F]{2}$",
             "description": "Address the firmware moves the part to at boot (see boot_sequence). Clash checks use this when present."
           },
-          "supply": { "$ref": "#/$defs/voltage_range", "description": "Allowed supply range from the datasheet." },
-          "supplied_from": { "type": ["string", "null"], "description": "Bus id of the power rail feeding this part." },
-          "enable_pin": { "type": ["string", "null"], "description": "pin_ref of a power/enable pin that must be driven before use." },
-          "sdk_driver": { "type": ["string", "null"] },
-          "sdk_example": { "type": ["string", "null"] },
-          "measures": { "type": "string" },
-          "forklift_use": { "type": "string" },
-          "caption": { "type": "string", "minLength": 1, "description": "One plain-language sentence for non-engineers on the /wiring page." },
+          "supply": {
+            "$ref": "#/$defs/voltage_range",
+            "description": "Allowed supply range from the datasheet."
+          },
+          "supplied_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Bus id of the power rail feeding this part."
+          },
+          "enable_pin": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "pin_ref of a power/enable pin that must be driven before use."
+          },
+          "sdk_driver": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sdk_example": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "measures": {
+            "type": "string"
+          },
+          "forklift_use": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One plain-language sentence for non-engineers on the /wiring page."
+          },
           "topics": {
             "type": "array",
-            "items": { "type": "string", "pattern": "^twin/gateway/" },
+            "items": {
+              "type": "string",
+              "pattern": "^twin/gateway/"
+            },
             "description": "MQTT topics this part feeds. Each must exist in /shared (checked in W5)."
           },
           "outline_pct": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "additionalProperties": false,
-            "required": ["x", "y", "w", "h"],
+            "required": [
+              "x",
+              "y",
+              "w",
+              "h"
+            ],
             "properties": {
-              "x": { "type": "number" }, "y": { "type": "number" },
-              "w": { "type": "number" }, "h": { "type": "number" }
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "w": {
+                "type": "number"
+              },
+              "h": {
+                "type": "number"
+              }
             },
             "description": "Outline on top.jpg in % for on-board parts. null until measured from the photo."
           },
-          "status": { "$ref": "#/$defs/status" },
-          "pins": { "type": "array", "items": { "$ref": "#/$defs/pin" } },
-          "notes": { "type": "string" }
+          "status": {
+            "$ref": "#/$defs/status"
+          },
+          "pins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/pin"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
         }
       }
     },
@@ -184,22 +505,69 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "from", "to", "signal", "medium", "wire_color", "status", "evidence"],
+        "required": [
+          "id",
+          "from",
+          "to",
+          "signal",
+          "medium",
+          "wire_color",
+          "status",
+          "evidence"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "from": { "$ref": "#/$defs/pin_ref" },
-          "to": { "$ref": "#/$defs/pin_ref" },
-          "signal": { "type": "string", "minLength": 1 },
-          "bus": { "type": ["string", "null"] },
-          "medium": { "enum": ["pcb", "qwiic_cable", "wire"], "description": "pcb = trace on the dev kit, drawn as a highlight, not a wire." },
-          "wire_color": {
-            "type": ["string", "null"],
-            "description": "Qwiic code: red 3.3 V, black GND, blue SDA, yellow SCL. null for PCB traces.",
-            "enum": ["red", "black", "blue", "yellow", "white", "green", null]
+          "id": {
+            "$ref": "#/$defs/id"
           },
-          "status": { "$ref": "#/$defs/status" },
-          "evidence": { "$ref": "#/$defs/evidence" },
-          "source": { "type": "string" }
+          "from": {
+            "$ref": "#/$defs/pin_ref"
+          },
+          "to": {
+            "$ref": "#/$defs/pin_ref"
+          },
+          "signal": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "medium": {
+            "enum": [
+              "pcb",
+              "qwiic_cable",
+              "wire"
+            ],
+            "description": "pcb = trace on the dev kit, drawn as a highlight, not a wire."
+          },
+          "wire_color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Qwiic code: red 3.3 V, black GND, blue SDA, yellow SCL. null for PCB traces.",
+            "enum": [
+              "red",
+              "black",
+              "blue",
+              "yellow",
+              "white",
+              "green",
+              null
+            ]
+          },
+          "status": {
+            "$ref": "#/$defs/status"
+          },
+          "evidence": {
+            "$ref": "#/$defs/evidence"
+          },
+          "source": {
+            "type": "string"
+          }
         }
       }
     },
@@ -209,13 +577,31 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["step", "action", "reason"],
+        "required": [
+          "step",
+          "action",
+          "reason"
+        ],
         "properties": {
-          "step": { "type": "integer", "minimum": 1 },
-          "action": { "type": "string", "minLength": 1 },
-          "pin": { "$ref": "#/$defs/pin_ref" },
-          "address": { "type": "string", "pattern": "^0x[0-9A-F]{2}$" },
-          "reason": { "type": "string", "minLength": 1 }
+          "step": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pin": {
+            "$ref": "#/$defs/pin_ref"
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[0-9A-F]{2}$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -224,11 +610,257 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "question", "blocks"],
+        "required": [
+          "id",
+          "question",
+          "blocks"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "question": { "type": "string" },
-          "blocks": { "type": "array", "items": { "type": "string" }, "description": "Part or connection ids that stay unverified until answered." }
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "question": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Part or connection ids that stay unverified until answered."
+          }
+        }
+      }
+    },
+    "kit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "asset_type",
+        "status",
+        "radio",
+        "power_source",
+        "mounting",
+        "purpose"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asset_type": {
+          "enum": [
+            "forklift",
+            "truck",
+            "dock",
+            "pallet",
+            "machine",
+            "conveyor",
+            "utility",
+            "worker",
+            "building",
+            "environment",
+            "energy",
+            "fire"
+          ],
+          "description": "Groups kits in the /wiring picker and on /kits."
+        },
+        "status": {
+          "enum": [
+            "built",
+            "reference"
+          ],
+          "description": "built: real hardware, verified on the bench. reference: parts and wiring plan are real and buyable, data is simulated."
+        },
+        "radio": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "protocol",
+            "chip",
+            "reason",
+            "evidence"
+          ],
+          "properties": {
+            "protocol": {
+              "enum": [
+                "wifi",
+                "ble",
+                "thread",
+                "matter",
+                "zigbee",
+                "wired"
+              ]
+            },
+            "chip": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Silicon Labs part or family, e.g. SiWG917 or EFR32MG24."
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "description": "One line: why this radio for this job."
+            },
+            "evidence": {
+              "$ref": "#/$defs/source"
+            }
+          }
+        },
+        "power_source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "description"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "mains",
+                "vehicle",
+                "battery",
+                "din_rail",
+                "usb"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "power_budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "average_ma",
+            "assumptions"
+          ],
+          "description": "An estimate, shown as one, with the assumptions behind it.",
+          "properties": {
+            "average_ma": {
+              "type": "number",
+              "minimum": 0
+            },
+            "peak_ma": {
+              "type": "number",
+              "minimum": 0
+            },
+            "supply_v": {
+              "type": "number"
+            },
+            "assumptions": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "mounting": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "est_battery_life": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "days",
+            "assumptions"
+          ],
+          "description": "Estimate only, with its assumptions.",
+          "properties": {
+            "days": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "assumptions": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "captions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "2-3 plain-language sentences for non-engineers."
+        }
+      }
+    },
+    "bom": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "part_number",
+          "manufacturer",
+          "description",
+          "quantity",
+          "unit_cost_usd",
+          "link",
+          "source",
+          "covers"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "part_number": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manufacturer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit_cost_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Approximate, for budgeting. null when unknown."
+          },
+          "link": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^https://"
+          },
+          "source": {
+            "$ref": "#/$defs/source"
+          },
+          "covers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/id"
+            },
+            "description": "Ids of the `parts` entries this line supplies (a dev kit covers its on-board parts too)."
+          }
         }
       }
     }

@@ -14,7 +14,7 @@ wiseconnect-*/
 backend/shared/
 .vercel
 .env*
-# Copy of hardware/wiring.json made by the Vercel build (vercel.json)
+# Copy of hardware/kits made by the Vercel build (vercel.json)
 backend/hardware/
 # Codex agent state, not part of the project
 .codex/
