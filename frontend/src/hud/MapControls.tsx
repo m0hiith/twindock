@@ -14,6 +14,7 @@ const icon = { width: 18, height: 18, fill: "none", stroke: "currentColor", stro
 export function MapControls() {
   const zoom = useView((s) => s.zoom);
   const showDevices = useView((s) => s.showDevices);
+  const cutaway = useView((s) => s.cutaway);
   const { zoomBy, rotate, home } = useView.getState();
   const focusSelected = () => {
     const { selected, units } = useWorld.getState();
@@ -38,6 +39,11 @@ export function MapControls() {
       <Btn label="Center on selection" onClick={focusSelected}>
         <svg viewBox="0 0 24 24" {...icon}><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z" /></svg>
       </Btn>
+      <button type="button" aria-label="Interiors" title={cutaway ? "Close the roofs" : "Show interiors (roofs off)"} aria-pressed={cutaway}
+        onClick={() => useView.getState().setCutaway(!cutaway)}
+        className={`grid h-9 w-9 place-items-center transition-colors ${cutaway ? "bg-[var(--accent)] text-white" : "text-ink hover:bg-info-bg"}`}>
+        <svg viewBox="0 0 24 24" {...icon}><path d="M3 10 12 4l9 6M5 10v9h14v-9M9 19v-5h6v5" /></svg>
+      </button>
       <button type="button" aria-label="Devices" title={showDevices ? "Hide devices" : "Show devices"} aria-pressed={showDevices}
         onClick={() => useView.getState().setShowDevices(!showDevices)}
         className={`grid h-9 w-9 place-items-center transition-colors ${showDevices ? "bg-[var(--accent)] text-white" : "text-ink hover:bg-info-bg"}`}>

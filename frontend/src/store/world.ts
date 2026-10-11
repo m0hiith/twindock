@@ -144,6 +144,12 @@ interface ViewState {
   rotation: number;
   /** Multiplier on the fit-to-site zoom, clamped to 0.6–2 (CLAUDE.md). */
   zoom: number;
+  /** Campus building the inspect card shows (local to this screen). */
+  building: string | null;
+  setBuilding: (id: string | null) => void;
+  /** Interiors: roofs off and the walls facing the camera drop, like the warehouse and factory. */
+  cutaway: boolean;
+  setCutaway: (v: boolean) => void;
   /** Bumped to ask the camera to recenter on homeTarget. */
   homeNonce: number;
   focus: { x: number; z: number; nonce: number } | null;
@@ -167,6 +173,10 @@ export const useView = create<ViewState>((set) => ({
   showDevices: new URLSearchParams(location.search).has("devices"),
   setShowDevices: (showDevices) => set({ showDevices }),
   setHovered: (hovered) => set({ hovered }),
+  building: null,
+  setBuilding: (building) => set({ building }),
+  cutaway: false,
+  setCutaway: (cutaway) => set({ cutaway }),
   rotation: 0,
   zoom: 1,
   homeNonce: 0,

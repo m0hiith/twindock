@@ -19,6 +19,8 @@ import { DevicePucks } from "./DevicePucks";
 import { ProductionLine } from "./ProductionLine";
 import { Workers } from "./Workers";
 import { AlertPulses } from "./AlertPulses";
+import { BatchA } from "./campus/BatchA";
+import { GreenBelt, Hotspots, PerimeterFence, Walkways } from "./campus/CampusSite";
 
 function DrawCalls() {
   // Perf check hooks (?stats only): renderer stats, plus advance() to step whole frames (every
@@ -78,6 +80,11 @@ export function Scene({ alertPulses = false }: { alertPulses?: boolean }) {
       <Warehouse layout={layout} />
       <Factory layout={layout} />
       <ProductionLine layout={layout} />
+      <GreenBelt layout={layout} />
+      <Walkways layout={layout} />
+      <PerimeterFence layout={layout} />
+      <Hotspots layout={layout} />
+      <BatchA layout={layout} />
       <GroundLabels layout={layout} />
       <Chargers layout={layout} />
       <GateBarrier layout={layout} />

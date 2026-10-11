@@ -101,7 +101,7 @@ export function CameraRig({ layout }: { layout: Layout }) {
 
     zoomShown.current += (THREE.MathUtils.clamp(zoom, ZOOM_MIN, ZOOM_MAX) - zoomShown.current) * k;
     // 1x = the warehouse and yard fill the view (~78 m across the diagonal).
-    const fit = overview ? Math.min(size.width / 150, size.height / 78) : Math.min(size.width / 78, size.height / 52);
+    const fit = overview ? Math.min(size.width / 250, size.height / 135) : Math.min(size.width / 78, size.height / 52);
     const ppm = fit * zoomShown.current;
     if (Math.abs(cam.zoom - ppm) > 1e-4) {
       cam.zoom = ppm;
