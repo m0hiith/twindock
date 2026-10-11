@@ -142,3 +142,12 @@ One line each, newest at the bottom, made during unattended runs. Each says what
 - Moved devices: CP-01 into the compressor room, TL-01 into the water tanks, TT-01 into the docks zone (it was outside its zone).
 - Muster points replaced by MP-1/2/3 on open ground (tested: clear of buildings and roads); hazmat is 12 m or more from every occupied building and at the far south-east.
 - New workers' badges check in for the lone-worker rule every 7 min (`sim.checkin_s`); the demo can make a worker forget (`skip_checkin`).
+
+## Factory extension: F2 buildings in 3D
+- Every campus building is drawn from `layout.campus` by `frontend/src/scene/campus/` (shared helpers, batch A gate/parking/admin/canteen/medical, batch B raw store/QC lab/workshop, batch C utilities/ETP/hazmat/fire pump/solar). Batches B and C were committed together; batch A on its own.
+- Cutaway: the "Interiors" map control (and the building card) takes the roofs off and lowers the walls facing the camera, like the warehouse and factory. Closed is the default for the new buildings. The warehouse and factory hall stay cut away as before, so `/twin` keeps showing the production line.
+- Rooftop solar: panels are drawn on the raw store roof (closed) and on the warehouse and factory roofs in the monitoring centre's overview camera (where those roofs are drawn flat); on `/twin` the two halls stay open. Output is computed from the time of day (6:00-18:00 sine) times the design kWp × 0.8 and labelled as simulated, never as a measurement.
+- Animations come from device state: generator shakes and puffs while PM-05 reads over 1 kW, compressor roof fan spins fast while CP-01's motor current is over 30 A, tank levels follow the tank-level devices, the boom barrier lifts when a truck is within 9 m, dock doors follow DB-03/04.
+- Device markers stand at their real mounting height (`MOUNT_HEIGHT` per device type) on a thin stem over their floor ring.
+- The inspect card for a building (`BuildingCard`) shows purpose, hazard, PPE, restricted roles, people count (a count only), KPIs computed from the building's own devices, and its devices with readings and ages.
+- Checked in the browser (overview, FAC-01 view, building card); no per-building screenshots were saved.

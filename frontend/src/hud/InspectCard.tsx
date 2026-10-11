@@ -5,6 +5,7 @@ import type { Gateway, Unit } from "../contract";
 import { ButtonSection, LedSection } from "../control/GatewayPanel";
 import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
+import { BuildingCard } from "./BuildingCard";
 import { DeviceInspect } from "./DeviceInspect";
 import { MachineRows } from "./MachineRows";
 import { WorkerRows } from "./WorkerRows";
@@ -141,6 +142,8 @@ export function InspectCard() {
   const dev = useWorld((s) => (s.selected && !s.units[s.selected] ? s.devices[s.selected] : undefined));
   const site = useWorld((s) => (u ? siteAt(s.sites, u.x, u.z) : undefined));
   const gw = useWorld((s) => (u?.kind === "gateway" ? s.gateway : null));
+  const building = useView((s) => s.building);
+  if (!u && !dev && building) return <BuildingCard />;
   if (!u) return dev ? <DeviceInspect d={dev} /> : null;
   const sub = subtitle(u, gw);
   const live = u.source === "device";

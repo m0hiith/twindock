@@ -9,7 +9,8 @@ import { deviceTone, type Tone } from "../status";
 import { useView, useWorld } from "../store/world";
 import { color } from "../theme";
 import { pickHandlers } from "./Units";
-import { Cyl, mat } from "./parts";
+import { MOUNT_HEIGHT } from "./campus/shared";
+import { Box, Cyl, mat } from "./parts";
 
 const TONE_HEX: Record<Tone, string> = {
   ok: color.ok, info: color.info, warn: color.warn, crit: color.crit, idle: color.idle, live: color.live,
@@ -36,12 +37,15 @@ function Puck({ d, selected }: { d: Device; selected: boolean }) {
     g.current.position.lerp(goal, 1 - Math.exp(-4 * dt));
   });
   const tone = TONE_HEX[deviceTone(d)];
+  const mount = d.type === "badge" ? 0 : (MOUNT_HEIGHT[d.type] ?? 0);
   return (
     <group ref={g} position={[d.x, 0, d.z]} {...pickHandlers(d.id)}>
       <mesh geometry={ringGeo} position={[0, 0.06, 0]} material={ringMat(tone)} />
       {selected && <mesh geometry={selGeo} position={[0, 0.07, 0]} material={ringMat(color.accent)} />}
-      <Cyl size={[0.5, 0.22, 0.5]} at={[0, 0.06, 0]} color="#FFFFFF" shadow={false} />
-      <Cyl size={[0.2, 0.04, 0.2]} at={[0, 0.28, 0]} shadow={false} material={mat(d.status === "online" ? tone : color.idle)} />
+      {/* The marker stands where the real kit is mounted (wall, ceiling, tank top), with a thin stem down to its floor ring. */}
+      {mount > 0.3 && <Box size={[0.04, mount, 0.04]} at={[0, 0.06, 0]} color="#BDBDBD" shadow={false} />}
+      <Cyl size={[0.5, 0.22, 0.5]} at={[0, 0.06 + mount, 0]} color="#FFFFFF" shadow={false} />
+      <Cyl size={[0.2, 0.04, 0.2]} at={[0, 0.28 + mount, 0]} shadow={false} material={mat(d.status === "online" ? tone : color.idle)} />
     </group>
   );
 }

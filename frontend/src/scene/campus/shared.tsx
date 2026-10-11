@@ -4,6 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import * as THREE from "three";
 import type { Campus, CampusBuilding, Layout, Wall as WallName } from "../../layout";
 import { useView, useWorld } from "../../store/world";
+import { send } from "../../store/ws";
 import { color } from "../../theme";
 import { Baked } from "../Baked";
 import { Box, Label, mat } from "../parts";
@@ -53,6 +54,7 @@ export function usePick(id: string) {
       e.stopPropagation();
       if (e.delta !== undefined && e.delta > 4) return; // that was a drag
       useView.getState().setBuilding(id);
+      if (useWorld.getState().selected) send({ type: "select_unit", unit_id: null }); // the card shows the building, not a unit
       const b = useWorld.getState().layout?.campus?.buildings.find((x) => x.id === id);
       if (b) useView.getState().focusOn(b.x + b.w / 2, b.z + b.d / 2);
     },
