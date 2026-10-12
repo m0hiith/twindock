@@ -12,7 +12,7 @@ type Beat = ScenarioCommand["beat"];
 // The projector shows /twin on FAC-01; camera and site are per-screen, so the phone can't move them.
 const SITE_BEATS: { beat: Exclude<Beat, "reset">; title: string; watch: string }[] = [
   { beat: "degrade", title: "Degrade M-01",
-    watch: "M-01's vibration climbs; within ~1 min it is flagged abnormal compared with its baseline and an alert opens. Acknowledge it here." },
+    watch: "A seeded bearing defect: M-01's wear and vibration climb; within about a minute it is flagged abnormal against its baseline, and a bearing work order waits for your approval in the Maintenance tab. Left alone, the bearing fails in about 5 minutes." },
   { beat: "near_miss", title: "Worker near a moving forklift",
     watch: "A forklift drives to the factory outbound while WK-02 walks that lane: amber/red rings and a proximity alert." },
   { beat: "visitor", title: "Visitor walks into the press area",
@@ -26,13 +26,13 @@ const SITE_BEATS: { beat: Exclude<Beat, "reset">; title: string; watch: string }
 // Campus emergencies (F3). Each runs end to end: simulated devices, rules, alerts, the monitoring centre (/monitor), the evacuation advice.
 const CAMPUS_BEATS: { beat: Exclude<Beat, "reset">; title: string; watch: string }[] = [
   { beat: "grid_failure", title: "Grid failure",
-    watch: "The substation incomer loses the grid: critical alert, the generator starts and the critical zones stay on; mains devices elsewhere go quiet. Solar stops (no islanding). Watch /energy." },
+    watch: "The substation incomer loses the grid: the generator's controller confirms, cranks, runs up and transfers the critical zones within 10 s; the production line and EV chargers are shed and mains devices elsewhere go quiet. Solar stops (no islanding). Reset demo restores the grid: retransfer after 60 s, then a 2 min cool-down. Watch /energy." },
   { beat: "gas_leak", title: "Gas leak in the hazardous store",
     watch: "CO rises past the alarm level: critical alert, badges in the store and next to it are told to evacuate, and /monitor shows the route to a muster point away from the leak." },
   { beat: "fire_alarm", title: "Fire alarm in the warehouse",
     watch: "The fire panel bridge (read only) reports an alarm: critical alert, an evacuation starts with a live headcount, routes to the nearest muster points appear, the fire pump runs. Nothing is closed or locked." },
   { beat: "compressor_fault", title: "Compressor fault",
-    watch: "The compressor trips: critical alert, air pressure falls below 6 bar (second alert) and the machines' cycle times grow." },
+    watch: "The duty compressor trips: pressure falls; below 6 bar an alert, below 5 bar the line stops on Low air pressure; the standby compressor starts after its sequencer delay and star-delta start, pressure recovers and the line restarts." },
 ];
 
 // Worker safety demo (K3): drives WK-01's SIMULATED badge. A real badge is never commanded.

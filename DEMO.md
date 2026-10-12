@@ -1,4 +1,11 @@
-# TwinDock live demo
+# TwinDock demo: the real board, then a factory that behaves like one
+
+Two parts. **Part 1** (3 min, laptop) is the real SiWx917 board: every violet value comes from it. **Part 2** (6 min,
+the hosted link or the laptop without the board) is the simulated campus: every value is SIM, and every beat is a
+cause followed by its effects, produced by a model you can name. The models and parameters are on `/model` and in
+[docs/model_card.md](docs/model_card.md).
+
+# Part 1: the real board (laptop)
 
 For the presenter. The projector shows `/twin` from the laptop; you drive from your phone on
 `/control` and from the board's two buttons. Every beat below is real: the board's LED and buttons,
@@ -66,112 +73,47 @@ the real board adds its own Wi-Fi and LED latency, so re-time them in your first
 - **Router takes longer than ~45 s to boot**: talk through the offline state. If you measured it in advance and it's slow, use the router's Wi-Fi on/off button (if it has one) instead of the power plug: same effect on the board, much faster.
 - **Projector browser dies**: reopen `localhost:5173/twin`; it rebuilds from the server's snapshot.
 
-## Site demo (5 minutes): the board, then the factory
+# Part 2: the factory, cause and effect (hosted)
 
-Run after the 3-minute board demo above, or as its continuation. Everything in part 2 is
-**simulated** (grey SIM badges) and is triggered from the phone: `/control` → **Demo** tab. The
-projector stays on `/twin`.
+**Where:** the hosted link (Hugging Face or Render; see [docs/deploy.md](docs/deploy.md)), or the laptop with the
+board unplugged. The bottom of every page says "Hosted demo · Simulated factory": every value here is SIM.
+Speeds ×5 and ×20 only work while no real board is online.
 
-**Extra setup** (T-10 min): a fourth terminal runs the simulator, which publishes every simulated
-device of the site through the same broker:
+**Before you start (T-5 min):**
+- Open the link once, so a sleeping free host wakes up. It fast-forwards 45 simulated minutes on start, so the line
+  is running, the compressor has cycled and trucks are mid-route.
+- Check the top-bar clock is **×1**. Then open `/twin` on the projector and `/control` on the phone.
+- Prefer a time in **shift A or B** (06:00–22:00 site time). The night crew has no mechanic, so the bearing work
+  order would wait for the morning, exactly as it would in a real plant.
+- Avoid the meal breaks (12:00–12:30, 19:30–20:00): the line stands still in them.
 
-```sh
-.venv/bin/python tools/site_sim.py
-```
+| Time | You do | Audience sees | Say | Model and parameters behind it |
+|---|---|---|---|---|
+| 0:00 | Projector `/twin`, factory view. Phone `/control` → **Factory**. | Four machines running or blocked, OEE, the compressor cycling, people on their rounds. | "This factory has been running for 45 minutes. Nothing here is a random number: every value has a cause." | Warm start (`TWINDOCK_WARM_START_MIN` 45, seed from the date). Shift calendar `production.shifts.*`; line press → buffer (12) → packer (`production.material.buffer_capacity`): the 6 s press is blocked behind the 8 s packer. |
+| 0:30 | **Bearing, 1/4.** Phone → **Demo** → **Degrade M-01**. | Nothing yet. | "I've seeded a bearing defect in the press. Watch its vibration." | `production.wear.demo_defect_rate_per_s` 0.003/s; wear grows as dw/dt = r(1 + 3w) (`wear.acceleration` 3). |
+| ~1:15 | Click **M-01** on the projector. | Vibration rising above its learned band; the machine's ISO zone moves from B towards C; an **Abnormal vibration** alert. | "The twin learned this press's own normal and sees it leave it. In this plant that really predicts a failure." | Vibration = healthy (1.1 mm/s, ISO 10816-1 class I zone B) + 4 mm/s × w² (`wear.vibration_mm_s_at_limit`). Baseline z-score > 3 for 10 samples (`sites.json production.z_threshold`, `window_samples`). |
+| ~1:30 | **Bearing, 2/4.** Phone → **Maintenance**. | Work order **WO-0001 Bearing change · Needs approval**, with a decision card: "Stop M-01 for a bearing change (about 25 min)". | "Stopping production is a person's decision. The twin recommends; I approve." Tap **Approve**. | `backend/twindock/control.py`; `sites.json cmms.bearing_change_min` 25. |
+| ~1:45 | Watch the projector. | The mechanic (WK-06 on shift A, WK-15 on B) walks from the workshop along the walkways to the press. | "The technician's badge walks the real walkways. The job starts when the badge is at the machine." | People walk at 1.3 m/s (`people.walk_speed_mps`) on the pedestrian graph; arrival within 4 m (`cmms.arrive_m`); badge positions carry BLE error (σ 1.2 m, `sensors.badge.position`). |
+| ~2:45 | **Bearing, 3/4.** When M-01 shows **Under maintenance**, set the top-bar speed to **×20**. | The 25-minute job passes in about 75 s; M-01 runs again; WO-0001 **Done**: "vibration before ~2.4 mm/s (baseline ~1.4) … new bearing fitted; baseline relearning". | "Cause, action, result: all in the log." Show **Automatic actions** in the Maintenance tab. | Repair resets wear to a new bearing (`wear.new` 0.02); the baseline relearns (90 s, `production.baseline_s`). Had I waited, the bearing would have failed at its own limit (normal around 1.0, `wear.limit`) and the work order would have closed as "broke down first". |
+| ~4:00 | Speed back to **×1**. **Low air, 1/2.** Demo → **Compressor fault**. | CP-01 trips; header pressure falls ~0.06 bar/s; below 6 bar a **Low air pressure** alert, below 5 bar the presses and packers stop with alarm **Low air pressure**. | "The duty compressor tripped. The machines are still drawing air, so pressure falls." | Receiver: dP/dt = (Q_comp − Q_demand − Q_leak)·P_atm/(60·V), V 0.5 m³ (`air.receiver_m3`), machines 0.5/0.3 Nm³/min, leaks ∝ pressure. Trip at 5.0 bar, reset at 5.8 (`air.trip_bar`, `trip_reset_bar`). |
+| ~4:30 | **Low air, 2/2.** Keep watching. | After its 15 s sequencer delay and a 6 s star-delta start, standby **CP-02 loads**; pressure recovers; above 5.8 bar the line restarts. | "The standby saved the line, but only after a real delay. That's why the dip happened at all." | `air.standby_start_bar` 6.2, `standby_start_delay_s` 15, `star_delta_s` 6, standby band 6.2–7.2 bar. |
+| ~5:00 | **Grid failure.** Demo → **Grid failure**. Phone or projector → `/energy`. | Grid import 0; generator: start delay → cranking → running in 9 s, then transfer; critical zones stay on, the production line and EV chargers are shed; diesel starts falling. | "Mains is gone. The generator's controller confirms, cranks, runs up and transfers the critical loads within ten seconds." | AMF sequence: 2 s confirm, 3 s crank, 4 s run-up (`power.generator.*`, ISO 8528-12 / NFPA 110 type 10). Fuel 3.5 L/h + 0.24 L/kWh. Non-critical zones shed (`sites.json utilities.critical_zones`). |
+| ~5:30 | Demo → **Reset demo** (restores the grid). | After 60 s stable mains the load transfers back; the generator cools down for 2 min, then stops. | "It doesn't jump back on the first second of mains: it waits, transfers, cools down." | `power.generator.retransfer_delay_s` 60, `cooldown_s` 120. |
+| ~6:00 | **Truck, gate to dock.** Phone → **Logistics**. If no truck is due within a few minutes, use **×20** briefly. | A truck goes gate → **weighbridge** (ticket: gross = tare + its pallets) → yard queue → dock; forklifts unload it pallet by pallet. | "The weighbridge weight is the truck plus the pallets actually on it: 5.4 t + 4 × 455 kg." | Schedule slots + lognormal delay (median 6 min); check-in, weighbridge and paperwork times (`logistics.gate.*`); weights `logistics.trucks.tare_kg`, `logistics.pallets.kg`. Forklift batteries in Ah (`logistics.forklift.*`). |
+| ~7:00 | **Shift report.** `/monitor` → **Shift report (PDF)**. | Output, OEE losses by reason (the bearing change, the air trip, the shed line), downtime with alarms, energy per carton, alerts with response times, work orders. | "Every number in this report is read back from the historian: nothing was set by hand." | `backend/twindock/report.py` over the SQLite historian (24 h kept, deadband-compressed). |
+| ~7:30 | `/model`. | Every model, its equations, every parameter with its source, the validation run. | "And if you want to check any of it, it's all here." | `backend/sim/params/*.yaml` (datasheet / standard / typical / assumption counted); `docs/validation.json`. |
 
-On the projector, pick **FAC-01 Assembly** in the site selector (top bar), then check: 11/11
-devices online on FAC-01, both machines Running, four workers walking. Production needs about
-90 s of running to learn each machine's vibration baseline, so start the simulator at least
-2 minutes before beat 2a. Phone → Demo → **Reset demo** right before you start.
+### Fallbacks
 
-| Time | You do | Audience sees | Say |
-|---|---|---|---|
-| 0:00 | **Part 1, real board.** Projector on WH-01. Press BTN1, then BTN0. | FL-01 selected and moving; the violet LIVE gateway. | "One thing on this map is real: the SiWx917. Everything else that's violet comes from it." |
-| 0:30 | Dock a truck at Bay 1 from the phone (Move tab). | The real LED turns green after the board confirms. | "The twin only shows green once the board says so." |
-| 0:50 | Unplug the router (see beat 4 above). | GW-01 offline after 15 s, critical alert *Gateway offline*; resolves on its own when the board is back. | "And when it's gone, we say so." |
-| 1:30 | **Part 2.** Projector: site selector → **FAC-01**. | The factory: conveyor running, press and packer, workers in hi-vis, KPIs: units today, availability, OEE (hover for the formula). All SIM. | "Same tool, a factory next door. These devices are simulated, and the twin labels every one of them SIM." |
-| 1:45 | Phone → Demo → **a. Degrade M-01**. | Within ~1 min the press shows a pulsing amber ring and an alert: *abnormal vibration compared with baseline*. Open M-01: the vibration line leaves the green baseline band. | "Each machine learned its own normal. This is a comparison with that, not a prediction." |
-| 2:45 | Phone → **Alerts** tab → **Acknowledge**. | The projector's alert shows *Acknowledged by Control Room (phone)*. | "Shared by every screen: who acknowledged and when." |
-| 3:00 | Phone → Demo → **b. Worker near a moving forklift**. | A forklift drives to the factory outbound while WK-02 walks that lane: amber, then red rings on both; a proximity alert; the safety panel counts it and the closest approach. | "Pedestrian near a moving forklift. A parked forklift never triggers this." |
-| 3:40 | Phone → Demo → **d. Cold room door left open**. | After 60 s the door alert; the cold room warms past 5 °C and a temperature alert follows. | "Door left open, and the temperature already reacts." |
-| 4:30 | Switch the projector to **/fleet**. | GW-01 (LIVE) first, simulated devices after; *Needs attention* lists the low-battery sensor. Optional: Demo → **e** makes AQ-01 go stale. | "Fleet view: real first, honest status for everything." |
-| 5:00 | Phone → Demo → **Reset demo**. | Seed world, simulator back to normal. | "Thanks." |
+- **No anomaly after the degrade**: the press may be blocked (not cycling, so no wear). Wait 30 s, or degrade M-03 instead.
+- **The work order waits ("no mechanical technician reachable")**: it's the night shift. Say so. That's the roster; approve it and show that it waits.
+- **The bearing fails before you approve**: show the work order "broke down first" and the breakdown in the shift report. That is the cost of not acting on the warning.
+- **Speed buttons greyed out**: a real board is online on this backend; board data always runs at ×1.
+- **The free host was asleep**: the first load takes about a minute (container start + 45-minute warm start); the factory is running when it opens.
 
-Optional beat **c. Visitor walks into the press area**: WK-04 (visitor) enters the restricted press
-area, giving a critical alert that resolves when they leave.
+### Each beat's chain, in one line
 
-**Not built yet** (SITE_PROMPTS.md): cold room door/temperature *physics in 3D* (S4; the alerts work),
-energy (S5), commissioning (S7), the planner `/plan` (S8), firmware campaigns (S9). Don't promise them in
-the demo; present them as the roadmap slide.
-
-### Site fallbacks
-
-- **Devices show stale/offline**: the simulator isn't running. Start `tools/site_sim.py`; they recover within 10 s.
-- **Degrade shows nothing after 2 min**: the baseline wasn't learned yet (machine card says *Learning baseline*). Wait, or reset the demo earlier next time.
-- **No forklift moves for beat b**: all forklifts are busy (the Demo tab says so). Turn auto mode off, wait for them to stop, retry.
-- **Beat buttons say "Not connected to the MQTT broker"**: the backend lost the broker; check terminal 1.
-
-## Campus demo (6 minutes): the board, the campus, safety, emergencies
-
-The full story. Part 1 is the **real** board; everything after it is **simulated** (grey SIM badges) and driven from the phone
-(`/control` → **Demo** tab) while the projector shows **`/monitor`** (the control-room wall display) and, for one beat, `/twin`.
-Rehearsal: run it once with `tools/fake_board.py` standing in for the board, then once with the real board.
-
-**Setup (T-10 min):** broker, backend, frontend and the simulator (`.venv/bin/python tools/site_sim.py`) running, as above. Projector: `http://localhost:5173/monitor`
-at 1920 × 1080. Phone: `/control` → Demo → **Reset demo**. Check the monitor's bottom strip (all SIM tiles populated, GW-01 tile violet and Online) and wait
-2 minutes so the machines have learned their baselines.
-
-| Time | You do | Audience sees | Say |
-|---|---|---|---|
-| 0:00 | **The real board.** Projector on `/monitor`; point at the right-most tile. Press **BTN1**, **BTN0** on the board. | The **GW-01 · real board** tile is violet LIVE and Online with its Wi-Fi level and age; it is the only violet thing on the page. FL-01 moves on the map after BTN0. | "One thing here is real: this SiWx917. Everything violet comes from it. Everything grey is simulated, and says so." |
-| 0:40 | **The campus.** Hover the map; open the camera menu (top-left of the map): *Campus overview*, then *Raw material store*, then *Interiors* on the map. | The whole campus from above: gate and weighbridge, car park, admin, canteen, two factory lines, utilities, the hazmat store far in the corner, solar roofs. The building card shows hazard level, PPE, devices (SIM) with ages. | "Every building is a zone with its hazard level and the PPE it needs, and its own sensors. Vehicles and people use separate graphs and meet only at marked crossings." |
-| 1:10 | **A truck through the gate.** Phone → Move tab → **TR-02** → Dock at bay → Bay 1. | TR-02 drives in past the boom barrier (it lifts), over the weighbridge, into the yard and backs into Bay 1. Dock-bay monitor DB-01 flips to occupied; the Logistics tile ticks. | "Gate, weighbridge, yard, dock. The same server plans it and every screen follows." |
-| 1:50 | **A machine anomaly.** Phone → Demo → **a. Degrade M-01**. | Within a minute the press shows an amber ring and an alert: abnormal vibration compared with its own baseline. Production tile OEE reacts. | "Each machine learned its own normal. This compares with it; it doesn't predict failure." |
-| 2:30 | **A worker falls, and cancels.** Phone → Demo → **4. Simulate fall**, then within 30 s **Worker cancels**. | A pre-alert opens: *Possible fall: waiting 30 s for the worker to cancel*; after the cancel it closes, **falls today 1 (1 cancelled)**. | "The badge asks first. A false alarm is counted but doesn't wake anyone." |
-| 3:00 | **A fall that isn't cancelled.** **Simulate fall** again and wait 30 s. | Critical **Man down** with the zone and the nearest first-aider; a pulsing ring at the location on the map; the worker's position is shown *because* of the alert. | "Now it's real: location and the nearest first-aider. Only now does the system show where the worker is; otherwise it shows zone counts." Then **Close** on the safety card. |
-| 3:30 | **A gas leak and an evacuation.** Phone → Demo → **b. Gas leak in the hazardous store**. Then on the projector press **Start evacuation drill**. | Critical **Gas alarm**; badges in and next to the store get *evacuate*; green dashed routes to a muster point away from the leak; the **headcount** counts up as badges reach the muster points and lists who is unaccounted for and where they were last. | "Routes are advice; the system closes and locks nothing. The headcount tells the incident lead who is still missing." Press **End** when it reads all accounted for. |
-| 4:30 | **Power.** Phone → Demo → **a. Grid failure**; switch the projector to **/energy**. | Critical *Grid failure*; grid import 0, solar 0, the generator picks up the critical loads only; mains devices elsewhere stop reporting. **Reset demo**. | "The generator keeps the fire pump house and the hazmat store on. Solar is computed from the time of day, and is labelled that way." |
-| 5:00 | **The kits.** Projector: **/kits**, then open **Worker badge**. | Cards for each kit (BUILT only for the forklift pack), the wiring page with true-size parts and the banner **Reference design · simulated**. | "Every asset type has a kit with real parts and a wiring plan. Only the forklift pack is built; the others are designs, and say so." |
-| 5:30 | **Back to the monitoring centre.** Projector: **/monitor** → **Incident timeline** → **Daily report (PDF)**. | Every alert of the run with who acknowledged and how fast, then the one-page report. | "Everything we just did is in the log, with response times." |
-
-Fallbacks: a beat button says "Not connected to the MQTT broker" → check the broker terminal. The man-down beat needs the previous pre-alert to be over (**Reset demo**).
-No fall? WK-01's badge must be online (10/10 badges online on the safety card).
-
-## Rehearsal with the fake board (no hardware)
-
-Shows a red FAKE BOARD banner on every page. Never in front of an audience.
-
-```sh
-./scripts/run_broker.sh
-./scripts/run_backend.sh
-cd frontend && npm run dev
-.venv/bin/python tools/fake_board.py      # then type: b1, b0, b0, off 40
-```
-
-`b0`/`b1` press the buttons, `off <s>` drops the fake Wi-Fi for that long and then flushes the
-buffered status messages, exactly like beat 4.
-
-## Where every number comes from
-
-From the code audit for this demo. "Server" = world state owned by the backend (seed data plus the
-movement engine; manual, auto or device units). "Device" = a real MQTT message from the board.
-
-| On screen | Source |
-|---|---|
-| Unit positions, states, tasks, battery, cargo, speeds | Server. Battery is simulated at 20× speed (world.py) so it visibly changes in a demo. |
-| Operator names, models, carriers, plates, SKUs | Seed data in `backend/world/layout.json`. |
-| Gateway values (RSSI, uptime, IP, counters, sensors, LED and button states, BLE sightings) | Device, each shown with its age; missing ones say *Waiting for device* / *Not reported*. |
-| LIVE badges | Units whose `source` is `device` (the gateway; forklifts tracked by a calibrated BLE tag). |
-| KPI cards | Computed in the browser from server units. Deltas compare with the last world snapshot this screen received, so two screens opened at different times can show different deltas. |
-| Shipment stepper | Derived from the truck's server state and cargo count. |
-| Planned path and "9 m" in the Control Room | Path from the server's dry run; the metres are summed in the browser from layout coordinates. |
-| Smooth motion between updates | Browser interpolation towards the latest server pose (no extrapolation; nothing moves without an update). |
-| "Live 10:24" clock, "12s ago" ages | Server clock (offset from `server_ts_ms`). |
-| Control Room log *Not delivered* | The browser's own verdict (no socket / no reply in 5 s), kept visually apart from server *Rejected*. |
-| RSSI chart history on `/device` | Accumulated in the browser from real `ble_tracks` messages since the page opened. |
-| BLE threshold suggestions on `/device` | Computed in the browser from your captures (stored in this browser only). |
-| Violet BLE range ring around the gateway | Radius is a layout constant (`gateway.ble_range_m`), not measured; it brightens only while the board is online. |
-| RGB LED colour mix, LED/button descriptions | Derived from confirmed LED0/LED1 states; mapping and wording from HARDWARE.md. |
-| Site selector | Local to each screen; WH-01 and FAC-01 come from `backend/world/sites.json`. |
-| Operator avatar | Static UI (no sign-in). |
-| Everything on FAC-01, /fleet, /rules | See `docs/value_audit.md` (every value on every page, with its source). |
+- Bearing: seeded defect → wear ↑ → vibration ↑ (∝ w²) → z > 3 → alert → work order → a person approves → technician walks → maintenance → new bearing → baseline relearns.
+- Low air: duty trip → supply < demand + leaks → pressure ↓ → < 6 bar alert → < 5 bar line stops → standby (after delay + start) → pressure ↑ → > 5.8 bar line restarts.
+- Grid: mains lost → AMF confirm → crank → run-up → transfer critical bus → non-critical shed → fuel ↓; mains back → wait 60 s → retransfer → cool-down → stop.
+- Truck: slot + delay → gate → weighbridge (tare + cargo) → queue → dock → forklifts unload (Ah drawn) → paperwork → weighbridge out → gone.
