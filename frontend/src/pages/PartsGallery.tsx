@@ -71,7 +71,7 @@ export function PartsGallery() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-[1500px] flex-col gap-4 p-4">
-        <header className="card flex h-[60px] items-center gap-4 px-4"><Brand /><PageTabs className="ml-2" /></header>
+        <header className="card flex h-[60px] items-center gap-4 px-4"><Brand tight /><PageTabs className="ml-2" /></header>
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-[20px] font-semibold">Part gallery</h1>

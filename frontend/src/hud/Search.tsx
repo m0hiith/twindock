@@ -133,3 +133,13 @@ export function Search() {
     </div>
   );
 }
+
+/** The search for crowded headers: a full box from 1800 px; below that an icon that opens over the header when
+ *  focused (click or "/"), so it never pushes the page tabs out. */
+export function FoldingSearch() {
+  return (
+    <div className="relative h-9 w-9 shrink-0 min-[1800px]:w-auto min-[1800px]:min-w-[200px] min-[1800px]:max-w-[340px] min-[1800px]:flex-1">
+      <div className="absolute left-0 top-0 z-30 w-9 transition-[width] duration-150 focus-within:w-[340px] min-[1800px]:static min-[1800px]:w-full min-[1800px]:focus-within:w-full"><Search /></div>
+    </div>
+  );
+}

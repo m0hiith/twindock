@@ -19,7 +19,7 @@ export function RulesPage() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-[1100px] flex-col gap-4 p-4">
         <header className="card flex h-[60px] items-center gap-4 px-4">
-          <Brand />
+          <Brand tight />
           <PageTabs className="ml-2" />
           <div className="ml-auto"><LivePill /></div>
         </header>

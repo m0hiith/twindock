@@ -25,7 +25,7 @@ export function MePage() {
   const time = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return (
     <div className="mx-auto flex max-w-[560px] flex-col gap-3 p-4">
-      <header className="card flex h-[56px] items-center px-4"><Brand /></header>
+      <header className="card flex h-[56px] items-center px-4"><Brand tight /></header>
       <h1 className="text-[20px] font-semibold">My safety data · {id}</h1>
       {err && <div role="alert" className="rounded-xl bg-crit-bg px-4 py-2 text-[13px] text-crit">{err}</div>}
       {me && (

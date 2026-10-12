@@ -9,7 +9,7 @@ import { InspectCard } from "../hud/InspectCard";
 import { CameraMenu } from "../hud/CameraMenu";
 import { LivePill } from "../hud/LivePill";
 import { MiniMap } from "../hud/MiniMap";
-import { Search } from "../hud/Search";
+import { FoldingSearch } from "../hud/Search";
 import { kpiCounts } from "../hud/kpis";
 import { PageTabs } from "../hud/PageTabs";
 import { SafetyPanel } from "../hud/SafetyPanel";
@@ -31,11 +31,11 @@ export function MonitorPage() {
   return (
     <div className="flex h-full w-full flex-col gap-3 overflow-hidden p-4">
       <header className="card flex h-[56px] shrink-0 items-center gap-4 px-4">
-        <Brand />
+        <Brand tight />
         <span className="text-[15px] font-semibold">Monitoring centre</span>
         <span className="hidden text-[13px] text-ink-2 2xl:inline">Riverside campus</span>
         <PageTabs className="ml-4" />
-        <Search />
+        <FoldingSearch />
         <div className="ml-auto"><LivePill /></div>
       </header>
       <div className="flex min-h-0 flex-1 gap-3">

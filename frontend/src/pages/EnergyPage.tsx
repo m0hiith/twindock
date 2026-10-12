@@ -29,7 +29,7 @@ export function EnergyPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 p-4">
-        <header className="card flex h-[60px] items-center gap-4 px-4"><Brand /><PageTabs className="ml-2" /><div className="ml-auto"><LivePill /></div></header>
+        <header className="card flex h-[60px] items-center gap-4 px-4"><Brand tight /><PageTabs className="ml-2" /><div className="ml-auto"><LivePill /></div></header>
         <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="text-[20px] font-semibold">Energy</h1>
           {p?.available && <Pill tone={down ? "crit" : p.grid_ok ? "ok" : "idle"}>{down ? `Grid failure · generator ${p.generator_state}` : p.grid_ok ? "Grid connected" : "No meter data"}</Pill>}

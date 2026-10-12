@@ -22,7 +22,7 @@ export function navigate(path: string): void {
 export function PageTabs({ className = "" }: { className?: string }) {
   const here = location.pathname;
   return (
-    <nav aria-label="Pages" className={`flex items-center gap-0.5 rounded-xl bg-idle-bg p-1 ${className}`}>
+    <nav aria-label="Pages" className={`flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-xl bg-idle-bg p-1 [scrollbar-width:none] ${className}`}>
       {PAGES.map((p) => {
         const active = here.startsWith(p.path);
         return (

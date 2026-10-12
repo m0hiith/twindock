@@ -4,7 +4,7 @@ import type { Event } from "../contract";
 import { useView, useWorld } from "../store/world";
 import { AutoModeToggle } from "./AutoModeToggle";
 import { LivePill } from "./LivePill";
-import { Search } from "./Search";
+import { FoldingSearch } from "./Search";
 import { ago, Icon, useTick } from "./ui";
 import { Brand } from "./Brand";
 import { PageTabs } from "./PageTabs";
@@ -121,14 +121,12 @@ function Notifications() {
 
 export function TopBar() {
   return (
-    <div className="card pointer-events-auto flex h-[60px] items-center gap-3 px-4">
+    <div className="card pointer-events-auto flex h-[60px] items-center gap-2 px-4">
       <Brand tight />
       {/* Below 1800 px the bar is too narrow for everything: the logo keeps its mark, the site selector its id,
           and the search folds into an icon that opens over the bar when focused (click or "/"). */}
-      <PageTabs className="ml-1 min-w-0 overflow-x-auto [scrollbar-width:none]" />
-      <div className="relative h-9 w-9 shrink-0 min-[1800px]:w-auto min-[1800px]:min-w-[200px] min-[1800px]:max-w-[340px] min-[1800px]:flex-1">
-        <div className="absolute left-0 top-0 z-30 w-9 transition-[width] duration-150 focus-within:w-[340px] min-[1800px]:static min-[1800px]:w-full min-[1800px]:focus-within:w-full"><Search /></div>
-      </div>
+      <PageTabs className="ml-1" />
+      <FoldingSearch />
       <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap">
         <SiteSelector />
         <AutoModeToggle />

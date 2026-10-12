@@ -113,20 +113,25 @@ export function WiringPage() {
 
   return (
     <div className="flex h-full flex-col gap-3 p-3 sm:p-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <Brand compact title="" />
-        <div className="min-w-0 flex-1">
-          <div className="text-[20px] font-semibold leading-tight">{wiring ? `${wiring.kit.name} wiring` : "Wiring"}</div>
-          <div className="text-[13px] text-ink-2">{wiring ? wiring.kit.purpose : "Loading the kit…"}</div>
+      {/* Two rows so the kit's name and purpose always get the full width: navigation on top, the kit below. */}
+      <header className="card flex h-[60px] shrink-0 items-center gap-4 px-4">
+        <Brand tight />
+        <PageTabs className="ml-2" />
+        <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap">
+          {wiring?.kit.status === "built" && <span className={`flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-medium ${online ? "bg-[#F3EDFF] text-live" : "bg-idle-bg text-idle"}`}>
+            <span className={`h-2 w-2 rounded-full ${online ? "bg-live" : "bg-idle"}`} />
+            {online ? "Board online" : "Board offline"}
+          </span>}
+          <LivePill />
+        </div>
+      </header>
+      <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="min-w-[280px] flex-1">
+          <h1 className="text-[20px] font-semibold leading-tight">{wiring ? `${wiring.kit.name} wiring` : "Wiring"}</h1>
+          <p className="mt-0.5 line-clamp-2 max-w-[900px] text-[13px] text-ink-2" title={wiring?.kit.purpose}>{wiring ? wiring.kit.purpose : "Loading the kit…"}</p>
         </div>
         <KitPicker kits={kits} current={kitId} />
-        <LivePill />
-        {wiring?.kit.status === "built" && <span className={`flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-medium ${online ? "bg-[#F3EDFF] text-live" : "bg-idle-bg text-idle"}`}>
-          <span className={`h-2 w-2 rounded-full ${online ? "bg-live" : "bg-idle"}`} />
-          {online ? "Board online" : "Board offline"}
-        </span>}
-        <PageTabs />
-      </header>
+      </div>
       <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
 
       <div className="flex flex-wrap items-center gap-2">
