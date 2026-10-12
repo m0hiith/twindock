@@ -66,9 +66,13 @@ export function AlertRow({ a, compact = false, stay = false }: { a: Alert; compa
 }
 
 /** Compact floating card for /twin. Collapses to a pill when nothing is open. */
-export function AlertsCard() {
+/** `collapsed`: start folded (an inspect card is open above); a click still opens it. */
+export function AlertsCard({ collapsed = false }: { collapsed?: boolean }) {
   const alerts = useWorld((s) => s.alerts?.alerts ?? NO_ALERTS);
-  const [open, setOpen] = useState(true);
+  const [choice, setChoice] = useState<{ open: boolean; when: boolean } | null>(null);
+  // The person's last click wins until `collapsed` changes (a new inspect card opens or closes).
+  const open = choice && choice.when === collapsed ? choice.open : !collapsed;
+  const setOpen = (v: boolean) => setChoice({ open: v, when: collapsed });
   useTick(5000);
   const active = alerts.filter((a) => a.state !== "resolved");
   const crit = active.filter((a) => a.severity === "critical").length;

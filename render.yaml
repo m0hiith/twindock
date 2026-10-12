@@ -14,5 +14,10 @@ services:
         value: auto        # the "Hosted demo" banner while no broker is configured
       - key: TZ
         value: Asia/Kolkata  # the site's time zone (solar, shifts, tariffs)
+      # The warm start runs before the server answers anything, and on the free plan's shared CPU 45 simulated
+      # minutes took ~150 s (Render's proxy answers 502 meanwhile, on every wake from sleep). 10 minutes is still
+      # far past the 90 s the machine baselines need and takes ~35 s.
+      - key: TWINDOCK_WARM_START_MIN
+        value: "10"
       # To let a real board join this backend later, add MQTT_URL (mqtts://user:password@host:8883) as a secret
       # environment variable in the Render dashboard. Never commit it here.

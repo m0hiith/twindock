@@ -22,7 +22,7 @@ export function navigate(path: string): void {
 export function PageTabs({ className = "" }: { className?: string }) {
   const here = location.pathname;
   return (
-    <nav aria-label="Pages" className={`flex shrink-0 items-center gap-0.5 rounded-xl bg-idle-bg p-1 ${className}`}>
+    <nav aria-label="Pages" className={`flex items-center gap-0.5 rounded-xl bg-idle-bg p-1 ${className}`}>
       {PAGES.map((p) => {
         const active = here.startsWith(p.path);
         return (
@@ -32,7 +32,7 @@ export function PageTabs({ className = "" }: { className?: string }) {
               e.preventDefault();
               navigate(p.path);
             }}
-            className={`flex h-7 items-center rounded-lg px-3 text-[13px] font-medium transition-colors ${active ? "bg-white text-ink shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "text-ink-2 hover:text-ink"}`}>
+            className={`flex h-7 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5 text-[13px] min-[1800px]:px-3 font-medium transition-colors ${active ? "bg-white text-ink shadow-[0_1px_2px_rgba(0,0,0,0.08)]" : "text-ink-2 hover:text-ink"}`}>
             {p.label}
           </a>
         );

@@ -2,11 +2,11 @@
 // reading and age), people in the zone (a count only) and live KPIs derived from those devices.
 import { useMemo } from "react";
 import type { Device } from "../contract";
-import { channelLabel, formatReading, readingEntries, zoneName } from "../fleet/format";
+import { zoneName } from "../fleet/format";
 import { sunFactor } from "../scene/campus/shared";
-import { send } from "../store/ws";
 import { useView, useWorld } from "../store/world";
-import { ago, Icon, Pill, SimBadge, useTick } from "./ui";
+import { Icon, Pill, SimBadge, useTick } from "./ui";
+import { ZoneDevices } from "./ZoneDevices";
 
 const PURPOSE: Record<string, string> = {
   SEC_CABIN: "Visitor check-in and boom barrier control at the main gate, next to the weighbridge.",
@@ -82,17 +82,19 @@ export function BuildingCard() {
   const ppe = (zone as { ppe?: string[] }).ppe ?? [];
   const roles = zone.restricted_roles ?? [];
   return (
-    <div className="card pointer-events-auto max-h-[calc(100vh-250px)] w-[340px] overflow-y-auto p-4" aria-label={`${b.name} details`}>
+    <div className="card pointer-events-auto max-h-[calc(100vh-250px)] min-h-0 w-[340px] overflow-y-auto p-4" aria-label={`${b.name} details`}>
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-info-bg text-info"><Icon name="dock" size={20} /></span>
         <div className="min-w-0 flex-1">
-          <div className="text-[12px] text-ink-2">Building · {zone.site_id}</div>
-          <div className="text-[20px] font-semibold leading-tight">{b.name}</div>
-        </div>
-        <div className="-mr-1 -mt-1 flex">
-          <button type="button" className={btn} aria-label="Locate" title="Locate" onClick={() => useView.getState().focusOn(b.x + b.w / 2, b.z + b.d / 2)}><Icon name="locate" /></button>
-          <button type="button" className={btn} aria-pressed={cutaway} aria-label="Interiors" title={cutaway ? "Close the roofs" : "Show interiors"} onClick={() => useView.getState().setCutaway(!cutaway)}><Icon name="open" /></button>
-          <button type="button" className={btn} aria-label="Close" title="Close" onClick={() => useView.getState().setBuilding(null)}><Icon name="close" /></button>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] text-ink-2">Building · {zone.site_id}</span>
+            <span className="-mr-1.5 -my-1 flex">
+              <button type="button" className={btn} aria-label="Locate" title="Locate" onClick={() => useView.getState().focusOn(b.x + b.w / 2, b.z + b.d / 2)}><Icon name="locate" /></button>
+              <button type="button" className={btn} aria-pressed={cutaway} aria-label="Interiors" title={cutaway ? "Close the roofs" : "Show interiors"} onClick={() => useView.getState().setCutaway(!cutaway)}><Icon name="open" /></button>
+              <button type="button" className={btn} aria-label="Close" title="Close" onClick={() => useView.getState().setBuilding(null)}><Icon name="close" /></button>
+            </span>
+          </div>
+          <div className="text-[17px] font-semibold leading-snug">{b.name}</div>
         </div>
       </div>
       {PURPOSE[id] && <p className="mt-2 text-[13px] text-ink-2">{PURPOSE[id]}</p>}
@@ -108,28 +110,16 @@ export function BuildingCard() {
         <div>{people} {people === 1 ? "person" : "people"} here now (count only)</div>
       </div>
       {k.length > 0 && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 mb-1.5 flex items-center justify-between text-[12px] text-ink-2">From this zone's devices <SimBadge /></div>
+      )}
+      {k.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
           {k.map(([l, v]) => (
             <div key={l} className="rounded-lg bg-idle-bg px-3 py-2"><div className="text-[12px] text-ink-2">{l}</div><div className="tabular text-[15px] font-semibold">{v}</div></div>
           ))}
         </div>
       )}
-      <div className="mt-3 border-t border-[var(--card-border)] pt-2">
-        <div className="mb-1 flex items-center justify-between text-[13px] font-semibold">Devices ({ds.length}) <SimBadge /></div>
-        <div className="divide-y divide-[var(--card-border)]">
-          {ds.length === 0 && <div className="py-1.5 text-[13px] text-ink-2">No devices in this zone</div>}
-          {ds.map((d) => {
-            const [ch, r] = readingEntries(d)[0] ?? [];
-            return (
-              <button key={d.id} type="button" className="flex w-full items-center gap-2 py-1.5 text-left text-[13px] hover:bg-idle-bg" onClick={() => { send({ type: "select_unit", unit_id: d.id }); useView.getState().focusOn(d.x, d.z); }}>
-                <span className="font-medium">{d.id}</span>
-                <span className="min-w-0 flex-1 truncate text-ink-2">{d.label}</span>
-                {ch && r ? <span className="tabular shrink-0 text-right"><span title={channelLabel(ch)}>{formatReading(ch, r)}</span> <span className="text-[11px] text-ink-2">{ago(r.received_ms)}</span></span> : <span className="text-ink-2">—</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <ZoneDevices devices={ds} />
       {solar && <p className="mt-2 text-[11px] text-ink-2">Solar: {solar.kwp} kWp design size; output is computed from the time of day (simulation), not measured.</p>}
       <div className="mt-1 text-[11px] text-ink-2">{zoneName(sites, zone.id)}</div>
     </div>

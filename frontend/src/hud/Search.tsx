@@ -97,9 +97,10 @@ export function Search() {
   };
 
   return (
-    <div className="relative w-[340px]">
-      <div className="flex h-9 items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[#F6F6F6] px-3 focus-within:border-info focus-within:bg-white">
-        <Icon name="search" className="text-ink-2" />
+    <div className="relative w-full">
+      <div onClick={() => input.current?.focus()}
+        className="flex h-9 cursor-text items-center gap-2 overflow-hidden rounded-xl border border-[var(--card-border)] bg-[#F6F6F6] px-2.5 focus-within:border-info focus-within:bg-white">
+        <Icon name="search" className="shrink-0 text-ink-2" />
         <input ref={input} value={q} placeholder="Search buildings, devices, vehicles, workers, alerts…" aria-label="Search"
           className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-2"
           onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }}
@@ -111,7 +112,7 @@ export function Search() {
             else if (e.key === "Enter" && items.length > 0) choose(active);
             else if (e.key === "Escape") { setQ(""); input.current?.blur(); }
           }} />
-        <kbd className="rounded-md border border-[var(--card-border)] bg-white px-1.5 text-[11px] font-medium text-ink-2">/</kbd>
+        <kbd className="shrink-0 rounded-md border border-[var(--card-border)] bg-white px-1.5 text-[11px] font-medium text-ink-2">/</kbd>
       </div>
       {open && q.trim() && (
         <div className="card absolute inset-x-0 top-11 z-30 overflow-hidden p-1" role="listbox">

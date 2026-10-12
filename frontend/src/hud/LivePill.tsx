@@ -14,7 +14,7 @@ export function LivePill() {
   const speed = clock?.speed ?? 1;
   return (
     <div className="flex items-center gap-1">
-      <div role="status" className={`flex h-9 items-center gap-2 rounded-xl px-3 text-[13px] font-medium ${live ? "bg-ok-bg text-ok" : "bg-idle-bg text-idle"}`}
+      <div role="status" className={`flex h-9 items-center gap-2 whitespace-nowrap rounded-xl px-3 text-[13px] font-medium ${live ? "bg-ok-bg text-ok" : "bg-idle-bg text-idle"}`}
         title={clock?.warm_start ? `Simulation warm-started: ${Math.round(clock.warm_start.sim_s / 60)} simulated minutes in ${clock.warm_start.wall_s.toFixed(1)} s (seed ${clock.warm_start.seed})` : "Server clock"}>
         <span className={`h-2 w-2 rounded-full ${live ? "bg-ok animate-pulse" : "bg-idle"}`} />
         {live ? "Live" : conn === "connecting" ? "Connecting" : "Reconnecting"}

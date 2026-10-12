@@ -15,7 +15,7 @@ function Kpi({ icon, label, value, sub, children }: { icon: "box" | "machine" | 
         <span className="ml-auto"><SimBadge /></span>
       </span>
       <span className="tabular text-[28px] font-semibold leading-none">{value}</span>
-      <span className="truncate text-[12px] text-ink-2">{sub}</span>
+      <span className="line-clamp-2 text-[12px] leading-snug text-ink-2" title={sub}>{sub}</span>
       {children}
     </div>
   );

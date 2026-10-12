@@ -53,14 +53,25 @@ export function WiringPage() {
     addEventListener("popstate", onNav);
     return () => removeEventListener("popstate", onNav);
   }, []);
+  const live = useWorld((s) => s.conn === "live");
+  const failed = useRef(false);
+  const fail = (e: unknown) => { failed.current = true; setError(String(e)); };
   useEffect(() => {
-    fetchKits().then(setKits).catch((e: unknown) => setError(String(e)));
+    fetchKits().then(setKits).catch(fail);
   }, []);
   useEffect(() => {
     setWiring(null);
     setError(null);
-    fetchWiring(kitId).then(setWiring).catch((e: unknown) => setError(String(e)));
+    fetchWiring(kitId).then(setWiring).catch(fail);
   }, [kitId]);
+  // A sleeping host answers 502 until it has finished starting: load again once the live link is back.
+  useEffect(() => {
+    if (!live || !failed.current) return;
+    failed.current = false;
+    setError(null);
+    fetchKits().then(setKits).catch(fail);
+    fetchWiring(kitId).then(setWiring).catch(fail);
+  }, [live, kitId]);
 
   const setView = (v: View) => {
     setViewState(v);

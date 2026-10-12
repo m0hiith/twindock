@@ -31,7 +31,7 @@ function Kpi({ icon, label, value, suffix, delta, since, context }: {
         </span>
         {delta !== null && <Delta value={delta} since={since} />}
       </div>
-      <div className="mt-2 truncate text-[12px] text-ink-2">{context}</div>
+      <div className="mt-2 line-clamp-2 text-[12px] leading-snug text-ink-2" title={context}>{context}</div>
     </div>
   );
 }

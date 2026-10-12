@@ -7,10 +7,15 @@ const CHANNEL_LABEL: Record<string, string> = {
   pm25_ugm3: "PM2.5", state: "Machine state", cycle_time_s: "Cycle time", current_a: "Motor current",
   vibration_rms: "Vibration (RMS)", units: "Units today", position: "Position", wifi_rssi_dbm: "Wi-Fi RSSI",
   uptime_s: "Uptime", msgs_sent: "Messages sent", power_kw: "Power", level_pct: "Light level",
+  pressure_bar: "Air pressure", discharge_c: "Discharge temperature", flow_nm3_min: "Air flow", co_ppm: "CO",
 };
 
+// Channel ids end in their unit ("dew_point_c", "flow_nm3_min"); the value is always shown with its unit, so the
+// fallback label drops it.
+const UNIT_SUFFIX = /_(c|bar|kw|kwh|kva|pct|ppm|a|v|hz|s|m|mm|kmh|nm3_min|m3h|lpm|ugm3|dbm|rms|mm_s|g)$/;
+
 export const channelLabel = (c: string): string =>
-  CHANNEL_LABEL[c] ?? c.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
+  CHANNEL_LABEL[c] ?? c.replace(UNIT_SUFFIX, "").replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
 
 const DEFAULT_UNIT: Record<string, string> = { wifi_rssi_dbm: "dBm", uptime_s: "s" };
 

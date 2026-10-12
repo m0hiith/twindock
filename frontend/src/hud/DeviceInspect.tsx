@@ -15,7 +15,7 @@ export function DeviceInspect({ d }: { d: Device }) {
   const live = d.source === "device";
   const btn = "grid h-8 w-8 place-items-center rounded-lg text-ink-2 transition-colors hover:bg-idle-bg hover:text-ink";
   return (
-    <div className="card pointer-events-auto max-h-[calc(100vh-250px)] w-[340px] overflow-y-auto p-4" aria-label={`${d.id} details`}>
+    <div className="card pointer-events-auto max-h-[calc(100vh-250px)] min-h-0 w-[340px] overflow-y-auto p-4" aria-label={`${d.id} details`}>
       <div className="flex items-start gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${live ? "bg-[#F3EDFF] text-live" : "bg-idle-bg text-ink-2"}`}>
           <Icon name="sensor" size={20} />

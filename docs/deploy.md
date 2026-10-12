@@ -85,7 +85,7 @@ Render builds straight from the private GitHub repo using `render.yaml`.
 4. Select `m0hiith/twindock`, branch `master`. Render reads `render.yaml`: one **web service**, runtime **Docker**,
    plan **Free**, health check `/api/health`.
 5. Give the Blueprint a name (for example `twindock`) and click **Apply**.
-6. Open the service. The **Events** and **Logs** tabs show the Docker build, then `warm start: 2700 simulated s in …`,
+6. Open the service. The **Events** and **Logs** tabs show the Docker build, then `warm start: 600 simulated s in …`,
    then the service goes **Live**.
 7. Your link is shown at the top: `https://twindock.onrender.com` (or a suffixed name if that one is taken).
 8. Free services sleep after about 15 minutes without visitors. The first visit after that takes about a minute
@@ -117,7 +117,7 @@ It prints a temporary `https://….trycloudflare.com` link; it lasts as long as 
 | `MQTT_URL` | unset | `mqtt://user:pass@host:1883` or `mqtts://user:pass@host:8883`: connect to that broker (e.g. HiveMQ Cloud) so a real board can join. A **secret**: set it in the host's dashboard, never in the repo |
 | `TWINDOCK_MQTT` | 0 | `1` to use the local broker from `TWINDOCK_MQTT_HOST`/`PORT` |
 | `TWINDOCK_SIM` | auto | `embedded` / `external`: where the site simulator runs |
-| `TWINDOCK_WARM_START_MIN` | 45 | simulated minutes fast-forwarded at start; `0` to switch off |
+| `TWINDOCK_WARM_START_MIN` | 45 (Render: 10) | simulated minutes fast-forwarded at start; `0` to switch off. The server answers nothing until it ends: 45 min took ~150 s on Render's free CPU (502s meanwhile), so `render.yaml` sets 10 |
 | `TWINDOCK_SEED` | date-based | fix the simulation seed |
 | `TWINDOCK_HOSTED` | auto | the "Hosted demo" banner (`auto`: on when nothing real can connect) |
 | `TWINDOCK_HISTORIAN_DB` | `backend/data/historian.sqlite` | the historian's SQLite file (24 simulated hours kept) |
