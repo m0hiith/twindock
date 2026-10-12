@@ -50,6 +50,11 @@ export function MaintenancePanel() {
   const closed = c.work_orders.filter((w) => ["done", "dismissed"].includes(w.state)).slice(0, 8);
   return (
     <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-wrap items-center gap-2 text-[13px]">
+        <span className="text-ink-2">Shift report (PDF, from the historian):</span>
+        <a className="underline" href="/api/report/shift.pdf?which=current" download>this shift</a>
+        <a className="underline" href="/api/report/shift.pdf?which=previous" download>previous shift</a>
+      </div>
       <section aria-label="Decisions">
         <div className="flex items-center gap-2"><h2 className="text-[15px] font-semibold">Decisions for a person</h2><SimBadge /></div>
         <p className="mt-0.5 text-[12px] text-ink-2">Anything that stops production or calls emergency services waits here.</p>

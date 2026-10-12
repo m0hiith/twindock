@@ -31,6 +31,7 @@ const ALLOWED: Record<string, [number, string]> = {
   "wiring/BreadboardView.tsx": [3, "readings from gateway.sensors (real board)"],
   "pages/WiringPage.tsx": [2, "board online state"],
   "pages/MonitorPage.tsx": [2, "GW-01 tile only: gateway state from the board's own messages (device source); every other tile is SIM-badged"],
+  "pages/DevicePage.tsx": [1, "GW-01 Wi-Fi signal history: the board's own status messages from the historian"],
   "scene/GatewayPole.tsx": [4, "the real board's pole and BLE ring"],
   "status.ts": [1, "tone colour table; deviceTone() gives live only to source device (tested below)"],
   "scene/DevicePucks.tsx": [1, "tone map; deviceTone() returns live only for source device (tested below)"],

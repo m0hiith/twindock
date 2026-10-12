@@ -1,7 +1,8 @@
 // Inspect-card rows for a FAC-01 machine: state, cycle time, current, vibration against its learned
 // baseline (chart with the normal band), units today, last fault, OEE parts. All simulated (SIM).
+import { useState } from "react";
 import type { Unit } from "../contract";
-import { useHistory } from "../fleet/DevicePanel";
+import { RangeBar, useHistory, type HistoryRange } from "../fleet/DevicePanel";
 import { BandChart } from "../fleet/ui";
 import { stateLabel } from "../status";
 import { useWorld } from "../store/world";
@@ -22,7 +23,8 @@ function Row({ k, children }: { k: string; children: React.ReactNode }) {
 export function MachineRows({ u }: { u: Unit }) {
   const m = useWorld((s) => s.production?.machines.find((x) => x.id === u.id));
   const cfg = useWorld((s) => s.production?.config);
-  const history = useHistory(m?.device_id ?? "", m ? "vibration_rms" : null);
+  const [range, setRange] = useState<HistoryRange>("15m");
+  const history = useHistory(m?.device_id ?? "", m ? "vibration_rms" : null, range);
   useTick(1000);
   if (!m || !cfg) return <Row k="Data">Waiting for machine monitor</Row>;
   const b = m.baseline;
@@ -48,6 +50,7 @@ export function MachineRows({ u }: { u: Unit }) {
           </div>
         )}
         <div className="mt-1.5">
+          <RangeBar id={m.device_id} channel="vibration_rms" range={range} onRange={setRange} />
           <BandChart points={history} band={band} mean={b.learned ? b.mean : null} unit="mm/s" />
         </div>
         <div className="text-[11px] text-ink-2">

@@ -203,7 +203,11 @@ its speed (×1 real time, ×5, ×20); only ×1 is allowed while the real board i
 | `GET /api/layout` | Static geometry and waypoint graph (`backend/world/layout.json`) |
 | `GET /api/snapshot` | Same payload as the WebSocket `world_snapshot` |
 | `POST /api/reset` | Restore the seed world (board data is kept: it is real) |
-| `GET /api/health` | Broker connection, board online/fake, client count |
+| `GET /api/health` | Uptime, achieved tick rate, simulation clock and speed, warm start, SIM devices online, broker, board online/fake, clients |
+| `GET /api/history?device=&channel=&range=15m\|1h\|shift` | Historian series (avg/min/max per bucket) for charts |
+| `GET /api/history.csv?...` | The same as CSV (`raw=true`: every stored point) |
+| `GET /api/report/shift.pdf?which=current\|previous` | Shift report PDF (`/api/report/shift` for its data) |
+| `GET /api/model` | The simulation's model card (models, equations, parameters with sources, sensors) |
 | `GET /api/devices/{id}/history?channel=` | Recent values of one device channel (fleet side panel) |
 | `WS /ws` | Messages in `shared/schema.md` |
 

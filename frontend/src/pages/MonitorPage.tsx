@@ -53,10 +53,14 @@ export function MonitorPage() {
             <div className="flex items-center gap-1 border-b border-[var(--card-border)] p-1.5">
               <TabButton active={tab === "open"} onClick={() => setTab("open")}>Open alerts</TabButton>
               <TabButton active={tab === "timeline"} onClick={() => setTab("timeline")}>Incident timeline</TabButton>
-              {tab === "timeline" && (
+              {tab === "timeline" && (<>
                 <button type="button" disabled={!data} onClick={() => data && exportDailyReport(data)}
                   className="ml-auto h-8 rounded-lg bg-accent px-3 text-[12px] font-medium text-white hover:brightness-95 disabled:opacity-50">Daily report (PDF)</button>
-              )}
+                <a href="/api/report/shift.pdf?which=current" download
+                  className="flex h-8 items-center rounded-lg border border-[var(--card-border)] bg-white px-3 text-[12px] font-medium hover:bg-idle-bg">Shift report (PDF)</a>
+                <a href="/api/report/shift.pdf?which=previous" download
+                  className="flex h-8 items-center rounded-lg border border-[var(--card-border)] bg-white px-3 text-[12px] font-medium hover:bg-idle-bg">Previous shift</a>
+              </>)}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4">{tab === "open" ? <OpenAlerts /> : <Timeline data={data} />}</div>
           </div>

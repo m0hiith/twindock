@@ -21,24 +21,43 @@ export function showInTwin(d: Pick<Device, "id" | "site_id" | "x" | "z">): void 
   navigate("/twin");
 }
 
-export function useHistory(id: string, channel: string | null): [number, number][] {
+export type HistoryRange = "15m" | "1h" | "shift";
+export const RANGES: { id: HistoryRange; label: string }[] = [{ id: "15m", label: "15 min" }, { id: "1h", label: "1 h" }, { id: "shift", label: "Shift" }];
+
+/** A channel's history from the historian (GET /api/history): [time, average] per bucket over the range. */
+export function useHistory(id: string, channel: string | null, range: HistoryRange = "15m"): [number, number][] {
   const [points, setPoints] = useState<[number, number][]>([]);
   useEffect(() => {
     setPoints([]);
-    if (!channel) return;
+    if (!channel || !id) return;
     let alive = true;
+    const q = new URLSearchParams({ device: id, channel, range, buckets: "240" });
     const load = () =>
-      fetch(`/api/devices/${encodeURIComponent(id)}/history?channel=${encodeURIComponent(channel)}`)
+      fetch(`/api/history?${q.toString()}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((j: { points?: unknown } | null) => {
-          if (alive && j && Array.isArray(j.points)) setPoints(j.points as [number, number][]);
+          if (alive && j && Array.isArray(j.points)) setPoints((j.points as number[][]).map((p) => [p[0]!, p[1]!] as [number, number]));
         })
         .catch(() => undefined);
     void load();
-    const t = setInterval(load, 5000);
+    const t = setInterval(load, range === "15m" ? 5000 : 20000);
     return () => { alive = false; clearInterval(t); };
-  }, [id, channel]);
+  }, [id, channel, range]);
   return points;
+}
+
+/** 15 min / 1 h / shift, and the chart's data as CSV from the historian. */
+export function RangeBar({ id, channel, range, onRange }: { id: string; channel: string; range: HistoryRange; onRange: (r: HistoryRange) => void }) {
+  const csv = `/api/history.csv?${new URLSearchParams({ device: id, channel, range }).toString()}`;
+  return (
+    <div className="flex items-center gap-1 text-[12px]">
+      {RANGES.map((r) => (
+        <button key={r.id} type="button" aria-pressed={range === r.id} onClick={() => onRange(r.id)}
+          className={`h-6 rounded-md px-2 ${range === r.id ? "bg-info-bg font-medium text-ink" : "text-ink-2 hover:bg-idle-bg"}`}>{r.label}</button>
+      ))}
+      <a href={csv} download className="ml-auto text-ink-2 underline hover:text-ink">CSV</a>
+    </div>
+  );
 }
 
 function Row({ k, children }: { k: string; children: React.ReactNode }) {
@@ -55,7 +74,8 @@ export function DevicePanel({ d, onClose }: { d: Device; onClose: () => void }) 
   const layout = useWorld((s) => s.layout);
   const devices = useWorld((s) => s.devices);
   const main = MAIN_CHANNEL[d.type];
-  const history = useHistory(d.id, main);
+  const [range, setRange] = useState<HistoryRange>("15m");
+  const history = useHistory(d.id, main, range);
   const site = sites.find((s) => s.id === d.site_id);
   const mainReading = main ? d.readings[main] : undefined;
   const reasons = attentionReasons(d);
@@ -101,6 +121,7 @@ export function DevicePanel({ d, onClose }: { d: Device; onClose: () => void }) 
               <span className="text-[13px] font-semibold">{channelLabel(main)} history</span>
               <span className="text-[12px] text-ink-2">{d.source === "device" ? "From the board's status" : "Simulated"}</span>
             </div>
+            <div className="mt-1"><RangeBar id={d.id} channel={main} range={range} onRange={setRange} /></div>
             <div className="mt-1.5">
               <Sparkline points={history} unit={mainReading?.unit ?? (main === "wifi_rssi_dbm" ? "dBm" : undefined)}
                 step={typeof mainReading?.value === "boolean"} />

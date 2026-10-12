@@ -22,7 +22,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
@@ -31,6 +31,7 @@ from .engine import Engine, MqttOut, WsOut
 from .graph import DEFAULT_LAYOUT, load_layout
 from .hub import Hub
 from .model_card import model_card
+from .report import shift_report, shift_report_pdf, shift_window
 from .models import WarmStart
 from .mqtt_bridge import BrokerConfig, MqttBridge
 from .simclock import SimClock, day_seed
@@ -57,8 +58,9 @@ MAX_STEP_S = 0.05  # one live tick at 20 Hz; at x5/x20 one tick is cut into slic
 # was asleep wakes up into a running factory. 0 switches it off (tests, local work against the real board).
 WARM_START_MIN = float(os.environ.get("TWINDOCK_WARM_START_MIN", "45"))
 # Engine and simulator step during the warm start. Movement is reservation-based (a unit never skips a node it
-# hasn't been granted), so 0.5 s slices only make the fast-forward coarser, never wrong; it halves its cost.
-WARM_STEP_S = 0.5
+# hasn't been granted) and every sensor reports at 1 s or slower, so 1 s slices only make the fast-forward
+# coarser, never wrong; they keep it well inside its 10 s budget with the historian recording.
+WARM_STEP_S = 1.0
 WARM_CHUNK_S = 10.0  # simulated seconds between drains of the (discarded) output
 # After a warm start auto mode stays on (the hosted demo is a working factory); TWINDOCK_AUTO=0 turns it off.
 AUTO_AFTER_WARM = os.environ.get("TWINDOCK_AUTO", "1") != "0"
@@ -114,6 +116,7 @@ class App:
         time give the same factory."""
         t0 = time.perf_counter()
         start_ms = self.clock.sim_ms
+        self.engine.historian.delete_from(start_ms)  # a restart within the day re-simulates this stretch
         e = self.engine
         e.fast_forward, e.auto_mode = True, True
         assert self.sim is not None
@@ -207,6 +210,58 @@ def health() -> dict[str, Any]:
             "devices_online": sum(d["status"] == "online" for d in devices), "devices_total": len(devices),
             "mqtt": str(BROKER) if MQTT_ENABLED else None, "mqtt_connected": e.mqtt_connected,
             "gateway_online": e.gw.online, "gateway_fake": e.gw.fake, "clients": len(state.hub.clients), "auto_mode": e.auto_mode}
+
+
+RANGES_S = {"15m": 15 * 60, "1h": 3600, "8h": 8 * 3600, "24h": 24 * 3600}
+
+
+def _history_window(range_: str) -> tuple[int, int]:
+    """[t0, t1] in simulated ms: a fixed span back from now, or the current shift ("shift")."""
+    now = state.engine.clock()
+    if range_ == "shift":
+        from sim import Params
+        _, t0, _ = shift_window(Params.load().v("production.shifts.calendar"), now)
+        return t0, now
+    if range_ not in RANGES_S:
+        raise HTTPException(status_code=400, detail=f"range must be one of {', '.join([*RANGES_S, 'shift'])}")
+    return now - RANGES_S[range_] * 1000, now
+
+
+@app.get("/api/history")
+def history(device: str, channel: str, range: str = "1h", buckets: int = 240) -> dict[str, Any]:
+    """Historian series for a chart: [bucket start ms, avg, min, max, n] (simulated time; SIM devices and the board's RSSI)."""
+    t0, t1 = _history_window(range)
+    return {"device_id": device, "channel": channel, "range": range, "from_ms": t0, "to_ms": t1,
+            "points": state.engine.historian.series(device, channel, t0, t1, max(10, min(buckets, 2000)))}
+
+
+@app.get("/api/history.csv")
+def history_csv(device: str, channel: str, range: str = "1h", raw: bool = False) -> Response:
+    """The same series as CSV (or every stored point with raw=true), for any chart's download link."""
+    t0, t1 = _history_window(range)
+    h = state.engine.historian
+    if raw:
+        lines = ["time,value"] + [f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t / 1000))},{v}" for t, v in h.raw(device, channel, t0, t1)]
+    else:
+        lines = ["time,avg,min,max,samples"] + [f"{time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t / 1000))},{a},{lo},{hi},{n}"
+                                                for t, a, lo, hi, n in h.series(device, channel, t0, t1, 240)]
+    name = f"{device}_{channel}_{range}.csv"
+    return Response("\n".join(lines) + "\n", media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@app.get("/api/report/shift")
+def report_shift(which: str = "current") -> dict[str, Any]:
+    """The shift report's data (which = current or previous)."""
+    if which not in ("current", "previous"):
+        raise HTTPException(status_code=400, detail="which must be current or previous")
+    return shift_report(state.engine, which)
+
+
+@app.get("/api/report/shift.pdf")
+def report_shift_pdf(which: str = "current") -> Response:
+    r = report_shift(which)
+    name = f"twindock_shift_{r['shift']}_{time.strftime('%Y%m%d', time.localtime(r['from_ms'] / 1000))}.pdf"
+    return Response(shift_report_pdf(r), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{name}"'})
 
 
 @app.get("/api/model")

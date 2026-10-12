@@ -36,6 +36,7 @@ from .models import (AckAlert, SafetyCommand, ScenarioCommand, AlertsUpdate, Ble
                      SelectUnit, SetAutoMode, SetSimSpeed, SimClockMsg, Timed, UnitUpdate, WarmStart, WorldSnapshot,
                      ControlDecision, ControlUpdate, LogisticsUpdate)
 from .control import ControlLoop
+from .historian import Historian
 from .logistics import Logistics
 from .world import Entity, World
 
@@ -48,6 +49,8 @@ SAFETY_EVAL_S = 0.25     # proximity check 4x a second: a forklift at demo pace 
 SAFETY_FLUSH_S = 0.5     # safety_update at most 2 Hz
 RULES_EVAL_S = 0.5       # rules 2x a second: fast enough for 1.5 m proximity at demo pace, cheap
 RULES_EVAL_FF_S = 2.0    # during the warm start nobody watches; alerts still raise and resolve, just less often
+HISTORIAN_FLUSH_S = 2.0  # write the historian's buffer every 2 simulated seconds (one transaction)
+HISTORIAN_FLUSH_FF_S = 30.0  # during the warm start nobody reads it: bigger transactions
 LOGISTICS_FLUSH_S = 2.0  # logistics_update at most every 2 s (KPIs, trucks' stages, weighbridge tickets)
 SIM_CLOCK_FLUSH_S = 5.0  # sim_clock every 5 s (and on change), so a screen's clock never drifts far at x20
 SEVERITY_LEVEL = {"info": "info", "warning": "warn", "critical": "error"}
@@ -142,6 +145,8 @@ class Engine:
         self.control = ControlLoop(self)
         self._new_logistics()
         self._log_acc = 0.0
+        self.historian = Historian()
+        self._hist_acc = 0.0
 
     # ------------------------------------------------------------------ site twin units (FAC-01)
 
@@ -733,6 +738,8 @@ class Engine:
 
     def event(self, level: str, text: str, source: str = "system", unit_id: str | None = None,
               to: str | None = None) -> None:
+        if to is None and hasattr(self, "historian"):
+            self.historian.add_event(self.clock(), level, source, text, unit_id)
         self._send(Event(seq=self._next_seq(), server_ts_ms=self.clock(), level=level,  # type: ignore[arg-type]
                          source=source, text=text, unit_id=unit_id), to)
 
@@ -946,6 +953,10 @@ class Engine:
         self._tick_rules(dt)
         self._tick_logistics(dt)
         self.control.tick(dt)
+        self._hist_acc += dt
+        if self._hist_acc >= (HISTORIAN_FLUSH_FF_S if self.fast_forward else HISTORIAN_FLUSH_S):
+            self._hist_acc = 0.0
+            self.historian.flush(self.clock())
         if self.control.c.dirty:
             self.control.c.dirty = False
             self._send_control()
@@ -1057,6 +1068,7 @@ class Engine:
                 self.gw.status = Timed(data=data, received_ms=now)
                 if "wifi_rssi_dbm" in data:
                     self.devices.record_real(self.layout.gateway.id, "wifi_rssi_dbm", now, data["wifi_rssi_dbm"])
+                    self.historian.add(self.layout.gateway.id, "wifi_rssi_dbm", now, float(data["wifi_rssi_dbm"]))
             self.gw.last_status_ms = now
             if self.gw.refresh_online(now):
                 self._on_online_changed()
@@ -1096,6 +1108,8 @@ class Engine:
                 self.event("warn", f"Dropped sensor {sensor_name}: not in hello or HARDWARE.md", "gateway")
                 return
             self.gw.sensors[sensor_name] = Timed(data=data, received_ms=now)
+            if isinstance(data.get("value"), (int, float)):
+                self.historian.add(self.layout.gateway.id, sensor_name, now, float(data["value"]))
 
         self._gateway_update(RawMqtt(topic=topic, payload=data, received_ms=now))
         if kind == "hello":
@@ -1117,6 +1131,10 @@ class Engine:
         for n in notes:
             self.event(n.level, n.text, "sim")
         parsed = parse_site_topic(topic)
+        if changed and parsed and parsed[2] not in ("hello", "status"):
+            hr = self.devices.sim[changed].readings.get(parsed[2])
+            if hr is not None and hr.received_ms == now:
+                self.historian.add(changed, parsed[2], now, hr.value)
         if changed and parsed and parsed[2] == "position":
             wk = next((w for w in self.safety.workers.values() if w.badge == changed), None)
             st = self.devices.sim.get(changed)

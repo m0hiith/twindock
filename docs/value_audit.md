@@ -129,3 +129,12 @@ threshold suggestions (computed in the browser).
 ## /wiring (FL-01)
 
 Wiring readings (device: `gateway.sensors`), unchanged.
+
+## /device board history and the historian (R6)
+
+| Value | Source |
+|---|---|
+| GW-01 Wi-Fi signal history (LIVE, violet) | **Device**: the board's own `twin/gateway/status` `wifi_rssi_dbm`, stored by the historian when each message arrives; empty until the board reports |
+| Every other trend chart (device panel, machine vibration), CSV export | Simulated readings stored by the historian (SIM); deadband-compressed, 24 simulated hours kept |
+| Shift report (PDF) | Read back from the historian (machine states and counters, meter kWh registers) and the engine's logs (alerts, work orders, logistics); SIM |
+| Not stored | Badge positions (privacy, K3) |

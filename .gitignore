@@ -19,3 +19,6 @@ videos/
 # Firmware build output and local Wi-Fi/broker secrets
 firmware/*/build/
 firmware/*/td_secrets.h
+
+# Historian database (backend/twindock/historian.py)
+backend/data/
