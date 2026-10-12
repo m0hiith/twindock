@@ -50,6 +50,23 @@ interface ModelCard {
   core: Param[];
   devices: Param[];
   run: { mode: "embedded" | "external"; seed: number | null; t_s: number | null; recent_events: { t: number; name: string; cause: string }[] };
+  card: { modelled: string[]; simplified: string[]; assumed: string[]; swap_to_hardware: string[] };
+  validation: { hours: number; seed: number; all_ok: boolean; wall_s: number; checks: Record<string, { ok: boolean } & Record<string, unknown>> } | null;
+}
+
+const CHECK: Record<string, string> = {
+  energy_balance: "Energy balance (supply = load every step)", material_conservation: "Material conserved (blanks in = WIP + good + scrap)",
+  compressor_duty: "Compressor duty, cycles and starts in typical ranges", oee_plausible: "OEE in a plausible band",
+  sensor_ranges: "No true value outside its sensor's range", events_have_causes: "Every event has a cause",
+};
+
+function Bullets({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <h3 className="text-[13px] font-semibold">{title}</h3>
+      <ul className="mt-1 list-disc space-y-1 pl-5 text-[13px]">{items.map((t) => <li key={t}>{t}</li>)}</ul>
+    </div>
+  );
 }
 
 const KIND: Record<SourceKind, { label: string; tone: Tone }> = {
@@ -123,6 +140,31 @@ export function ModelPage() {
           )}
           {error && <div className="mt-3 text-crit">{error}</div>}
         </section>
+        {card?.validation && (
+          <section className="card p-4" aria-label="Validation">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[15px] font-semibold">Validation: {card.validation.hours} simulated hours</h2>
+              <Pill tone={card.validation.all_ok ? "ok" : "crit"}>{card.validation.all_ok ? "All checks pass" : "A check fails"}</Pill>
+            </div>
+            <p className="mt-1 text-[12px] text-ink-2">backend/sim/validate.py, seed {card.validation.seed}, with a grid failure and a compressor trip in the run; also run in the test suite.</p>
+            <div className="mt-2 divide-y divide-[var(--card-border)] text-[13px]">
+              {Object.entries(card.validation.checks).map(([k, v]) => (
+                <div key={k} className="flex items-center gap-2 py-1.5">
+                  <Pill tone={v.ok ? "ok" : "crit"}>{v.ok ? "Pass" : "Fail"}</Pill><span>{CHECK[k] ?? k}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {card && (
+          <section className="card flex flex-col gap-3 p-4" aria-label="Model card">
+            <h2 className="text-[15px] font-semibold">Model card</h2>
+            <Bullets title="What is modelled" items={card.card.modelled} />
+            <Bullets title="What is simplified" items={card.card.simplified} />
+            <Bullets title="What is assumed" items={card.card.assumed} />
+            <Bullets title="Swapping a simulated kit for real hardware" items={card.card.swap_to_hardware} />
+          </section>
+        )}
         {card?.models.map((m) => (
           <section key={m.key} className="card p-4" aria-label={m.title}>
             <div className="flex items-baseline justify-between gap-3">

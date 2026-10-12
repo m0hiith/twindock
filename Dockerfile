@@ -34,6 +34,7 @@ COPY backend/sim backend/sim
 COPY backend/twindock backend/twindock
 COPY backend/world backend/world
 COPY backend/rules backend/rules
+COPY docs/validation.json docs/validation.json
 COPY --from=frontend /src/frontend/dist frontend/dist
 # Hugging Face Spaces runs the container as uid 1000; nothing here writes to disk except the historian (R6).
 RUN useradd -m -u 1000 twindock && chown -R twindock /app

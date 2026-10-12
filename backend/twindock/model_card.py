@@ -60,9 +60,17 @@ def _static(sites_json: str, layout_json: str) -> dict[str, Any]:
             "devices": [{**lf.wire(), "kind": source_kind(lf.source)} for lf in params.under("devices")]}
 
 
+CARD = ROOT / "backend" / "sim" / "card.json"
+VALIDATION = ROOT / "docs" / "validation.json"
+
+
 def model_card(sites_cfg: dict[str, Any], layout: dict[str, Any], running: Any | None) -> dict[str, Any]:
     """`running` is the backend's EmbeddedSim (or None when the simulator is an external process)."""
     out = dict(_static(json.dumps(sites_cfg, sort_keys=True), json.dumps(layout, sort_keys=True)))
+    card = json.loads(CARD.read_text())
+    out["card"] = {k: card[k] for k in ("modelled", "simplified", "assumed", "swap_to_hardware")}
+    # The last validation run (sim/validate.py), committed with the code that produced it.
+    out["validation"] = json.loads(VALIDATION.read_text()) if VALIDATION.is_file() else None
     if running is None:
         out["run"] = {"mode": "external", "seed": None, "t_s": None, "recent_events": []}
     else:

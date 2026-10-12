@@ -56,7 +56,8 @@ class Sensor:
         self.stream = stream
         # Devices boot at different moments, so their sample clocks are spread over one period.
         self.next_t = rng.stream(stream + ".phase").uniform(0.0, spec.period_s)
-        self.clipped = 0
+        self.clipped = 0          # readings held at a range limit (noise around a value at the limit: normal)
+        self.out_of_range = 0     # true values the part could not have measured (a modelling error)
 
     def due(self, t: float) -> bool:
         if t + 1e-9 < self.next_t:
@@ -74,6 +75,8 @@ class Sensor:
         s = self.spec
         if s.dropout_p and self.rng.chance(self.stream + ".dropout", s.dropout_p):
             return None
+        if (s.lo is not None and true < s.lo - 1e-9) or (s.hi is not None and true > s.hi + 1e-9):
+            self.out_of_range += 1
         x = true + self.rng.gauss(self.stream, s.sigma)
         if s.lo is not None and x < s.lo:
             x = s.lo

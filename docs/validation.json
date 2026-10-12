@@ -1,0 +1,88 @@
+{
+ "hours": 4.0,
+ "seed": 7,
+ "start_hour": 6.0,
+ "step_s": 0.5,
+ "wall_s": 11.8,
+ "all_ok": true,
+ "checks": {
+  "energy_balance": {
+   "ok": true,
+   "worst_kw": 1.4210854715202004e-14,
+   "supply_kwh": 513.32,
+   "load_kwh": 513.32
+  },
+  "material_conservation": {
+   "ok": true,
+   "fed": 2640,
+   "good": 2453,
+   "scrap": 54,
+   "wip": 28,
+   "infeed": 105
+  },
+  "compressor_duty": {
+   "ok": true,
+   "loaded_share": 0.55,
+   "load_cycles_per_h": 55.2,
+   "motor_starts_per_h": {
+    "CP-01": 0.5,
+    "CP-02": 0.5
+   }
+  },
+  "oee_plausible": {
+   "ok": true,
+   "oee": {
+    "M-01": 0.475,
+    "M-02": 0.651,
+    "M-03": 0.58,
+    "M-04": 0.802
+   }
+  },
+  "sensor_ranges": {
+   "ok": true,
+   "true_values_outside_range": {},
+   "noise_held_at_a_limit": {
+    "MM-01.vibration_rms": 143,
+    "MM-01.current_a": 602,
+    "MM-02.vibration_rms": 410,
+    "MM-02.current_a": 1912,
+    "TT-01.speed_kmh": 882,
+    "TT-02.speed_kmh": 840,
+    "CP-01.current_a": 117,
+    "CP-01.power_kw": 106,
+    "TL-01.level_pct": 4,
+    "PM-01.power_kw": 56,
+    "PM-01.voltage_v": 63,
+    "PM-02.power_kw": 66,
+    "PM-02.voltage_v": 64,
+    "PM-03.power_kw": 68,
+    "PM-03.voltage_v": 67,
+    "MM-03.vibration_rms": 119,
+    "MM-03.current_a": 519,
+    "MM-04.vibration_rms": 195,
+    "MM-04.current_a": 906,
+    "PM-04.power_kw": 61,
+    "PM-04.voltage_v": 62,
+    "PM-05.power_kw": 1373,
+    "PM-05.voltage_v": 1380,
+    "PM-06.power_kw": 65,
+    "PM-06.voltage_v": 64,
+    "TL-04.level_pct": 136,
+    "PM-07.voltage_v": 1,
+    "CP-02.current_a": 1371,
+    "CP-02.power_kw": 1360,
+    "GS-01.rpm": 1379,
+    "GS-01.fuel_lph": 1401,
+    "GS-01.load_kw": 1355,
+    "PM-08.power_kw": 59,
+    "PM-08.voltage_v": 61,
+    "PM-08.power_factor": 1388
+   }
+  },
+  "events_have_causes": {
+   "ok": true,
+   "events": 5247,
+   "without_cause": []
+  }
+ }
+}

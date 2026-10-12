@@ -1,0 +1,34 @@
+{
+  "_doc": "The model card's prose for /model (docs/model_card.md says the same at more length).",
+  "modelled": [
+    "Compressed air as a receiver mass balance with duty and standby screw compressors on load/unload bands, a sequencer start delay and star-delta start, pressure-proportional leaks, and a low-air trip that stops pneumatic machines.",
+    "Electrical supply as a sum of every consumer's kW (with its power factor) per zone; solar with clouds and a zero-export limiter; an APFC bank; a diesel generator with the AMF sequence (confirm, crank, run-up, transfer, retransfer, cool-down), a fuel curve and coolant temperature.",
+    "Production lines as press → buffer → packer with material conserved from raw pallets to cartons, a three-shift calendar, Weibull minor stops, bearing wear that accelerates and fails at its own limit, and motor current, surface temperature and vibration from load and wear.",
+    "Water and effluent: day and storage tanks with pumps, canteen, cooling-tower and process demand, the ETP's equalisation tank and its overload.",
+    "Rooms: open halls follow the outdoor temperature plus their equipment's heat, offices are air-conditioned, humidity from the outdoor moisture; the cold room and its door.",
+    "People: a three-shift roster arriving and leaving through the gate, rounds, canteen breaks, evacuation walks on the walkway graph; badge positions with BLE error.",
+    "Logistics (the twin's auto mode): truck schedules with delays, gate, weighbridge, yard, paperwork; raw material reorders; orders; forklift batteries in amp-hours.",
+    "Every sensor through a measurement layer with the real kit part's period, noise, resolution, range and dropouts."
+  ],
+  "simplified": [
+    "One receiver and one air header; no pressure drop along pipes; leaks are one lumped orifice.",
+    "Machine cycles are a single time with lognormal spread; no individual cylinder or die dynamics.",
+    "Room air is one well-mixed node per zone; walls, sun on roofs and wind are folded into the outdoor curve and k per zone.",
+    "Bearing wear is a single scalar per machine; other failure modes are lumped into Weibull minor stops.",
+    "The electrical network has no voltage drop, harmonics or protection coordination; the generator's governor and AVR are not modelled beyond their timing.",
+    "Forklift energy uses a constant rolling resistance and lift height; no regenerative braking.",
+    "The warehouse moves at the demo PACE (2.5×) unless TWINDOCK_PACE=1; handling times scale with it."
+  ],
+  "assumed": [
+    "Every number marked 'assumption' in the parameter tables below, with the reason given beside it.",
+    "The weather is a fixed daily cycle (no seasons, no rain); the date only changes the seed.",
+    "Customer orders and supplier lead times are random processes, not a real order book.",
+    "The tariff is an example time-of-day schedule, not a utility's."
+  ],
+  "swap_to_hardware": [
+    "Each simulated device stands for a kit in hardware/kits (real, buyable parts and wiring). Building one means flashing its firmware to publish the same twin/<site>/<device>/<channel> topics and payloads the simulator uses.",
+    "Then: allow source \"device\" on those site topics (today the schema fixes them to \"sim\"), set the device's source to \"device\" in sites.json, and stop simulating it (tools/site_sim.py selects only source \"sim\"). The twin then shows it LIVE, like GW-01, and rules, charts and reports work unchanged.",
+    "Bridges (energy meter, generator controller, fire panel) read existing certified equipment; they never control it.",
+    "GW-01, the SiWx917 board, is already real: it is never simulated, and simulated data can never reach it."
+  ]
+}
