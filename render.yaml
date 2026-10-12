@@ -1,0 +1,18 @@
+# Render Blueprint (https://render.com/docs/blueprint-spec): TwinDock as one Docker web service on the free plan.
+# Render injects PORT (10000); the Dockerfile's command listens on $PORT with exactly one worker.
+services:
+  - type: web
+    name: twindock
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: TWINDOCK_HOSTED
+        value: auto        # the "Hosted demo" banner while no broker is configured
+      - key: TZ
+        value: Asia/Kolkata  # the site's time zone (solar, shifts, tariffs)
+      # To let a real board join this backend later, add MQTT_URL (mqtts://user:password@host:8883) as a secret
+      # environment variable in the Render dashboard. Never commit it here.

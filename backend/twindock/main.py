@@ -64,6 +64,9 @@ WARM_STEP_S = 1.0
 WARM_CHUNK_S = 10.0  # simulated seconds between drains of the (discarded) output
 # After a warm start auto mode stays on (the hosted demo is a working factory); TWINDOCK_AUTO=0 turns it off.
 AUTO_AFTER_WARM = os.environ.get("TWINDOCK_AUTO", "1") != "0"
+# "Hosted demo" banner (D2): on (1), off (0), or auto: on when the simulator runs inside the backend and no broker was
+# configured (no real board can reach this backend). The container sets auto; a local run defaults to off.
+HOSTED = os.environ.get("TWINDOCK_HOSTED", "0")
 # The built frontend (vite build). The container serves it from here; locally Vite serves it instead.
 STATIC_DIR = Path(os.environ.get("TWINDOCK_STATIC_DIR") or Path(__file__).resolve().parents[2] / "frontend" / "dist")
 
@@ -209,6 +212,7 @@ def health() -> dict[str, Any]:
             "warm_start": e.warm_start.model_dump() if e.warm_start else None,
             "devices_online": sum(d["status"] == "online" for d in devices), "devices_total": len(devices),
             "mqtt": str(BROKER) if MQTT_ENABLED else None, "mqtt_connected": e.mqtt_connected,
+            "hosted": HOSTED == "1" or (HOSTED == "auto" and state.sim is not None and not MQTT_URL),
             "gateway_online": e.gw.online, "gateway_fake": e.gw.fake, "clients": len(state.hub.clients), "auto_mode": e.auto_mode}
 
 

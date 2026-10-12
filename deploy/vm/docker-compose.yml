@@ -1,0 +1,34 @@
+# TwinDock on an always-on VM (docs/deploy_vm.md): the app, a Mosquitto broker the real board can reach, and Caddy
+# for HTTPS. Start from the repository root:  docker compose -f deploy/vm/docker-compose.yml up -d --build
+services:
+  twindock:
+    build: { context: ../.., dockerfile: Dockerfile }
+    restart: unless-stopped
+    environment:
+      MQTT_URL: mqtt://twindock:${MQTT_BACKEND_PASSWORD:?set MQTT_BACKEND_PASSWORD in deploy/vm/.env}@mosquitto:1883
+      TWINDOCK_SIM: embedded      # the site simulator runs inside the backend; the board joins through Mosquitto
+      TWINDOCK_HOSTED: "0"        # the real board can connect here, so no "Hosted demo" banner
+      TZ: Asia/Kolkata
+    volumes:
+      - historian:/app/backend/data   # keep the historian across restarts
+    depends_on: [mosquitto]
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    # Not published to the internet: the board's firmware speaks plain MQTT, and credentials must not cross the internet
+    # in clear text. docs/deploy_vm.md explains how the board can join (MQTT over TLS on 8883, a firmware change).
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./passwd:/mosquitto/config/passwd:ro
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in deploy/vm/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+volumes:
+  historian:
+  caddy_data:

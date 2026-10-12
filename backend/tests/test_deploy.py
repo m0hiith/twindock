@@ -29,6 +29,7 @@ def test_health_reports_process_state() -> None:
     for k in ("uptime_s", "tick_hz", "tick_target_hz", "sim_clock_ms", "sim_speed", "devices_online", "devices_total"):
         assert k in h
     assert h["devices_total"] > 50
+    assert h["hosted"] is False  # a local run (TWINDOCK_HOSTED unset) never shows the "Hosted demo" banner
 
 
 def test_built_frontend_is_served_with_spa_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

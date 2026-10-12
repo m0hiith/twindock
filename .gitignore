@@ -22,3 +22,5 @@ firmware/*/td_secrets.h
 
 # Historian database (backend/twindock/historian.py)
 backend/data/
+deploy/vm/.env
+deploy/vm/passwd

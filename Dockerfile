@@ -21,6 +21,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PORT=7860 \
     TZ=Asia/Kolkata \
     TWINDOCK_MQTT=0 \
+    TWINDOCK_HOSTED=auto \
     TWINDOCK_SIM=auto
 WORKDIR /app
 COPY backend/requirements.txt backend/requirements.txt

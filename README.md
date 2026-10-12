@@ -90,6 +90,21 @@ Plan: [docs/kits_plan.md](docs/kits_plan.md). Credits and part graphics: [CREDIT
 - **Workers can see their own data** at `/me/<worker id>`.
 - Safety features **advise**: TwinDock never closes, locks or silences anything, and the fire panel and gas nodes only add information next to certified systems.
 
+## Hosted demo and deployment
+
+TwinDock runs as **one always-on container** (`Dockerfile`: the built frontend, `/api` and `/ws` from one FastAPI
+process with one worker), never as serverless functions: [docs/deploy_diagnosis.md](docs/deploy_diagnosis.md)
+explains why the old Vercel deploy showed no factory data.
+
+```sh
+docker build -t twindock . && docker run --rm -p 7860:7860 twindock    # http://localhost:7860
+```
+
+Hosted on Hugging Face Spaces or Render it runs the simulated factory, says "Hosted demo" on every page, and starts by
+fast-forwarding 45 simulated minutes. Click-by-click steps: [docs/deploy.md](docs/deploy.md); an always-on VM with a
+broker and HTTPS: [docs/deploy_vm.md](docs/deploy_vm.md). The simulation itself:
+[docs/sim_architecture.md](docs/sim_architecture.md), [docs/model_card.md](docs/model_card.md) and the `/model` page.
+
 ## Repo layout
 
 | Path | What |
