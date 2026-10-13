@@ -8,10 +8,11 @@ and GW-01's behaviour were not touched.
 
 | Commit | What |
 |---|---|
-| `12fd77e` | Control Room fix found while capturing: at 1440 px the side panel ran off the right edge (the map column had no `min-w-0`) |
-| `8ecb172` | `tools/screenshots/capture.py` (Playwright), the screenshots, `docs/screenshots/CHECKLIST.md`, `docs/readme_blockers.md` |
-| `03a1a47` | README.md rewritten in the 16 requested sections; gateway card shot added |
-| last | Clean-checkout fixes to the README (Python venv note), this report |
+| `6eec232` | Control Room fix found while capturing: at 1440 px the side panel ran off the right edge (the map column had no `min-w-0`) |
+| `4595a1f` | `tools/screenshots/capture.py` (Playwright), the screenshots, `docs/screenshots/CHECKLIST.md`, `docs/readme_blockers.md` |
+| `b8cdd24` | README.md rewritten in the 16 requested sections; gateway card shot added |
+| `72ba915` | Clean-checkout fixes to the README (Python venv note), this report |
+| `9989d72` | README license line: Apache 2.0, after rebasing onto the LICENSE commit on origin |
 
 ## What was captured
 
@@ -23,7 +24,7 @@ attention), monitor, rules, energy, model, and forklift-route.mp4 (13 s). Every 
 results are in [docs/screenshots/CHECKLIST.md](docs/screenshots/CHECKLIST.md).
 
 Problems found and fixed while checking, never by cropping:
-- `/control` at 1440 px: side panel off screen. Fixed in the app (`12fd77e`), re-captured.
+- `/control` at 1440 px: side panel off screen. Fixed in the app (`6eec232`), re-captured.
 - Selection is shared server state, so FL-01 selected for one shot opened its card in the next ones. The script now
   clears the selection over `/ws` before every shot (its first try was rejected for a missing `cmd_id`, which it now sends).
 - The route clip first showed the search box, then an idle forklift. The script now trims at the measured moment
