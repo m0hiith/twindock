@@ -104,7 +104,7 @@ export function ControlPage() {
 
   return (
     <div className="flex h-full flex-col bg-[var(--ground)] lg:flex-row">
-      <div className="flex min-h-0 flex-col lg:flex-1">
+      <div className="flex min-h-0 min-w-0 flex-col lg:flex-1">
         <header className="flex items-center gap-2 px-3 pb-2 pt-3 sm:px-4">
           <Brand compact title="" />
           <div className="min-w-0 flex-1">
