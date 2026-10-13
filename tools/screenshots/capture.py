@@ -97,6 +97,11 @@ def factory_view(page: Page) -> None:
     time.sleep(4)
 
 
+def gateway_card(page: Page) -> None:
+    search(page, "GW-01")
+    time.sleep(3)
+
+
 def fleet_attention(page: Page) -> None:
     btn = page.get_by_role("button", name="Needs attention").first
     if btn.count():
@@ -117,6 +122,7 @@ SHOTS = [
     Shot("twin-overview", "/twin", DESKTOP),
     Shot("twin-inspect-forklift", "/twin", DESKTOP, select_fl01),
     Shot("campus-factory", "/twin", DESKTOP, factory_view),
+    Shot("twin-gateway-card", "/twin", DESKTOP, gateway_card),
     Shot("control-room", "/control", DESKTOP),
     Shot("control-phone", "/control", PHONE),
     Shot("device-page", "/device", DESKTOP),
