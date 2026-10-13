@@ -455,4 +455,4 @@ modules, then calibrate BLE zones in a real space.
   is used ([CREDITS.md](CREDITS.md)).
 - **Open-source software:** React, three.js, React Three Fiber, drei, zustand, Tailwind CSS, Vite, FastAPI, pydantic,
   Eclipse Mosquitto, aiomqtt, jsonschema, PyYAML and Playwright, under their own licenses.
-- **License:** the repository does not have a license file yet, so no license is granted. Ask the author before reusing the code.
+- **License:** Apache License 2.0 ([LICENSE](LICENSE)). The Silicon Labs names and logo are not covered by it.
