@@ -354,6 +354,9 @@ python3 -m venv .venv
 (cd frontend && npm install)
 ```
 
+If `python3 -m venv` fails at `ensurepip` (it does with Homebrew's Python 3.14 on the development Mac), use the
+python.org installer instead, e.g. `/Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13 -m venv .venv`.
+
 **Run** (three terminals):
 
 ```sh
