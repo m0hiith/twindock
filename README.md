@@ -27,8 +27,6 @@ TwinDock firmware written in C on the WiSeConnect SDK. It publishes its status, 
 MQTT, and it takes LED commands from the twin. Every other device kit in the project is designed around a Silicon Labs
 radio: SiWx917 for Wi-Fi, EFR32BG for coin-cell BLE, EFR32MG24 for Thread.
 
-The visual language is inspired by **Dilum Sanjaya's "WareTrack"** concept. TwinDock does not use its name, logo,
-wordmarks or truck branding.
 
 ## Real vs simulated
 
