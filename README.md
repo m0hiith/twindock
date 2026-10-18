@@ -446,7 +446,6 @@ modules, then calibrate BLE zones in a real space.
 
 ## Credits and licenses
 
-- **Design inspiration:** Dilum Sanjaya's "WareTrack" concept. TwinDock does not use its name, logo, wordmarks or truck branding.
 - **Silicon Labs:** the logo, SiWx917, EFR32 and Simplicity Studio are Silicon Labs names, used here only to say
   what TwinDock is built on. This is a demonstration project, not a Silicon Labs product.
 - **Part graphics:** every part on the wiring pages is drawn in SVG from its real dimensions. No third-party artwork
