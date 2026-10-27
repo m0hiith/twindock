@@ -44,7 +44,7 @@ function ResetButton() {
     }
   };
   return (
-    <button type="button" onClick={reset} disabled={state === "busy"} title="Restore the seed world"
+    <button type="button" data-tour="reset" onClick={reset} disabled={state === "busy"} title="Restore the seed world"
       className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-medium transition-colors ${state === "failed" ? "border-crit bg-crit-bg text-crit" : "border-[var(--card-border)] bg-white text-ink hover:bg-idle-bg"}`}>
       <Icon name="reset" size={15} />
       <span className="hidden sm:inline">{state === "busy" ? "Resetting…" : state === "failed" ? "Reset failed" : "Reset world"}</span>
@@ -117,15 +117,15 @@ export function ControlPage() {
           <PageTabs className="hidden md:flex" />
         </header>
         <div className="flex justify-center px-3 empty:hidden"><FakeBoardBanner /></div>
-        <div className="px-3 sm:px-4"><UnitChips /></div>
-        <div className="relative mx-3 mb-2 mt-1 aspect-[57/86] max-h-[62vh] min-h-0 overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[#F0F0F0] sm:mx-4 lg:mb-4 lg:aspect-auto lg:max-h-none lg:flex-1">
+        <div className="px-3 sm:px-4" data-tour="unit-chips"><UnitChips /></div>
+        <div data-tour="control-map" className="relative mx-3 mb-2 mt-1 aspect-[57/86] max-h-[62vh] min-h-0 overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[#F0F0F0] sm:mx-4 lg:mb-4 lg:aspect-auto lg:max-h-none lg:flex-1">
           <SiteMap checks={perNode} chosen={proposal?.target ?? null} path={proposal?.path ?? null} onNodeTap={onNodeTap}
             onBackground={() => { propose(null); setNotice(null); }} />
         </div>
       </div>
 
       <aside className="flex min-h-0 flex-1 flex-col lg:w-[420px] lg:flex-none lg:border-l lg:border-[var(--card-border)] lg:bg-white/60">
-        <nav className="flex gap-1 overflow-x-auto px-3 pt-1 lg:px-4 lg:pt-4">
+        <nav data-tour="control-tabs" className="flex gap-1 overflow-x-auto px-3 pt-1 lg:px-4 lg:pt-4">
           <TabButton active={tab === "move"} onClick={() => setTab("move")}>Move</TabButton>
           <TabButton active={tab === "gateway"} onClick={() => setTab("gateway")}>Gateway</TabButton>
           <TabButton active={tab === "factory"} onClick={() => setTab("factory")}>Factory</TabButton>

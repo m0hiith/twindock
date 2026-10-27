@@ -134,7 +134,7 @@ export function WiringPage() {
       </div>
       <div className="flex justify-center empty:hidden"><FakeBoardBanner /></div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" data-tour="wiring-views">
         <div className="card flex gap-1 p-1" role="tablist">
           {VIEWS.map((v) => (
             <TabButton key={v.id} active={view === v.id} onClick={() => setView(v.id)}>

@@ -86,7 +86,7 @@ export function FleetPage() {
             </div>
           </div>
 
-          <div className="card flex flex-col">
+          <div className="card flex flex-col" data-tour="fleet-devices">
             <div className="flex flex-wrap items-center gap-3 border-b border-[var(--card-border)] p-3">
               <div className="flex rounded-xl bg-idle-bg p-1" role="group" aria-label="Show">
                 {[{ v: true, l: `Needs attention · ${sum.attention}` }, { v: false, l: `All devices · ${sum.total}` }].map((o) => (

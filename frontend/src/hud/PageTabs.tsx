@@ -1,5 +1,7 @@
 // Tabs between the app's pages, shown in every page header. Navigation is client-side
 // (history.pushState) so the WebSocket and world state stay up when switching pages.
+import { useTour } from "../tour/store";
+
 export const PAGES = [
   { path: "/twin", label: "Twin" },
   { path: "/monitor", label: "Monitor" },
@@ -7,7 +9,6 @@ export const PAGES = [
   { path: "/control", label: "Control" },
   { path: "/fleet", label: "Fleet" },
   { path: "/rules", label: "Rules" },
-  { path: "/device", label: "Device" },
   { path: "/kits", label: "Kits" },
   { path: "/wiring", label: "Wiring" },
   { path: "/model", label: "Model" },
@@ -37,6 +38,13 @@ export function PageTabs({ className = "" }: { className?: string }) {
           </a>
         );
       })}
+      <button type="button" onClick={() => useTour.getState().start()} title="A guided tour of every page"
+        className="flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-[13px] font-medium text-accent transition-colors hover:bg-white">
+        <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.2M12 17h.01" />
+        </svg>
+        Tour
+      </button>
     </nav>
   );
 }

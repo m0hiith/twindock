@@ -103,7 +103,7 @@ Every message is a JSON object with a `type` field.
 | `selection_changed` | `ws/selection_changed.json` | When any client or BTN1 changes the shared selection. |
 | `command_ack` | `ws/command_ack.json` | Reply to each client command (`ok`, `reason`, planned `path`). |
 | `event` | `ws/event.json` | Event-log notices: BTN0/BTN1 actions, auto mode, LED confirmation timeouts, dropped device messages, BLE tag acquired/lost. |
-| `ble_tracks` | `ws/ble_tracks.json` | After each `twin/gateway/ble` message and when a tag is lost. Per tag: last and smoothed RSSI, raw and committed zone, pending zone. Feeds the /device calibration helper. |
+| `ble_tracks` | `ws/ble_tracks.json` | After each `twin/gateway/ble` message and when a tag is lost. Per tag: last and smoothed RSSI, raw and committed zone, pending zone. |
 | `device_update` | `ws/device_update.json` | At most 2 Hz: devices whose status, readings, battery or signal changed. `world_snapshot` carries all `sites` (with zones) and `devices`. |
 | `production_update` | `ws/production_update.json` | On connect and ≤ 1 Hz: FAC-01 machines (state, cycle, current, vibration, learned baseline, z, abnormal, OEE parts) and the line (units, pallets, zone OEE). |
 | `safety_update` | `ws/safety_update.json` | On connect and ≤ 2 Hz: workers (role, badge, zone, nearest moving forklift, restricted zone; **no names**), workers per zone, today's counters. |

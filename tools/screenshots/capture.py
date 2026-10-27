@@ -35,6 +35,9 @@ SETTLE_S = 5.0
 # Goto targets tried for the route clip, spread over the warehouse and the factory.
 ROUTE_TARGETS = ["ZONE_A", "RACK_B4", "CHARGER_C2", "FAC_OUT", "RAW_BAY_1", "FAC_AISLE_2"]
 
+# The guided tour opens on a first visit; screenshots show the pages without it.
+NO_TOUR = "try { localStorage.setItem('twindock.tour.seen', '1') } catch {}"
+
 
 def clear_selection(base: str) -> None:
     """Selection is shared by every screen (server state), so one shot's selected forklift would open its card in the
@@ -125,7 +128,6 @@ SHOTS = [
     Shot("twin-gateway-card", "/twin", DESKTOP, gateway_card),
     Shot("control-room", "/control", DESKTOP),
     Shot("control-phone", "/control", PHONE),
-    Shot("device-page", "/device", DESKTOP),
     Shot("wiring-breadboard-fl01", "/wiring/fl01_sensor_pack?view=breadboard", DESKTOP),
     Shot("wiring-schematic-fl01", "/wiring/fl01_sensor_pack?view=schematic", DESKTOP),
     Shot("wiring-reference-kit", "/wiring/machine_monitor?view=breadboard", DESKTOP),
@@ -154,6 +156,7 @@ def capture(base: str, only: set[str] | None, video: bool) -> int:
             phone = shot.viewport is PHONE
             ctx = browser.new_context(viewport=shot.viewport, device_scale_factor=2 if phone else 1,
                                       is_mobile=phone, has_touch=phone)
+            ctx.add_init_script(NO_TOUR)
             page = ctx.new_page()
             try:
                 page.goto(base + shot.path, wait_until="domcontentloaded")
@@ -180,6 +183,7 @@ def record_route(browser, base: str) -> int:  # type: ignore[no-untyped-def]
     """About 12 s of /twin with FL-01 selected, driving a route the server planned (see send_fl01_on_route)."""
     tmp = OUT / "_video"
     ctx = browser.new_context(viewport=DESKTOP, record_video_dir=str(tmp), record_video_size=DESKTOP)
+    ctx.add_init_script(NO_TOUR)
     page = ctx.new_page()
     t0 = time.monotonic()  # the video starts with the page
     try:

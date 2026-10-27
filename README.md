@@ -35,9 +35,9 @@ is shown only if the board sent it, with its age. If nothing has arrived, the sc
 
 | Data | Source | Badge in the UI | Where it appears |
 |---|---|---|---|
-| GW-01 status: Wi-Fi RSSI, uptime, IP, firmware version, message counters | **Real.** MQTT from the SiWx917 board | **LIVE** (violet) | Gateway card on `/twin`, `/control` Gateway tab, `/device`, `/fleet`, `/monitor` |
+| GW-01 status: Wi-Fi RSSI, uptime, IP, firmware version, message counters | **Real.** MQTT from the SiWx917 board | **LIVE** (violet) | Gateway card on `/twin`, `/control` Gateway tab, `/fleet`, `/monitor` |
 | BTN0 / BTN1 presses, LED0 / LED1 state | **Real.** The board reports each change; LEDs show on only after the board confirms | LIVE | Gateway card, `/control`, event log |
-| BLE tags named `TD-…` (e.g. a phone advertising `TD-BADGE-01` as RB-01) | **Real**, through the board's BLE scan | LIVE | `/device`, `/fleet`, and as live forklifts once zones are calibrated |
+| BLE tags named `TD-…` (e.g. a phone advertising `TD-BADGE-01` as RB-01) | **Real**, through the board's BLE scan | LIVE | `/fleet`, and as live forklifts once zones are calibrated |
 | Warehouse trucks, forklifts, pallets, docks | Server world state, moved by a person (`manual`) or auto mode (`auto`) | none; the inspect card's "Source" row says which | `/twin`, `/control` |
 | 88 factory and campus devices: machine monitors, worker badges, meters, compressors, generator controller, env, gas, water | **Simulated** by `backend/sim` (via `tools/site_sim.py` or in the backend) | **SIM** (grey) | Everywhere they appear |
 | OEE, alerts, work orders, energy totals, weighbridge tickets | Computed by the backend from the data above | Same badge as their inputs | `/twin`, `/monitor`, `/energy`, `/rules`, `/control` |
@@ -81,11 +81,6 @@ board is online. Its card shows status, LEDs and buttons, all from the board's o
 it shows exactly that:
 
 ![GW-01 selected with no board connected: the card and the scene label read Waiting for device](docs/screenshots/twin-gateway-card.png)
-
-`/device` shows the board's Wi-Fi signal history and the BLE tags it sees, and it has a helper for calibrating BLE
-zones on site. Without the board the chart is empty and the tag table says so:
-
-![The device page with no board: an empty RSSI history and no TD- tags](docs/screenshots/device-page.png)
 
 ### Fleet (`/fleet`)
 
@@ -419,7 +414,7 @@ and 17 of the 18 device kits.
 **Not built yet:**
 - Firmware Step E (BLE scan) and Step F (offline buffer, replay, reconnect counters), and running Steps A–D on the board.
 - The board twin (a 3D model of the board in the gateway card): it needs a top-down photo, `frontend/public/board/top.jpg`.
-- BLE tags as live forklift zones: built, but the zones need calibration on site at `/device`.
+- BLE tags as live forklift zones: built, but the zone thresholds need calibrating on site (in `backend/world/ble_zones.json`).
 - The forklift sensor pack's Qwiic modules (VL53L1X, NAU7802, load cell) and the on-board sensor topics.
 - Over-the-air firmware updates, and TLS between the board and the broker (the board uses plain MQTT on the LAN today).
 - The factory planner (`/plan`) and site steps S4, S5, S7, S8 and S9 ([SITE_PROMPTS.md](SITE_PROMPTS.md)).

@@ -57,7 +57,7 @@ export function ShipmentPanel() {
   const cap = Number(t.meta?.capacity ?? 0), n = t.cargo?.length ?? 0;
 
   return (
-    <div className="card pointer-events-auto flex w-[640px] gap-5 p-4">
+    <div className="card pointer-events-auto flex w-[640px] gap-5 p-4" data-tour="shipments">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between">
           <div>

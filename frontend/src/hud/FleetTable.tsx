@@ -35,7 +35,7 @@ export function FleetTable() {
   const rows = Object.values(units).filter((u) => u.kind === tab).sort((a, b) => a.id.localeCompare(b.id));
 
   return (
-    <div className="card pointer-events-auto flex w-[520px] flex-col p-3">
+    <div className="card pointer-events-auto flex w-[520px] flex-col p-3" data-tour="fleet-table">
       <div className="flex items-center gap-1 px-1">
         {TABS.map((t) => (
           <TabButton key={t.id} active={tab === t.id} onClick={() => setTab(t.id)}>

@@ -14,7 +14,7 @@ export function AutoModeToggle() {
     setWaiting(false);
   };
   return (
-    <button type="button" role="switch" aria-checked={auto} onClick={toggle} disabled={waiting}
+    <button type="button" role="switch" data-tour="auto" aria-checked={auto} onClick={toggle} disabled={waiting}
       title={auto ? "The warehouse is working on its own. Click to stop." : "Let the warehouse work on its own"}
       className={`flex h-9 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 text-[13px] font-medium transition-colors ${auto ? "border-warn bg-warn-bg text-warn" : "border-[var(--card-border)] bg-white text-ink"}`}>
       <span className={`relative h-4 w-7 rounded-full transition-colors ${auto ? "bg-warn" : "bg-[#D6D6D6]"}`}>

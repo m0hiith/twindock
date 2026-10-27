@@ -24,7 +24,7 @@ export function MapControls() {
     else home();
   };
   return (
-    <div className="card flex flex-col overflow-hidden !rounded-xl divide-y divide-[var(--card-border)]">
+    <div data-tour="map-controls" className="card flex flex-col overflow-hidden !rounded-xl divide-y divide-[var(--card-border)]">
       <Btn label="Zoom in" onClick={() => zoomBy(1.25)} disabled={zoom >= ZOOM_MAX - 1e-6}>
         <svg viewBox="0 0 24 24" {...icon}><path d="M12 5v14M5 12h14" /></svg>
       </Btn>

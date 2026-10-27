@@ -46,7 +46,7 @@ export function KpiCards() {
   const since = baseline ? new Date(baseline.at_ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
   const dockPct = c.docksUsable ? Math.round((c.docksInUse / c.docksUsable) * 100) : 0;
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3" data-tour="kpis">
       <Kpi icon="box" label="Stock on hand" value={c.stock} suffix="pallets" delta={b ? c.stock - b.stock : null} since={since}
         context={`${c.stockInRacks} in racks · ${c.stockStaged} staged · ${c.stock - c.stockInRacks - c.stockStaged} on forklifts`} />
       <Kpi icon="truck" label="Trucks on site" value={c.trucksOnSite} delta={b ? c.trucksOnSite - b.trucksOnSite : null} since={since}

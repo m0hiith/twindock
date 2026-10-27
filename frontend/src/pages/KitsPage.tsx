@@ -29,7 +29,7 @@ export function KitsPage() {
         {error && <div role="alert" className="rounded-xl bg-crit-bg px-4 py-2 text-[13px] text-crit">{error}</div>}
         {!kits && !error && <div className="text-ink-2">Loading kits…</div>}
         {kits && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="kits">
             {groupKits(kits).flatMap(([, list]) => list).map((k) => <KitCard key={k.id} k={k} />)}
           </div>
         )}

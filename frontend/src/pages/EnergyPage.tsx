@@ -40,7 +40,7 @@ export function EnergyPage() {
         {p && !p.available && <div className="text-ink-2">No power meters are configured.</div>}
         {p?.available && (
           <>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3" data-tour="energy-cards">
               <Card title="Demand" value={f(p.demand_kw)} unit="kW" sub={`${p.peak_kw} kW peak limit`} tone={p.peak_exceeded ? "warn" : undefined} />
               <Card title={p.solar_measured ? "Solar now" : "Solar now (computed)"} value={f(p.solar_kw, 0)} unit="kW" sub={p.solar_share === null ? "Solar offsets nothing while the grid is down" : `${Math.round(p.solar_share * 100)}% of demand`} />
               <Card title="Grid import" value={f(p.grid_kw)} unit="kW" sub={down ? "No grid" : "From the substation incomer meter"} tone={down ? "crit" : undefined} />

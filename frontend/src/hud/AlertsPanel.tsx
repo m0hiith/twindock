@@ -78,13 +78,13 @@ export function AlertsCard({ collapsed = false }: { collapsed?: boolean }) {
   const crit = active.filter((a) => a.severity === "critical").length;
   if (active.length === 0) {
     return (
-      <button type="button" onClick={() => navigate("/rules")} className="card pointer-events-auto flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2">
+      <button type="button" data-tour="alerts" onClick={() => navigate("/rules")} className="card pointer-events-auto flex items-center gap-2 px-3 py-2 text-[13px] text-ink-2">
         <Icon name="check" className="text-ok" /> No open alerts
       </button>
     );
   }
   return (
-    <div className="card pointer-events-auto w-[340px] overflow-hidden" aria-label="Open alerts">
+    <div className="card pointer-events-auto w-[340px] overflow-hidden" aria-label="Open alerts" data-tour="alerts">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
         className="flex w-full items-center gap-2 border-b border-[var(--card-border)] px-4 py-2.5 text-left">
         <Icon name="alert" size={16} className={crit ? "text-crit" : "text-warn"} />

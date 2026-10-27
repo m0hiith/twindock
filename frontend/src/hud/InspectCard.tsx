@@ -148,7 +148,7 @@ export function InspectCard() {
   const sub = subtitle(u, gw);
   const live = u.source === "device";
   return (
-    <div className={`card pointer-events-auto max-h-[calc(100vh-250px)] min-h-0 w-[340px] overflow-y-auto p-4 ${live && gw && !gw.online ? "opacity-90" : ""}`} aria-label={`${u.id} details`}>
+    <div className={`card pointer-events-auto max-h-[calc(100vh-250px)] min-h-0 w-[340px] overflow-y-auto p-4 ${live && gw && !gw.online ? "opacity-90" : ""}`} aria-label={`${u.id} details`} data-tour="inspect">
       <div className="flex items-start gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${live ? "bg-[#F3EDFF] text-live" : "bg-info-bg text-info"}`}>
           <Icon name={kindIcon[u.kind]} size={20} />

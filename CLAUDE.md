@@ -39,7 +39,7 @@ SiWx917 board ──MQTT (Wi-Fi)──► Mosquitto (laptop) ◄──► backen
                                                           ▼ WebSocket
                                   ┌───────────────────────┴───────────────────────┐
                                   │  /twin  3D view + HUD    /control  Control Room │
-                                  │  /device  board page     /wiring  sensor pack   │
+                                  │  /fleet   devices        /wiring  sensor pack   │
                                   └─────────────────────────────────────────────────┘
 ```
 
@@ -79,7 +79,7 @@ Every message has a `type`. Server → client: `world_snapshot` (on connect and 
 `event` (`{seq, server_ts_ms, level: info|warn|error, source, text, unit_id?}` for the event log:
 BTN0/BTN1 actions, auto mode, LED timeouts, dropped device messages, BLE tags), and
 `ble_tracks` (after each BLE scan: per tag last/smoothed RSSI, raw/committed/pending zone, plus
-the zone config; for the /device calibration helper), `sim_clock` (simulated time, speed ×1/×5/×20,
+the zone config), `sim_clock` (simulated time, speed ×1/×5/×20,
 warm start; every `server_ts_ms` is on this clock), `control_update` (work orders, recommendations waiting for
 a person, the cause → action → result log of automatic actions), `logistics_update` (logistics KPIs, truck
 stages and weighbridge tickets, orders, inventory, forklift batteries in Ah).

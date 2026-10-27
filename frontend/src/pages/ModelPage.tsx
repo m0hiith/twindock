@@ -118,7 +118,7 @@ export function ModelPage() {
           <PageTabs className="ml-2" />
           <div className="ml-auto"><LivePill /></div>
         </header>
-        <section className="card p-4">
+        <section className="card p-4" data-tour="model-intro">
           <h1 className="text-[20px] font-semibold">How the simulation works</h1>
           <p className="mt-1 max-w-[820px] text-[13px] text-ink-2">
             Everything marked SIM comes from these models. Each number is a cause and effect: machines draw air and power

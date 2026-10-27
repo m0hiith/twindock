@@ -41,7 +41,7 @@ export function SiteSelector() {
   const site = sites.find((s) => s.id === current) ?? sites[0];
   if (!site) return null;
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" data-tour="site">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`Site: ${site.name}`}
         className="flex h-9 items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--card-border)] px-3 text-[13px] font-medium hover:bg-idle-bg">
         <Icon name={site.kind === "factory" ? "factory" : "dock"} size={15} className="text-ink-2" />
@@ -86,7 +86,7 @@ function Notifications() {
     setOpen(!open);
   };
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" data-tour="notifications">
       <IconButton label={unread ? `Notifications, ${unread} new` : "Notifications"} onClick={toggle}>
         <Icon name="bell" size={18} />
         {unread > 0 && (
