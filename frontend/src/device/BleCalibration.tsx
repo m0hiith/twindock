@@ -113,9 +113,13 @@ export function BleCalibration() {
         <p className="mt-1 text-ink-2">Stand at a spot holding the tag still, wait until the average uses {config?.window ?? 5} scans, then capture. One gateway measures distance only, so choose spots at clearly different distances from the board.</p>
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-[12px] text-ink-2">Tag
-            <select value={chosen?.name ?? ""} onChange={(e) => setTag(e.target.value)} className="h-10 rounded-lg border border-[var(--card-border)] bg-white px-2 text-[13px] text-ink">
-              {tracks.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
-            </select>
+            {tracks.length === 0
+              ? <span className="flex h-10 items-center rounded-lg border border-[var(--card-border)] bg-idle-bg px-3 text-[13px] text-ink-2">No tag in range</span>
+              : (
+                <select value={chosen?.name ?? ""} onChange={(e) => setTag(e.target.value)} className="h-10 rounded-lg border border-[var(--card-border)] bg-white px-2 text-[13px] text-ink">
+                  {tracks.map((t) => <option key={t.name} value={t.name}>{t.name}</option>)}
+                </select>
+              )}
           </label>
           <label className="flex flex-col gap-1 text-[12px] text-ink-2">Spot
             <select value={node} onChange={(e) => setNode(e.target.value)} className="h-10 rounded-lg border border-[var(--card-border)] bg-white px-2 text-[13px] text-ink">
@@ -125,7 +129,7 @@ export function BleCalibration() {
           </label>
           <button type="button" onClick={capture} disabled={!ready || !node}
             className="h-10 rounded-lg bg-accent px-4 font-semibold text-white disabled:opacity-50">
-            {ready ? `Capture ${chosen.avg_rssi_dbm!.toFixed(1)} dBm` : chosen ? `Waiting for ${config?.window ?? 5} scans (${chosen.readings})` : "No tag"}
+            {ready ? `Capture ${chosen.avg_rssi_dbm!.toFixed(1)} dBm` : chosen ? `Waiting for ${config?.window ?? 5} scans (${chosen.readings})` : "Capture"}
           </button>
         </div>
 
